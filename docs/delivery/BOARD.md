@@ -1,10 +1,10 @@
 # Tableau de livraison
 
-Vue générée depuis tickets.json, révision 0. GitHub Issues est un miroir ; les preuves restent dans Git.
+Vue générée depuis tickets.json, révision 3. GitHub Issues est un miroir ; les preuves restent dans Git.
 
 | Ticket | Phase | Responsable | État | Dépendances |
 |---|---|---|---|---|
-| ARC-01 — Qualifier le parcours embarqué | M0 | frontend | ready (éligible) | — |
+| ARC-01 — Qualifier le parcours embarqué | M0 | frontend | blocked | — |
 | ARC-02 — Verrouiller versions et environnement | M0 | orchestrator | todo | ARC-01 |
 | ARC-03 — Installer les contrats de l'équipe | M0 | orchestrator | todo | ARC-01, ARC-02 |
 | DOM-01 — Snapshot et validation complète | M1 | backend | todo | ARC-03, CAT-01 |

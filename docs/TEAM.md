@@ -19,7 +19,7 @@ Le designer peut travailler avant l'interface, puis vérifier le résultat du fr
 2. Choisir un ticket dont les dépendances sont terminées, préciser ses chemins et le réclamer avec la révision courante du backlog.
 3. Déléguer au rôle adapté, sans chevauchement d'écriture. Faire évoluer un contrat commun avant les consommateurs s'il doit changer.
 4. Exécuter les contrôles utiles, déposer une preuve avec commandes/résultats/limites, puis soumettre à review.
-5. Faire relire par un autre agent ; corriger avant done. Ne pas confondre un contrôle de schéma avec le fonctionnement de ChatGPT.
+5. Faire relire par un autre agent et tenir la [réunion de fin de tâche](meetings/README.md) : résultat, tests, dettes attribuées, décisions et verdict. Corriger avant done. Ne pas confondre un contrôle de schéma avec le fonctionnement de ChatGPT.
 6. Mettre à jour le tableau, la passation et GitHub Issues ; committer le résultat cohérent avec l'ID du ticket.
 
 ## Lancer ou reprendre

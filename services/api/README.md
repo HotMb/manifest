@@ -1,0 +1,52 @@
+# Serveur de qualification M0
+
+Ce serveur teste le parcours d'un seul projet, d'une page et d'un Hero. Il utilise le SDK MCP officiel et les helpers MCP Apps. Il ne constitue ni un backend de production ni une preuve d'ouverture dans le vrai ChatGPT.
+
+## Transport local
+
+Installer les dépendances depuis la racine du dépôt et construire la vue avec la commande de build de l'éditeur avant de lire la ressource UI. Lancer le transport stdio depuis la racine :
+
+```sh
+node --import tsx services/api/src/main.ts --stdio
+```
+
+Le client MCP doit appeler Node directement avec cette commande : `npm run` ajoute des en-têtes sur stdout et n'est donc pas adapté au transport protocolaire sans option silencieuse. Le processus Node réserve stdout au protocole MCP ; les messages de démarrage utilisent stderr. L'accès à ce processus dépend des permissions du client qui le lance. Aucune clé de fournisseur IA n'est demandée ou employée.
+
+Le transport HTTP se lance avec `npm run start --workspace @design-workbench/api`, après configuration **hors Git** de `M0_ACCESS_TOKEN` (au moins 32 caractères sans espace). `PORT` est facultatif, par défaut 8787. Le serveur écoute uniquement `127.0.0.1` et n'affiche pas le jeton. Ne pas recopier un jeton réel dans une issue, un prompt ou une capture.
+
+`GET /health` fournit seulement l'état du prototype. `/mcp` requiert le jeton Bearer, un Host local et une Origin absente ou du même serveur. Le corps JSON est limité à 64 Kio. Ce contrat local n'implémente pas OAuth et ne doit pas être exposé par un tunnel public tel quel. Le test dans le vrai hôte et la stratégie d'identité restent à qualifier.
+
+## Outils et ressource
+
+| Outil | Entrée | Effet |
+|---|---|---|
+| `open_designer` | objet vide | ouvre `ui://design/editor.html` et lit le projet M0 |
+| `read_project` | `projectId` | lit le brouillon sans rouvrir l'interface |
+| `commit_commands` | commande `apply_ops` canonique | enregistre atomiquement les modifications manuelles admises |
+
+La ressource utilise `text/html;profile=mcp-app` et lit `apps/editor-web/dist/index.html`. Seul l'outil d'ouverture porte `resourceUri`. Les outils de données déclarent une visibilité `app` ; le respect de cette visibilité dépend de l'hôte et ne remplace aucune autorisation.
+
+`structuredContent` contient uniquement le résumé : identifiant, version, hash, stockage `memory-m0`, révision approuvée nulle et éventuel reçu. Le document complet est dans `_meta.project`, réservé à la vue. Les erreurs métier ont `isError: true` et `_meta.error` avec code, message, requestId et retryable. Une erreur de schéma du SDK peut ne fournir que le contenu textuel d'erreur.
+
+## Limites volontaires du prototype
+
+- Un principal de développement, un projet `project-m0`, une page `/`, un bloc `Hero` ; aucune identité multi-utilisateur.
+- Opérations admises : `update_props` sur titre, corps, token de fond et animation ; `update_theme` sur les trois couleurs. Les autres mutations sont refusées explicitement.
+- Seuls `none` et `fade` sont disponibles ; les couleurs acceptent `#RRGGBB`. Aucun HTML, callback ou asset externe n'est exécuté.
+- Le Snapshot reste celui du contrat de domaine. Les références de catalogue et de politique de l'exemple sont **fictives** et ne deviennent pas une release M1 par leur utilisation dans cet essai.
+- Les verrous empêchent les modifications des propriétés concernées, y compris manuelles dans ce M0 conservateur. Le déverrouillage ne fait pas partie de l'essai.
+- Stockage et reçus en mémoire, perdus au redémarrage. Le store garde jusqu'à 1 000 reçus puis refuse les nouvelles commandes ; il n'évince pas silencieusement des reçus nécessaires au replay.
+- Pas d'IA, de génération, de job de suggestions, d'approbation, d'export ou de persistance PostgreSQL. Ces fonctions appartiennent aux tickets suivants.
+
+La transaction M0 ne contient aucun `await` ni accès disque : comparaison de version, calcul SHA-256, validation et assignation se terminent dans le même tour JavaScript du processus unique. Une base et plusieurs workers exigeront la vraie transaction décrite dans les contrats, pas la réutilisation de cette hypothèse d'exécution.
+
+## Vérifier
+
+Depuis la racine :
+
+```sh
+node node_modules/typescript/bin/tsc --noEmit -p services/api/tsconfig.json
+node --import tsx --test tests/m0-backend.test.ts
+```
+
+Les tests emploient le vrai client SDK MCP, les transports en mémoire et HTTP local, sans appel à un modèle. Le test de ressource utilise un HTML de test temporaire ; seul un essai de l'éditeur construit dans le vrai hôte prouvera son rendu. Les restrictions réseau du poste peuvent nécessiter l'autorisation habituelle d'accès au serveur local ; ne pas remplacer un test refusé par une prétendue réussite.

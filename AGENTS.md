@@ -16,6 +16,10 @@ docs/delivery/tickets.json est la source des états ; GitHub Issues en est un mi
 
 ARC-01 et ARC-02 exigent des preuves dans le vrai hôte et l'environnement d'identité. Le bootstrap du dépôt ne les termine pas. N'inventer ni un PASS ni un accès indisponible. Si un ticket est bloqué, noter la condition exacte et avancer seulement sur un autre ticket éligible. Reprendre en bornant chaque session à trois tickets intégrés ou un blocage nécessitant l'utilisateur, puis laisser une passation.
 
+## Réunion après chaque tâche
+
+Avant d'annoncer une tâche terminée, tenir la revue d'équipe définie dans docs/meetings/README.md. Recueillir les contributions réelles du propriétaire, d'un reviewer distinct et du designer si une UI est concernée. L'orchestrateur publie un compte rendu versionné : résultat démontré, tests, limites, dettes attribuées, décisions, verdict et prochaine action. Une tâche bloquée ou à reprendre a aussi sa revue. Ne pas inventer de présence ni d'accord. La synthèse est communiquée dans ce chat ; aucune invitation calendrier n'est créée sans demande. Les dettes retenues vont dans docs/TECH-DEBT.md avec propriétaire, condition de levée et jalon. La preuve de revue sous docs/evidence/ renvoie au compte rendu avant le passage done.
+
 ## Architecture et vérification
 
 Conserver un seul Snapshot et contrôleur ; commandes atomiques et propositions réversibles. Clés uniquement backend. Les tests par défaut n'appellent pas d'API payante. Ne pas publier l'application, envoyer un message à autrui ou déclencher un appel fournisseur facturable sans autorisation correspondante. La création et le push de ce dépôt privé sont autorisés ; une mise en production ne l'est pas.

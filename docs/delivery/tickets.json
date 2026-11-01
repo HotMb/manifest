@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "revision": 0,
+  "revision": 3,
   "tickets": [
     {
       "id": "ARC-01",
@@ -20,12 +20,16 @@
         "Clavier, dimensions étroites et poll court sont éprouvés ; les capacités fichier, stockage et iframe sont consignées avec fallback navigateur.",
         "Un enregistrement et une matrice de capacités datée sans secrets sont livrés ; aucun plugin public ni catalogue complet n'est publié."
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/ARC-01/implementation.md"
+      ],
       "blockers": [
         "Preuve réelle ChatGPT et compte de test autorisé non encore obtenus.",
         "Configuration d'identité et jetons d'essai à préparer sans secrets dans le dépôt."
       ],
-      "status": "ready"
+      "status": "blocked",
+      "branch": "work/arc-01",
+      "reason": "Prototype local relu et testé ; connexion dans le vrai hôte et identité réelle à qualifier avant ARC-02."
     },
     {
       "id": "ARC-02",
@@ -660,6 +664,33 @@
       "evidence": [],
       "blockers": [],
       "status": "todo"
+    }
+  ],
+  "history": [
+    {
+      "revision": 1,
+      "ticketId": "ARC-01",
+      "from": "ready",
+      "to": "in_progress",
+      "actor": "frontend",
+      "at": "2026-11-01T17:09:36.198Z"
+    },
+    {
+      "revision": 2,
+      "ticketId": "ARC-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "frontend",
+      "at": "2026-11-01T21:30:39.880Z"
+    },
+    {
+      "revision": 3,
+      "ticketId": "ARC-01",
+      "from": "review",
+      "to": "blocked",
+      "actor": "orchestrator",
+      "at": "2026-11-01T21:30:40.041Z",
+      "reason": "Prototype local relu et testé ; connexion dans le vrai hôte et identité réelle à qualifier avant ARC-02."
     }
   ]
 }

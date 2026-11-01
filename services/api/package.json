@@ -1,0 +1,20 @@
+{
+  "name": "@design-workbench/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "start:stdio": "tsx src/main.ts --stdio",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@design-workbench/m0-contract": "*",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@modelcontextprotocol/ext-apps": "1.1.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "zod": "4.6.7"
+  }
+}

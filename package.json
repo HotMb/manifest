@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Atelier de design web assisté par IA — développement par tickets",
-  "engines": { "node": ">=24 <25" },
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/board.mjs check",
@@ -17,6 +19,38 @@
     "team:reopen": "node scripts/board.mjs reopen",
     "team:board": "node scripts/board.mjs render",
     "team:brief": "node scripts/start-team.mjs --print",
-    "team:start": "node scripts/start-team.mjs"
+    "team:start": "node scripts/start-team.mjs",
+    "test:m0": "tsx --test tests/m0-backend.test.ts tests/m0-bundle.test.ts packages/host-adapters/test/adapter.test.ts",
+    "build": "npm run build --workspace @design-workbench/editor-web",
+    "dev": "npm run dev --workspace @design-workbench/editor-web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test:e2e": "playwright test"
+  },
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@modelcontextprotocol/ext-apps": "1.1.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "zod": "4.6.7",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "@puckeditor/core": "0.24.0"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "tsx": "4.23.15",
+    "vite": "8.3.5",
+    "vite-plugin-singlefile": "2.3.4",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@fontsource/instrument-sans": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0"
   }
 }

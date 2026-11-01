@@ -1,0 +1,11 @@
+{
+  "name": "@design-workbench/host-adapters",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@design-workbench/m0-contract": "0.0.0",
+    "@modelcontextprotocol/ext-apps": "1.1.2"
+  }
+}

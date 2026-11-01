@@ -28,6 +28,16 @@ jobs:
         run: npm test
       - name: Repository consistency
         run: npm run check
+      - name: TypeScript workspaces
+        run: npm run typecheck
+      - name: Build the shared editor view
+        run: npm run build
+      - name: M0 domain and MCP tests
+        run: npm run test:m0
+      - name: Install Chromium for UI tests
+        run: npx playwright install --with-deps chromium
+      - name: Browser qualification tests
+        run: npm run test:e2e
       - name: Contract validation
         run: python scripts/check_contracts.py
       - name: Contract mutation tests

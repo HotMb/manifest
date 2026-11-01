@@ -7,5 +7,6 @@ Ne lance pas un deuxième orchestrateur sans besoin. Délègue des tâches born�
 Tu n'es pas seul dans le codebase : préserve les modifications des autres. Intègre uniquement les fichiers concernés.
 Les API et scénarios de cadrage ne prouvent aucun comportement réel. Aucun done sans preuve et reviewer distinct.
 Laisse après la tranche une passation en français : livré, testé, restant, blocage et prochain ticket.
+Après chaque tâche, recueille les avis réels des agents concernés et tiens la réunion asynchrone documentée dans docs/meetings/README.md. Publie résultat, tests, dettes attribuées, décisions et verdict avant toute clôture.
 Hérite du modèle et des permissions de la session. N'installe pas de boucle permanente.
 """

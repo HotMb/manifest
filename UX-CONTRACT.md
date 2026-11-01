@@ -23,6 +23,17 @@ Le thème de l'éditeur ne se confond pas avec celui du site créé. Les dimensi
 
 Ne pas créer de versions locales concurrentes de ces comportements dans chaque panneau. Le choix Puck ne dispense pas de vérifier ses contrôles et raccourcis dans ces parcours.
 
+### Canonical UI Map — implémentation de qualification M0
+
+Cette carte décrit les propriétaires réellement introduits par ARC-01 pour son écran unique. Elle ne remplace pas les garanties de sauvegarde et de versions décrites ci-dessous. L'extraction vers les packages de l'architecture cible se fait au ticket concerné, sans conserver deux implémentations concurrentes. Les vérifications citées doivent être exécutées et leurs résultats consignés séparément.
+
+| Capability | Canonical owner | Source of truth | Allowed variants | Verification |
+|---|---|---|---|---|
+| Form | Puck.Fields et heroConfig, apps/editor-web/src/hero.tsx | propriétés admises du contrat M0 et Snapshot | un Hero, texte, radio et couleurs natives | tests/e2e/arc01.spec.ts : édition, focus, mobile |
+| Scrollbar | apps/editor-web/src/style.css | DESIGN.md et défilement défini ici | shell et panneaux ; aperçu responsive distinct | tests/e2e/arc01.spec.ts : largeur étroite et absence de débordement |
+| Toast | footer.statusbar et error-banner, apps/editor-web/src/main.tsx | états de retour définis ici | statut discret, erreur persistante, aucun toast éphémère de remplacement | tests/e2e/arc01.spec.ts : sauvegarde et conflit |
+| CRUD | Editor dans apps/editor-web/src/main.tsx et packages/host-adapters/src/index.ts | commandes canoniques et transport actif | lecture et modification M0 ; navigateur diagnostic ou MCP, sans création/suppression générale | tests/m0-backend.test.ts et tests/e2e/arc01.spec.ts |
+
 ## Intention et suggestions
 
 La première activation de l'analyse automatique montre fournisseur, transmission après pause et limite d'usage. La session conserve ce choix ; un interrupteur « Suspendre l'analyse » stoppe les nouvelles demandes. « Proposer maintenant » existe aussi et ne vide pas le champ. Enter insère une nouvelle ligne ; un raccourci explicite, documenté et compatible IME déclenche l'action manuelle. Une génération ne désactive jamais la saisie.
