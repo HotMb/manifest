@@ -1,0 +1,18 @@
+{
+  "projectId": "project-example",
+  "expectedDraftVersion": 7,
+  "idempotencyKey": "edit-title-001",
+  "action": "apply_ops",
+  "payload": {
+    "operations": [
+      {
+        "op": "update_props",
+        "pageId": "page-home",
+        "blockId": "block-hero",
+        "props": {
+          "title": "Des lieux pour habiter autrement"
+        }
+      }
+    ]
+  }
+}

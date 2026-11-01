@@ -1,0 +1,11 @@
+name = "frontend"
+description = "Implémente l'éditeur Puck partagé, ses contrôles et la causalité des suggestions, puis apporte les preuves navigateur."
+developer_instructions = """
+Lis AGENTS.md, DESIGN.md, UX-CONTRACT.md, docs/spec/ARCHITECTURE.md et CONTRACTS.md dans docs/spec/.
+Applique les skills de design disponibles et les décisions du designer. Possède uniquement les chemins attribués.
+Tu n'es pas seul dans le codebase : préserve les modifications d'autrui ; aucun changement global Git.
+Un seul contrôleur de document. Une proposition est une projection, pas une mutation silencieuse du brouillon.
+Garde saisie, IME, autosave, conflits, retour arrière et réponses périmées corrects.
+N'expose aucune clé fournisseur. Ne suppose pas les capacités du vrai hôte ; relève les preuves ARC-01.
+Teste les états visibles et erreurs, puis rends un résumé avec fichiers, contrôles exécutés et limites.
+"""

@@ -1,0 +1,22 @@
+{
+  "name": "design-workbench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Atelier de design web assisté par IA — développement par tickets",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/board.mjs check",
+    "team:status": "node scripts/board.mjs status",
+    "team:next": "node scripts/board.mjs next",
+    "team:claim": "node scripts/board.mjs claim",
+    "team:submit": "node scripts/board.mjs submit",
+    "team:done": "node scripts/board.mjs done",
+    "team:block": "node scripts/board.mjs block",
+    "team:reopen": "node scripts/board.mjs reopen",
+    "team:board": "node scripts/board.mjs render",
+    "team:brief": "node scripts/start-team.mjs --print",
+    "team:start": "node scripts/start-team.mjs"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "proposal-example",
+  "jobId": "job-example",
+  "generationId": "generation-example",
+  "editorSessionId": "editor-example",
+  "intentEpoch": 3,
+  "baseDraftVersion": 7,
+  "mode": "direct",
+  "operations": [
+    {
+      "op": "update_props",
+      "pageId": "page-home",
+      "blockId": "block-hero",
+      "props": {
+        "animation": "fade",
+        "title": "Des lieux pour habiter autrement"
+      }
+    }
+  ],
+  "explanation": "Conserve la composition et simplifie uniquement le titre et son entrée.",
+  "status": "ready"
+}

@@ -1,0 +1,665 @@
+{
+  "schemaVersion": 1,
+  "revision": 0,
+  "tickets": [
+    {
+      "id": "ARC-01",
+      "title": "Qualifier le parcours embarqué",
+      "phase": "M0",
+      "owner": "frontend",
+      "dependencies": [],
+      "ownedPaths": [
+        "apps/mcp-view/",
+        "apps/editor-web/",
+        "packages/host-adapters/",
+        "docs/evidence/ARC-01"
+      ],
+      "acceptance": [
+        "Un éditeur minimal avec un bloc s'ouvre dans le vrai ChatGPT, se rafraîchit et permet une modification.",
+        "Le bridge officiel initialise Vue vers Hôte, réalise une lecture authentifiée et refuse un jeton invalide.",
+        "Clavier, dimensions étroites et poll court sont éprouvés ; les capacités fichier, stockage et iframe sont consignées avec fallback navigateur.",
+        "Un enregistrement et une matrice de capacités datée sans secrets sont livrés ; aucun plugin public ni catalogue complet n'est publié."
+      ],
+      "evidence": [],
+      "blockers": [
+        "Preuve réelle ChatGPT et compte de test autorisé non encore obtenus.",
+        "Configuration d'identité et jetons d'essai à préparer sans secrets dans le dépôt."
+      ],
+      "status": "ready"
+    },
+    {
+      "id": "ARC-02",
+      "title": "Verrouiller versions et environnement",
+      "phase": "M0",
+      "owner": "orchestrator",
+      "dependencies": [
+        "ARC-01"
+      ],
+      "ownedPaths": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "docs/adr/",
+        "docs/evidence/ARC-02"
+      ],
+      "acceptance": [
+        "Les versions exactes React, Puck, SDK MCP et validation ainsi que le runtime Node sont compatibles et consignées dans un lockfile et une matrice.",
+        "Une installation et un build propres sont exécutés avec les versions retenues.",
+        "La stratégie OAuth et le déploiement sont décidés ; un token de mauvaise audience est refusé.",
+        "La capacité du fournisseur sélectionné est éprouvée ; aucune version n'est inventée à partir des exemples."
+      ],
+      "evidence": [],
+      "blockers": [
+        "Attend la matrice de capacités ARC-01.",
+        "Identité OAuth et accès fournisseur de test non encore qualifiés."
+      ],
+      "status": "todo"
+    },
+    {
+      "id": "ARC-03",
+      "title": "Installer les contrats de l'équipe",
+      "phase": "M0",
+      "owner": "orchestrator",
+      "dependencies": [
+        "ARC-01",
+        "ARC-02"
+      ],
+      "ownedPaths": [
+        "AGENTS.md",
+        ".codex/",
+        ".github/",
+        "packages/contracts/",
+        "scripts/",
+        "tests/contract/",
+        "tests/fixtures/",
+        "docs/delivery/",
+        "docs/evidence/ARC-03"
+      ],
+      "acceptance": [
+        "Le dépôt, les modules, la CI de contrats, les règles de propriété et les fixtures communes sont installés.",
+        "Les exemples valides passent et une modification de schéma incompatible fait échouer la vérification.",
+        "Les mocks locaux permettent de développer UI et API séparément, sans appel réel facturable dans les tests par défaut.",
+        "ARC-01 et ARC-02 sont clos avec preuves avant de déclarer ce ticket terminé."
+      ],
+      "evidence": [],
+      "blockers": [
+        "Le bootstrap prépare ce ticket mais ne remplace pas les preuves réelles ARC-01/02."
+      ],
+      "status": "todo"
+    },
+    {
+      "id": "DOM-01",
+      "title": "Snapshot et validation complète",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "ARC-03",
+        "CAT-01"
+      ],
+      "ownedPaths": [
+        "packages/domain/",
+        "tests/contract/domain/",
+        "docs/evidence/DOM-01"
+      ],
+      "acceptance": [
+        "Sérialisation et validation structurelle plus catalogue contrôlent IDs, slots, routes, tokens, assets, profondeur et limites.",
+        "Les fixtures valides passent ; bloc inconnu, doublon imbriqué, cycle de déplacement et référence hors projet sont refusés.",
+        "Le domaine ne dépend ni du réseau, ni de React, ni d'un SDK fournisseur."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "DOM-02",
+      "title": "Commandes atomiques et idempotence",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "DOM-01"
+      ],
+      "ownedPaths": [
+        "packages/domain/",
+        "services/api/commands/",
+        "tests/contract/commands/",
+        "docs/evidence/DOM-02"
+      ],
+      "acceptance": [
+        "Les quatre actions de CONTRACTS.md sont implémentées dans une transaction complète.",
+        "Un retry identique retourne le même reçu ; une clé réutilisée pour un autre corps provoque un conflit.",
+        "Deux écritures sur une même version ne donnent qu'un gagnant ; locks, version du brouillon et head sont contrôlés atomiquement.",
+        "Reçu et nouvelle version sont écrits ensemble ; AT-05/06/09/10 sont prouvés sans lot partiel."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "DOM-03",
+      "title": "Annuler et rétablir par groupe",
+      "phase": "M1",
+      "owner": "frontend",
+      "dependencies": [
+        "DOM-02"
+      ],
+      "ownedPaths": [
+        "packages/editor/history/",
+        "tests/contract/history/",
+        "docs/evidence/DOM-03"
+      ],
+      "acceptance": [
+        "Une modification manuelle ou proposition conservée forme un groupe réversible ; une restauration approuvée conserve l'histoire.",
+        "Suppression/restauration de sous-arbre, IDs, références et conflit après réponse serveur sont testés.",
+        "Les tokens IA et les frappes du prompt ne deviennent pas des groupes du document."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "CAT-01",
+      "title": "Primitives et schémas de composants",
+      "phase": "M1",
+      "owner": "designer",
+      "dependencies": [
+        "ARC-03"
+      ],
+      "ownedPaths": [
+        "packages/catalog/primitives/",
+        "packages/catalog/schemas/",
+        "tests/fixtures/catalog/",
+        "docs/evidence/CAT-01"
+      ],
+      "acceptance": [
+        "Section, Stack, Grid, Heading, Text, Button et Image ont des champs éditables, slots déclarés et schémas stricts.",
+        "Éditeur, rendu et export utilisent les mêmes paramètres ; les valeurs hors bornes sont rejetées.",
+        "Trois dispositions distinctes avec emboîtement et responsive sont réalisables sans code arbitraire."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "CAT-02",
+      "title": "Dix blocs de référence",
+      "phase": "M1",
+      "owner": "designer",
+      "dependencies": [
+        "CAT-01",
+        "UX-01"
+      ],
+      "ownedPaths": [
+        "packages/catalog/blocks/",
+        "packages/catalog/motion/",
+        "tests/visual/catalog/",
+        "docs/evidence/CAT-02"
+      ],
+      "acceptance": [
+        "Les dix blocs et préréglages d'animation admis de CATALOGUE.md sont implémentés.",
+        "Chaque bloc couvre mobile, clavier, contenu long, états, mouvement réduit et preuve de licence.",
+        "Les briefs restaurant, portfolio et produit ne dépendent pas d'un layout unique ; AT-14/15/20 sont prouvés."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "CAT-03",
+      "title": "Release immuable et profil Unslop",
+      "phase": "M1",
+      "owner": "designer",
+      "dependencies": [
+        "CAT-02"
+      ],
+      "ownedPaths": [
+        "packages/catalog/releases/",
+        "packages/catalog/policy/",
+        "tests/contract/catalog/",
+        "docs/evidence/CAT-03"
+      ],
+      "acceptance": [
+        "Les manifests comprennent empreintes sources, assets et lockfile, profil versionné, attribution et notices.",
+        "Une mise à jour du catalogue ne modifie pas une ancienne révision.",
+        "Les règles esthétiques restent adaptables et respectent locks et exceptions documentées ; les contenus tiers sont vérifiés avant admission."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "UX-01",
+      "title": "Primitives de l'outil et tokens",
+      "phase": "M1",
+      "owner": "designer",
+      "dependencies": [
+        "ARC-03"
+      ],
+      "ownedPaths": [
+        "DESIGN.md",
+        "UX-CONTRACT.md",
+        "packages/editor/theme/",
+        "packages/editor/primitives/",
+        "docs/evidence/UX-01"
+      ],
+      "acceptance": [
+        "Le mapping DESIGN.md vers styles, contrôles partagés, états et scroll est unique.",
+        "La sélection de l'éditeur est distincte du thème de page ; focus visible et menus clavier sont opérationnels.",
+        "Les popups ouverts et l'écran étroit sont vérifiés sans dupliquer les valeurs normatives."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "UI-01",
+      "title": "Puck contrôlé et inspecteur",
+      "phase": "M1",
+      "owner": "frontend",
+      "dependencies": [
+        "DOM-01",
+        "CAT-01",
+        "UX-01"
+      ],
+      "ownedPaths": [
+        "packages/editor/canvas/",
+        "packages/editor/inspector/",
+        "apps/editor-web/",
+        "apps/mcp-view/",
+        "docs/evidence/UI-01"
+      ],
+      "acceptance": [
+        "La composition Puck est branchée au contrôleur ; sélection, champs et viewport mobile sont opérants.",
+        "Un rechargement restitue le document confirmé et changer une propriété change le rendu.",
+        "Déplacer un bloc conserve les IDs ; la sélection de l'éditeur n'apparaît pas dans l'export."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "UI-02",
+      "title": "Catalogue, navigation et alternatives",
+      "phase": "M1",
+      "owner": "frontend",
+      "dependencies": [
+        "UI-01",
+        "CAT-02"
+      ],
+      "ownedPaths": [
+        "packages/editor/catalog/",
+        "packages/editor/navigation/",
+        "packages/editor/alternatives/",
+        "docs/evidence/UI-02"
+      ],
+      "acceptance": [
+        "Recherche et filtres du catalogue ne déclenchent pas d'IA ; navigation des pages et comparaison des candidats fonctionnent.",
+        "Vide, sans résultat, erreur et alternative tactile au survol sont testés.",
+        "L'ajout vise le bon slot et la bonne position ; une cible incompatible est expliquée sans insertion silencieuse."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "UI-03",
+      "title": "Saisie réactive et suivi des jobs",
+      "phase": "M1",
+      "owner": "frontend",
+      "dependencies": [
+        "UI-01",
+        "JOB-01",
+        "AI-01"
+      ],
+      "ownedPaths": [
+        "packages/editor/intent/",
+        "packages/editor/jobs/",
+        "packages/host-adapters/",
+        "tests/e2e/intent/",
+        "docs/evidence/UI-03"
+      ],
+      "acceptance": [
+        "Temporisation, IME, arrêt, reprise et causalité fonctionnent sans requête par frappe et avec input utilisable.",
+        "Les événements dupliqués/hors ordre et les anciens résultats n'altèrent pas l'état courant.",
+        "Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "UI-04",
+      "title": "Proposition et conservation atomique",
+      "phase": "M1",
+      "owner": "frontend",
+      "dependencies": [
+        "UI-03",
+        "DOM-02"
+      ],
+      "ownedPaths": [
+        "packages/editor/proposals/",
+        "tests/e2e/proposals/",
+        "docs/evidence/UI-04"
+      ],
+      "acceptance": [
+        "La proposition est projetée sans écriture du brouillon ; Conserver et Refuser sont réversibles.",
+        "Promotion du candidat et réglage manuel se font dans un seul lot et un candidat obsolète ne peut être exporté.",
+        "Frappe et deuxième onglet pendant conservation sont éprouvés ; AT-04/05/06 passent avec annulation cohérente."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "UI-05",
+      "title": "Autosave, récupération et conflit",
+      "phase": "M1",
+      "owner": "frontend",
+      "dependencies": [
+        "UI-01",
+        "DOM-02",
+        "API-01"
+      ],
+      "ownedPaths": [
+        "packages/editor/persistence/",
+        "tests/e2e/persistence/",
+        "docs/evidence/UI-05"
+      ],
+      "acceptance": [
+        "La file de sauvegarde ordonnée limite les écritures en vol à une et expose des statuts exacts.",
+        "Pas de faux Sauvegardé ; rechargement et récupération n'écrasent pas un serveur récent ; la file s'arrête sur conflit.",
+        "401, timeout et coupure réseau préservent le brouillon ; AT-09/11/12 passent."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "API-01",
+      "title": "Persistance et transports communs",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "DOM-02",
+        "ARC-02"
+      ],
+      "ownedPaths": [
+        "services/api/",
+        "packages/contracts/",
+        "tests/contract/transports/",
+        "docs/evidence/API-01"
+      ],
+      "acceptance": [
+        "HTTP et wrappers MCP de l'OpenAPI utilisent les mêmes services et produisent les mêmes résultats sur fixture.",
+        "Les droits sont contrôlés par ressource ; erreurs communes et outputSchema sont conformes.",
+        "Les polls ne retournent aucune nouvelle ressource UI ; AT-16/17 sont prouvés."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "JOB-01",
+      "title": "Cycle durable des tâches",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "API-01"
+      ],
+      "ownedPaths": [
+        "services/worker/jobs/",
+        "services/api/jobs/",
+        "tests/contract/jobs/",
+        "docs/evidence/JOB-01"
+      ],
+      "acceptance": [
+        "Queue en base, lease, événements paginés, annulation et outcome_unknown sont durables.",
+        "Crash avant et après dispatch sont différenciés ; aucun double appel sur replay ou reprise d'une issue incertaine.",
+        "Curseur expiré récupérable sans inférence et proposition annulée inéligible ; AT-07/08/18 passent."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "AI-01",
+      "title": "Adaptateur OpenAI",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "JOB-01",
+        "CAT-01"
+      ],
+      "ownedPaths": [
+        "packages/inference/openai/",
+        "tests/contract/inference/",
+        "docs/evidence/AI-01"
+      ],
+      "acceptance": [
+        "Le SDK officiel génère une sortie structurée puis revalidée par le domaine ; erreurs et usage sont normalisés.",
+        "Schéma incompatible, refus, timeout, quota et réparation bornée sont testés ; aucun résultat partiel n'est appliqué et aucune clé n'est exposée.",
+        "Mocks par défaut et essai réel volontaire plafonné sont distincts ; aucun fallback de fournisseur silencieux."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "AI-02",
+      "title": "Contexte, cibles et profil",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "AI-01",
+        "CAT-03"
+      ],
+      "ownedPaths": [
+        "packages/inference/context/",
+        "packages/inference/policy/",
+        "tests/fixtures/briefs/",
+        "docs/evidence/AI-02"
+      ],
+      "acceptance": [
+        "Le contexte réduit comprend page, sélection, locks, opérations autorisées et profil versionné.",
+        "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global.",
+        "Une intention ambiguë propose des variantes ; plusieurs briefs de référence sont vérifiés."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "SEC-01",
+      "title": "Autorisations et contrôle d'usage",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "ARC-02",
+        "API-01",
+        "JOB-01"
+      ],
+      "ownedPaths": [
+        "services/api/auth/",
+        "services/api/usage/",
+        "tests/security/",
+        "docs/evidence/SEC-01"
+      ],
+      "acceptance": [
+        "Tokens, droits, chiffrement des secrets, réservations d'usage, plafonds et logs minimisés sont implémentés.",
+        "L'accès croisé est refusé pour toutes les ressources et le dépassement est bloqué avant appel fournisseur.",
+        "Le coût inconnu n'est pas zéro et la configuration de clé reste hors plugin/chat ; AT-16/17/18 passent."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "ASSET-01",
+      "title": "Ressources du projet",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "API-01",
+        "SEC-01"
+      ],
+      "ownedPaths": [
+        "services/api/assets/",
+        "packages/catalog/assets/",
+        "tests/security/assets/",
+        "docs/evidence/ASSET-01"
+      ],
+      "acceptance": [
+        "Upload raster validé, empreinte, attribution et accès privé sont opérationnels.",
+        "Faux MIME, image excessive et asset d'un autre projet sont refusés ; la source immuable est retrouvée à l'export.",
+        "Le transfert hôte n'est utilisé que s'il est qualifié ; l'alternative navigateur et AT-19 sont éprouvés."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "REV-01",
+      "title": "Approbation, historique et restauration",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "DOM-02",
+        "UI-04"
+      ],
+      "ownedPaths": [
+        "packages/domain/revisions/",
+        "services/api/revisions/",
+        "packages/editor/revisions/",
+        "docs/evidence/REV-01"
+      ],
+      "acceptance": [
+        "Révisions hors snapshots, parent immuable et comparaison sont implémentés.",
+        "Restaurer crée une nouvelle révision et conserve le head précédent ; éditer ne modifie pas les snapshots historiques.",
+        "L'export vise l'état exact approuvé ; AT-10/13 passent."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "EXP-01",
+      "title": "Export React depuis le catalogue",
+      "phase": "M1",
+      "owner": "platform",
+      "dependencies": [
+        "DOM-01",
+        "CAT-03",
+        "REV-01"
+      ],
+      "ownedPaths": [
+        "packages/exporter-react/",
+        "tests/contract/export/",
+        "docs/evidence/EXP-01"
+      ],
+      "acceptance": [
+        "Projet React, styles, ressources et notices sont générés depuis une release et un snapshot approuvé.",
+        "Le bundle exporté ne contient ni Puck, SDK modèles ni bridge ; routes et interactions annoncées fonctionnent.",
+        "Dépendances verrouillées et fonctions non implémentées signalées ; aucun redessin libre des blocs figés par le modèle."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "EXP-02",
+      "title": "Construction et vérification isolées",
+      "phase": "M1",
+      "owner": "platform",
+      "dependencies": [
+        "EXP-01",
+        "SEC-01",
+        "ASSET-01"
+      ],
+      "ownedPaths": [
+        "services/worker/export/",
+        "services/worker/build/",
+        "tests/visual/export/",
+        "tests/security/build/",
+        "docs/evidence/EXP-02"
+      ],
+      "acceptance": [
+        "Build propre, rendu et archive comprennent manifeste et empreinte, sans secret ni accès à production.",
+        "Traversée de chemin et scripts non admis sont refusés ; une erreur de build/rendu empêche le statut validé.",
+        "Aperçu et export utilisent mêmes fixtures, tailles et polices ; AT-20/21/22 passent."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "OPS-01",
+      "title": "Déploiement et restauration",
+      "phase": "M1",
+      "owner": "platform",
+      "dependencies": [
+        "API-01",
+        "SEC-01",
+        "EXP-02"
+      ],
+      "ownedPaths": [
+        "infra/",
+        "docs/runbooks/",
+        "tests/ops/",
+        "docs/evidence/OPS-01"
+      ],
+      "acceptance": [
+        "Environnements séparés, métriques, alertes et sauvegardes sont déployés.",
+        "Restauration DB, assets et releases, rollback compatible et rotation de clé sont exécutés.",
+        "RPO/RTO sont fixés et mesurés avant production ; AT-23 passe sans promettre un objectif non testé."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "TEST-01",
+      "title": "Recette transversale M1",
+      "phase": "M1",
+      "owner": "qa",
+      "dependencies": [
+        "ARC-03",
+        "DOM-01",
+        "DOM-02",
+        "DOM-03",
+        "CAT-01",
+        "CAT-02",
+        "CAT-03",
+        "UX-01",
+        "UI-01",
+        "UI-02",
+        "UI-03",
+        "UI-04",
+        "UI-05",
+        "API-01",
+        "JOB-01",
+        "AI-01",
+        "AI-02",
+        "SEC-01",
+        "ASSET-01",
+        "REV-01",
+        "EXP-01",
+        "EXP-02",
+        "OPS-01"
+      ],
+      "ownedPaths": [
+        "tests/e2e/",
+        "tests/fixtures/",
+        "tests/visual/",
+        "docs/evidence/TEST-01"
+      ],
+      "acceptance": [
+        "Les fixtures et tests préparatoires sont construits par les tickets dès ARC-03 ; TEST-01 en rassemble les preuves et clôt la recette après toutes ses dépendances.",
+        "Tous les tickets M1 sont clos avec preuves avant de terminer cette recette.",
+        "Le parcours complet dans ChatGPT et l'archive reconstruite sont exécutés ; chaque scénario AT-01 à AT-25 passe ou présente un écart explicitement accepté.",
+        "Le registre des limites, versions, résultats et décision produit est livré ; un PASS de modèle ou build seul ne vaut pas cette preuve."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    }
+  ]
+}

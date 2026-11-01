@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "projectTitle": "Portfolio exemple",
+  "pages": [
+    {
+      "id": "page-home",
+      "title": "Accueil",
+      "route": "/",
+      "composition": {
+        "content": [
+          {
+            "type": "Hero",
+            "props": {
+              "id": "block-hero",
+              "title": "Des espaces conçus pour durer",
+              "body": "Architecture et aménagement pour les lieux de vie.",
+              "backgroundToken": "color.background",
+              "animation": "fade"
+            }
+          }
+        ],
+        "root": {
+          "props": {
+            "lang": "fr"
+          }
+        }
+      }
+    }
+  ],
+  "theme": {
+    "tokens": {
+      "color.background": {
+        "kind": "color",
+        "value": "#ffffff"
+      },
+      "color.text": {
+        "kind": "color",
+        "value": "#1c2533"
+      },
+      "color.accent": {
+        "kind": "color",
+        "value": "#2454c6"
+      }
+    }
+  },
+  "assetRefs": [],
+  "catalogLock": {
+    "releaseId": "catalog-m1-example",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "target": "react"
+  },
+  "designPolicy": {
+    "releaseId": "policy-unslop-adapted-example",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "locks": [],
+  "designBrief": {
+    "product": "Portfolio atelier architecture",
+    "character": [
+      "précis",
+      "accueillant"
+    ],
+    "world": "Plans, matières et lumière naturelle",
+    "moments": [
+      "Photographies des projets"
+    ],
+    "signature": "Repères de plan discrets",
+    "brandConstraints": [
+      "Conserver une page claire et lisible"
+    ]
+  }
+}
