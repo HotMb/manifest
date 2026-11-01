@@ -8,7 +8,7 @@ Date : 1er novembre 2026. État : **bootstrap de l'équipe et du dépôt**. Le n
 - Six rôles Codex persistants, dont un orchestrateur principal ; trois spécialistes maximum en parallèle.
 - 26 tickets structurés, tableau lisible et commandes de suivi avec dépendances, révisions, propriété et revue.
 - Brief de conception et grille M0 préparés par l'agent conception.
-- Tests de l'outillage et contrôle des contrats automatisés ; workflow CI défini.
+- Tests de l'outillage et contrôle des contrats automatisés ; [première CI réussie](evidence/CI-BOOTSTRAP.md) avec 21 tests Node et 8 tests Python.
 - Dépôt [GitHub privé](https://github.com/HotMb/design-workbench) créé avec [26 issues liées](delivery/GITHUB.md).
 
 Les résultats réellement exécutés et le statut distant sont consignés dans [la preuve de bootstrap](evidence/BOOTSTRAP.md). La CI n'est considérée passée qu'après observation de son résultat sur GitHub.

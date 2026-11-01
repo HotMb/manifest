@@ -32,4 +32,3 @@ Les 26 issues ont été créées dans le dépôt privé [HotMb/design-workbench]
 | TEST-01 | qa | [#26](https://github.com/HotMb/design-workbench/issues/26) |
 
 La synchronisation suivante est explicite : relire le registre et l'issue, traiter toute divergence, puis publier seulement les changements justifiés. Les preuves restent sous docs/evidence/. Les issues ont été créées sans assignation à autrui, mention ni clôture automatique.
-
