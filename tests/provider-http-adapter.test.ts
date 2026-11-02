@@ -47,3 +47,10 @@ test('les erreurs HTTP sont normalisées sans relayer le corps distant', async (
   const adapter = createOpenAICompatibleModelAdapter({ descriptor, baseUrl: 'https://api.example.test', getApiKey: () => 'secret-test', fetchImpl: async () => response({ secret: 'do-not-return' }, 401) });
   await assert.rejects(adapter.suggest(request()), (error: unknown) => error instanceof ProviderHttpAdapterError && error.code === 'UNAUTHORIZED' && !error.message.includes('do-not-return'));
 });
+
+test('les endpoints non sécurisés, avec paramètres ou credentials sont refusés', () => {
+  for (const baseUrl of ['http://api.example.test/v1', 'https://user:pass@api.example.test/v1', 'https://api.example.test/v1?token=secret']) {
+    assert.throws(() => createOpenAICompatibleModelAdapter({ descriptor, baseUrl, getApiKey: () => 'secret-test', fetchImpl: async () => response({}) }), ProviderHttpAdapterError);
+  }
+  assert.doesNotThrow(() => createOpenAICompatibleModelAdapter({ descriptor, baseUrl: 'http://127.0.0.1:9000/v1', getApiKey: () => 'secret-test', fetchImpl: async () => response({}) }));
+});

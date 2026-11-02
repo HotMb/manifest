@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createDesignerMcpServer } from './mcp.ts';
 import { MemoryProjectStore } from './domain.ts';
+import type { SuggestionJobManager } from './suggestion-jobs.ts';
 
 const MAX_BODY_BYTES = 65_536;
 function json(res: ServerResponse, status: number, value: unknown) {
@@ -29,7 +30,7 @@ async function readBody(req: IncomingMessage): Promise<unknown> {
 }
 
 /** Loopback-only bearer-authenticated development transport, explicitly not OAuth. */
-export function createDesignerHttpServer(options: { token: string; store?: MemoryProjectStore; htmlPath?: string }) {
+export function createDesignerHttpServer(options: { token: string; store?: MemoryProjectStore; htmlPath?: string; suggestionJobs?: SuggestionJobManager }) {
   if (options.token.length < 32 || /\s/.test(options.token)) throw new Error('M0_ACCESS_TOKEN doit contenir au moins 32 caractères sans espace.');
   const store = options.store ?? new MemoryProjectStore();
   return createServer(async (req, res) => {
@@ -51,7 +52,7 @@ export function createDesignerHttpServer(options: { token: string; store?: Memor
     let body: unknown;
     try { body = await readBody(req); }
     catch (error) { json(res, error instanceof Error && error.message === 'BODY_TOO_LARGE' ? 413 : 400, { code: 'INVALID_INPUT', message: 'Corps JSON invalide ou trop volumineux.' }); return; }
-    const server = createDesignerMcpServer({ store, htmlPath: options.htmlPath });
+    const server = createDesignerMcpServer({ store, htmlPath: options.htmlPath, suggestionJobs: options.suggestionJobs });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on('close', () => { void transport.close(); void server.close(); });
     try {

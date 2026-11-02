@@ -10,7 +10,9 @@ Installer les dépendances depuis la racine du dépôt et construire la vue avec
 node --import tsx services/api/src/main.ts --stdio
 ```
 
-Le client MCP doit appeler Node directement avec cette commande : `npm run` ajoute des en-têtes sur stdout et n'est donc pas adapté au transport protocolaire sans option silencieuse. Le processus Node réserve stdout au protocole MCP ; les messages de démarrage utilisent stderr. L'accès à ce processus dépend des permissions du client qui le lance. Aucune clé de fournisseur IA n'est demandée ou employée.
+Le client MCP doit appeler Node directement avec cette commande : `npm run` ajoute des en-têtes sur stdout et n'est donc pas adapté au transport protocolaire sans option silencieuse. Le processus Node réserve stdout au protocole MCP ; les messages de démarrage utilisent stderr. L'accès à ce processus dépend des permissions du client qui le lance. Sans configuration optionnelle, aucune clé de fournisseur IA n'est demandée ou employée.
+
+Pour activer le fournisseur compatible dans un environnement local de confiance, fournir hors Git les variables `MANIFEST_PROVIDER`, `MANIFEST_MODEL`, `MANIFEST_API_BASE_URL` et `MANIFEST_API_KEY`. Les quatre sont exigées ensemble ; `MANIFEST_PROVIDER` accepte `openai`, `deepseek` ou `custom`. La clé reste côté processus hôte et ne rejoint ni le Snapshot, ni le job, ni les métadonnées MCP. Les fournisseurs Anthropic/Google natifs nécessiteront leurs adaptateurs dédiés. Ne pas exposer le transport HTTP loopback sur Internet.
 
 Le transport HTTP se lance avec `npm run start --workspace @design-workbench/api`, après configuration **hors Git** de `M0_ACCESS_TOKEN` (au moins 32 caractères sans espace). `PORT` est facultatif, par défaut 8787. Le serveur écoute uniquement `127.0.0.1` et n'affiche pas le jeton. Ne pas recopier un jeton réel dans une issue, un prompt ou une capture.
 
@@ -24,6 +26,8 @@ Le transport HTTP se lance avec `npm run start --workspace @design-workbench/api
 | `read_project` | `projectId` | lit le brouillon sans rouvrir l'interface |
 | `commit_commands` | commande `apply_ops` canonique | enregistre atomiquement les modifications manuelles admises |
 
+Quand la configuration fournisseur est complète, des outils MCP réservés à la vue sont aussi disponibles : `start_suggestion`, `get_job`, `get_job_updates`, `cancel_job` et `read_proposal`. Ils suivent le contrat suggestion/job déjà décrit dans `docs/spec/contracts/domain.schema.json`. Le prototype garde jobs, événements et propositions en mémoire ; le client reçoit une proposition complète puis décide explicitement de l'appliquer. Les credentials restent dans le processus hôte et ne sont jamais inclus dans le job.
+
 La ressource utilise `text/html;profile=mcp-app` et lit `apps/editor-web/dist/index.html`. Seul l'outil d'ouverture porte `resourceUri`. Les outils de données déclarent une visibilité `app` ; le respect de cette visibilité dépend de l'hôte et ne remplace aucune autorisation.
 
 `structuredContent` contient uniquement le résumé : identifiant, version, hash, stockage `memory-m0`, révision approuvée nulle et éventuel reçu. Le document complet est dans `_meta.project`, réservé à la vue. Les erreurs métier ont `isError: true` et `_meta.error` avec code, message, requestId et retryable. Une erreur de schéma du SDK peut ne fournir que le contenu textuel d'erreur.
@@ -36,7 +40,7 @@ La ressource utilise `text/html;profile=mcp-app` et lit `apps/editor-web/dist/in
 - Le Snapshot reste celui du contrat de domaine. Les références de catalogue et de politique de l'exemple sont **fictives** et ne deviennent pas une release M1 par leur utilisation dans cet essai.
 - Les verrous empêchent les modifications des propriétés concernées, y compris manuelles dans ce M0 conservateur. Le déverrouillage ne fait pas partie de l'essai.
 - Stockage et reçus en mémoire, perdus au redémarrage. Le store garde jusqu'à 1 000 reçus puis refuse les nouvelles commandes ; il n'évince pas silencieusement des reçus nécessaires au replay.
-- Pas d'IA, de génération, de job de suggestions, d'approbation, d'export ou de persistance PostgreSQL. Ces fonctions appartiennent aux tickets suivants.
+- Les jobs de suggestion facultatifs s'exécutent en mémoire et nécessitent un adaptateur compatible configuré. Sans variables fournisseur, les outils de suggestion ne sont pas enregistrés. Il n'y a toujours pas de jobs durables, d'approbation, d'export ou de persistance PostgreSQL.
 
 La transaction M0 ne contient aucun `await` ni accès disque : comparaison de version, calcul SHA-256, validation et assignation se terminent dans le même tour JavaScript du processus unique. Une base et plusieurs workers exigeront la vraie transaction décrite dans les contrats, pas la réutilisation de cette hypothèse d'exécution.
 

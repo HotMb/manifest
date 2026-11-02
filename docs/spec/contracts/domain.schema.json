@@ -919,7 +919,9 @@
           "enum": [
             "openai",
             "anthropic",
-            "google"
+            "google",
+            "deepseek",
+            "custom"
           ]
         },
         "model": {

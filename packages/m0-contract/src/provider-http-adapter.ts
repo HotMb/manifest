@@ -50,8 +50,12 @@ function parseContent(value: unknown): unknown {
 function endpoint(baseUrl: string): string {
   let parsed: URL;
   try { parsed = new URL(baseUrl); } catch { throw new ProviderHttpAdapterError('HTTP_ERROR', 'L’URL du fournisseur est invalide.'); }
-  if (!['http:', 'https:'].includes(parsed.protocol)) throw new ProviderHttpAdapterError('HTTP_ERROR', 'L’URL du fournisseur doit utiliser HTTP ou HTTPS.');
-  return `${parsed.toString().replace(/\/$/, '')}/chat/completions`;
+  const localHost = ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
+  if (parsed.username || parsed.password || parsed.search || parsed.hash || (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && localHost))) {
+    throw new ProviderHttpAdapterError('HTTP_ERROR', 'L’URL fournisseur doit utiliser HTTPS sans identifiants ni paramètres ; HTTP est permis uniquement en loopback.');
+  }
+  parsed.pathname = `${parsed.pathname.replace(/\/+$/, '')}/chat/completions`;
+  return parsed.toString();
 }
 
 function providerError(status: number): ProviderHttpAdapterError {
