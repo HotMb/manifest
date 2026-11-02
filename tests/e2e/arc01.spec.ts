@@ -14,11 +14,11 @@ async function openEditor(page: Page) {
 
 async function openSettings(page: Page) {
   const desktopSettings = page.locator('.inspector-tabs').getByRole('button', { name: 'Réglages', exact: true });
-  if (await desktopSettings.isVisible()) {
-    await desktopSettings.click();
-  } else {
-    await page.getByRole('button', { name: 'Réglages du bloc', exact: true }).click();
-  }
+  const isMobileLayout = (page.viewportSize()?.width ?? 1280) <= 767;
+  const settings = isMobileLayout
+    ? page.getByRole('button', { name: 'Réglages du bloc', exact: true })
+    : desktopSettings;
+  await settings.click();
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toBeVisible();
 }
 

@@ -6,7 +6,7 @@ Mise à jour : **2 novembre 2026**. Le dépôt GitHub est désormais public sous
 
 - Le prototype local comprend l'éditeur React/Puck et la boucle de suggestion MCP. Le nom visible par le transport MCP, le serveur et les logs a été aligné sur Manifest.
 - Le dépôt GitHub et ses 26 Issues ont été renommés/référencés sous `HotMb/manifest`. Les Issues restent des miroirs ; `docs/delivery/tickets.json` fait foi pour les états et dépendances.
-- La branche `work/arc-01-qualification` est poussée ; le dernier commit de code couvert par la CI est `3bf14b9`. Les runs `Quality` 24 (`ee9ec5d`) et 26 (`3bf14b9`) ont échoué à `Browser qualification tests` : 7/8 E2E passent, le parcours de reprise d'un brouillon expiré dépasse 30 s en attendant le bouton « Réglages du bloc ». Un run Windows local antérieur passait 8/8 ; l'écart Linux/Windows reste à diagnostiquer. Aucun PASS CI n'est revendiqué ; les changements de suivi seuls n'ont pas de run retourné.
+- Les runs `Quality` récents échouent à `Browser qualification tests` : 7/8 E2E passent, le parcours de reprise d'un brouillon expiré attend le bouton « Réglages du bloc » pendant 30 s. La trace Linux montre que `openSettings` choisit ce bouton mobile après une vérification instantanée de visibilité alors que l'éditeur sort encore de l'écran de reprise ; le bouton mobile est masqué au-dessus de 767 px. Le changement local dans `tests/e2e/arc01.spec.ts` choisit maintenant le bouton selon le viewport, laissant Playwright attendre le bon contrôle. Il n'est pas encore poussé ni confirmé en CI. Le test ciblé local n'a pas produit de résultat après environ 60 s et a été interrompu ; il n'est compté ni comme réussi ni comme échoué. Aucun PASS CI n'est revendiqué.
 - Le registre est en révision **3**. **ARC-01 est bloqué** jusqu'à l'essai dans le vrai hôte ChatGPT et la preuve d'identité réelle. `npm run team:next` indique **0 ticket éligible** ; ARC-02 et la suite ne démarrent donc pas.
 - Les agents frontend et backend ont relu cette porte de sortie avant de changer uniquement leurs libellés d'application. Leur travail de nommage n'avance ni ne clôture ARC-01.
 
@@ -27,14 +27,15 @@ Le prototype reste un outil de qualification : stockage serveur en mémoire, auc
 
 - 52 tests M0, 24 tests fournisseurs et 8 E2E navigateur ont été rapportés réussis sur les incréments précédents ; typecheck et build réussis.
 - `npm test` avait 20 réussites et un cas ignoré faute de droit de création de lien symbolique sous Windows.
-- La CI Linux échoue désormais sur le parcours E2E de reprise d'un brouillon expiré (7/8), comme décrit ci-dessus ; cette régression de qualification doit être résolue avant d'annoncer la suite verte.
+- `npm run check`, `npm run typecheck` et `git diff --check` réussissent après l'ajustement local du helper E2E. La CI Linux du commit précédent échoue sur le helper E2E de reprise d'un brouillon expiré (7/8), comme décrit ci-dessus ; l'ajustement doit être poussé et le run Linux observé avant d'annoncer la suite verte.
+- Les deux passes loop-verify sur ce suivi ont rendu FAIL : la première n'avait pas le compte rendu et les statuts détaillés ; la seconde n'avait pas le code du helper. La limite de deux tentatives est atteinte ; aucun PASS global n'est revendiqué. Le diff du helper a été relu séparément par un agent Test Automation Engineer.
 - Les deux passes loop-verify précédentes sur le code M0 étaient en échec ; les défauts relevés ont reçu des corrections et des tests ciblés, mais aucun PASS global n'est revendiqué.
 - Pour ce renommage, les deux tentatives loop-verify ont aussi rendu FAIL : la seconde a validé 4 critères sur 5 et demandé une preuve explicite des liens dans chaque Issue. L'audit direct des 26 Issues a ensuite confirmé le lien `HotMb/manifest`, le bandeau Manifest et l'absence de l'ancien slug dans chacune ; aucune troisième tentative n'a été effectuée selon la limite du skill.
 - La revue complète de l'hôte ChatGPT, des capacités hôte réelles, de l'identité et de l'appel facturable reste à effectuer.
 
 ## Prochaine action
 
-Préparer un compte de test autorisé et l'accès à l'hôte ChatGPT demandé, puis exécuter et documenter ARC-01 dans `docs/design/M0-REVIEW.md` et `docs/evidence/ARC-01/`. Une fois les critères réels établis, l'orchestrateur rouvre ou fait avancer le ticket avec le CLI du backlog et sa révision attendue. ARC-02 démarre après clôture prouvée d'ARC-01. Aucun agent ne doit contourner ces dépendances ; tant que l'hôte n'est pas disponible, la prochaine action attend l'accès et les preuves nécessaires.
+Pousser l'ajustement du helper E2E, observer le résultat CI Linux et corriger encore si le parcours reste en échec. Ensuite, préparer un compte de test autorisé et l'accès à l'hôte ChatGPT demandé, puis exécuter et documenter ARC-01 dans `docs/design/M0-REVIEW.md` et `docs/evidence/ARC-01/`. Une fois les critères réels établis, l'orchestrateur rouvre ou fait avancer le ticket avec le CLI du backlog et sa révision attendue. ARC-02 démarre après clôture prouvée d'ARC-01. Aucun agent ne doit contourner ces dépendances ; la qualification hôte et identité reste requise.
 
 ## Reprendre le travail
 
