@@ -8,13 +8,14 @@ L'outil est un atelier de composition utilisable dans ChatGPT, puis Claude, avec
 
 ## Parcours de référence
 
-1. Ouvrir un projet dans l'éditeur embarqué ; retrouver page, thème et version.
-2. Choisir un modèle disponible et activer l'analyse automatique, avec limite d'usage visible.
-3. Écrire une intention. Après 900 ms d'inactivité, obtenir une proposition complète et vérifiée ; le délai de génération reste variable.
-4. Voir la proposition dans la page sans clic « Envoyer ». Explorer des alternatives lorsqu'une demande est ambiguë.
-5. Modifier des propriétés ou la composition directement ; annuler et refaire.
-6. Conserver le design dans le brouillon, puis approuver une révision.
-7. Exporter cette révision, exécuter le projet et retrouver la même composition et les interactions annoncées.
+1. Dans le chat de projet, sélectionner `@Manifest` ou l'application, puis ouvrir la carte « Ouvrir Manifest ». `/manifest` est un raccourci d'usage souhaité ; sa disponibilité comme commande native dépend de l'hôte et reste à qualifier.
+2. Ouvrir l'éditeur embarqué ; retrouver page, thème et version. La coque reste sombre, le champ d'intention est à gauche, l'aperçu de la page au centre et les suggestions à droite.
+3. Choisir explicitement un modèle disponible et activer l'analyse automatique, avec état et limite d'usage visibles.
+4. Écrire une intention. Après 1,5 seconde d'inactivité hors composition IME, une proposition complète et vérifiée devient éligible ; le délai de génération reste variable.
+5. Voir la proposition dans la page sans envoyer un message. Explorer les suggestions du catalogue et les alternatives lorsqu'une demande est ambiguë.
+6. Modifier la description ou les propriétés, observer l'aperçu réagir, puis conserver/annuler les changements. Une proposition nouvelle ne remplace pas silencieusement le dernier état conservé.
+7. Valider une révision immuable, préparer le rapport et le relire. « Transmettre au chat » envoie explicitement le rapport dans la conversation active ; l'éditeur ne se ferme pas.
+8. Exporter la révision, exécuter le projet et retrouver la même composition et les interactions annoncées.
 
 La prévisualisation automatique n'est pas une approbation. Une nouvelle proposition ne détruit pas le dernier brouillon conservé. La sélection d'une proposition et ses modifications restent réversibles.
 
@@ -38,6 +39,8 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 | RQ-14 | Catalogue et ressources avec licences, versions et alternatives | M1 |
 | RQ-15 | Connexion Claude ; lancement depuis Claude Code vers navigateur | M2 |
 | RQ-16 | Extensions 3D, effets spécialisés et exports supplémentaires | M3 |
+| RQ-17 | Préparer un rapport reproductible lié à une révision et le transmettre explicitement au chat actif | M1 |
+| RQ-18 | Afficher pour chaque suggestion la raison, l'état, la bibliothèque, la version et la compatibilité utile | M1 |
 
 ## Périmètre M1
 
@@ -63,12 +66,18 @@ M1 produit du React. Les interfaces de document et de catalogue déclarent leurs
 
 | Sujet | Défaut proposé | Réglage |
 |---|---|---|
-| Pause avant analyse IA | 900 ms, entre 500 et 2 000 ms | Préférence utilisateur |
+| Pause avant analyse IA | 1 500 ms, hors composition IME | Valeur M1 ; ajuster seulement après mesure et décision produit |
 | Sauvegarde du brouillon | 1 s après modification, une écriture en vol | Désactivation autorisée, état explicite |
 | Analyse automatique | Désactivée jusqu'à activation dans la session | Arrêt immédiat et mode manuel |
 | Proposition ambiguë | Jusqu'à trois alternatives, jamais trois fournisseurs implicites | Choix utilisateur |
 | Révision approuvée | Action explicite, pas une conséquence de l'autosave | Invariant |
 | Langue interface | Français ; architecture localisable | Anglais ensuite |
+
+## Rapport de transmission
+
+Le rapport est un instantané versionné, lié à `revisionId`, empreinte du Snapshot et release du catalogue. Il accompagne la description originale d'une spécification structurée : pages et routes, composants/propriétés, thème, interactions, animations, règles responsive, références et attribution des assets, exigences d'accessibilité et de mouvement réduit, modèle/job à l'origine des suggestions, preuve d'éligibilité capturée, hypothèses et éléments non pris en charge. Il exclut les clés, jetons d'authentification et secrets. Son empreinte est calculée sur une sérialisation JSON canonique reproductible, hors état de transmission.
+
+Le modèle affiché au moment de la transmission ne remplace pas la provenance du job qui a produit le candidat. Le rapport réutilise les mêmes règles d'éligibilité que l'aperçu afin qu'un candidat obsolète ne soit jamais présenté comme actuel. L'envoi passe par la capacité de transmission de l'hôte ; si elle est absente, le produit le dit et propose un export/copie sans prétendre que le chat a reçu le rapport.
 
 ## Validation de la valeur
 

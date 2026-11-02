@@ -2,6 +2,20 @@
 
 Produit : **Manifest**. Les tickets sont le plan de travail de l'application Manifest ; `docs/delivery/tickets.json` est la source des statuts et des dépendances, et les Issues GitHub leur servent de miroir public.
 
+## Addendum de conception approuvé — 2 novembre 2026
+
+Le commanditaire a validé le parcours des captures : invocation depuis le chat vers une carte « Ouvrir Manifest », puis espace en trois zones (intention à gauche, aperçu dominant au centre, suggestions à droite), attente de 1,5 s, itérations visibles, version figée et rapport relu avant transmission explicite au chat. Cette validation fixe la direction produit, pas la disponibilité des commandes de l'hôte ni l'achèvement du prototype.
+
+| Capacité à livrer | Tickets existants concernés | Critère à préserver |
+|---|---|---|
+| Carte d'ouverture et fallback hôte | ARC-01, puis UX/recette | `@Manifest`/sélection explicite comme voie documentée ; tester `/manifest` sans le promettre comme commande native ; fallback conserve le même projet |
+| Trois zones et palette issue des captures | UX-01, UI-01 | séparation du shell et du thème de page, contrôle clavier/mobile, contraste mesuré ; le fond clair vide est un état initial, pas un thème imposé |
+| Catalogue et cartes de suggestion | CAT-01/02/03, UI-02 | suggérer uniquement les candidats admissibles après contrôles capacité/compatibilité/version/licence ; afficher raison/source/version, prévisualiser puis ajouter par action ; si aucun candidat ne convient, le dire plutôt que d'en inventer |
+| Réactivité et provenance | UI-03, UI-04, AI-01/02 | 1 500 ms hors IME, dernière prévisualisation stable pendant la génération, obsolescence correcte et origine capturée par le job/proposal |
+| Version et transmission du rapport | REV-01, UI-02/04, API/MCP et TEST-01 à détailler | rapport lié à une révision/hash, avec preuve d'éligibilité capturée et hash JCS déterministe ; relu avant envoi, provenance fidèle, reçu d'envoi confirmé ou fallback explicite |
+
+Les statuts/dépendances du registre machine ne changent pas dans cet addendum : ARC-01 attend toujours la qualification réelle de ChatGPT Desktop et aucune nouvelle tâche ne devient éligible. Lorsque la porte M0 s'ouvre, l'orchestrateur traduira RQ-17/RQ-18 et le rapport de transmission en critères de tickets via le processus de backlog, avant de déclarer ces capacités planifiées.
+
 ## Rôles et responsabilité
 
 Le nombre de personnes dépend de la disponibilité et des compétences. Les responsabilités suivantes doivent avoir un propriétaire nommé ; une personne peut en cumuler plusieurs. Aucun effectif, coût ou délai n'est présenté comme estimé sans revue de l'équipe.

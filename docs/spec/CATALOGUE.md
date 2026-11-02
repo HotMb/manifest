@@ -8,6 +8,14 @@ Le registre shadcn peut distribuer les fichiers ; la couche produit ajoute les m
 
 Les schémas de composant font autorité pour leurs propriétés. La config Puck, les contrôles, la projection de schéma vers le modèle et l'export sont dérivés d'une définition commune ou vérifiés contre elle. Toute propriété affichée doit réellement agir sur le rendu et être exportable.
 
+## Moteur de suggestions
+
+Le moteur reçoit le texte et le contexte autorisé de la page, puis construit une spécification d'intention structurée (type de bloc, rôle, style, interaction, mouvement, viewport et contraintes). La recherche initiale filtre le catalogue par capability tags, cible, composants déjà présents, versions compatibles, statut de licence et budget de performance disponible. Seuls les candidats ayant passé ces filtres peuvent être suggérés ou classés par le modèle ; les entrées incompatibles, non versionnées ou sans statut de licence vérifié sont exclues ou présentées comme indisponibles, jamais comme recommandations intégrables. S'il ne reste aucun candidat, l'interface l'indique et invite à préciser la demande au lieu d'inventer une dépendance. Le modèle ne peut pas ajouter une entrée hors catalogue ni affirmer une compatibilité absente du registre.
+
+Chaque carte de suggestion indique : nom et type, raison courte liée à la demande, bibliothèque et version de release, dépendances utiles, état (« Suggestion », « Prévisualisée », « Ajoutée »), accessibilité/mouvement réduit et éventuelles limites. Les vignettes utilisent un rendu réel du candidat lorsque possible ; une illustration schématique est signalée comme telle. Une carte est d'abord prévisualisée, puis ajoutée par action explicite. Le modèle et le catalogue n'approuvent jamais une proposition à la place de l'utilisateur.
+
+La source de vérité pour le rendu est le composant versionné, pas l'image miniature. La révision conserve l'ID de catalogue, la version et l'empreinte de la release afin qu'une mise à jour future ne change pas rétroactivement l'aperçu exporté.
+
 ## Catalogue M1
 
 Primitives composables : Section, Stack, Grid, Heading, Text, Button et Image. Leurs propriétés couvrent alignement, largeur, espacement, colonnes, tokens, ordre et variantes responsive autorisées. Le placement absolu libre n'est pas une promesse M1. Les slots sont imbriquables jusqu'à huit niveaux et limités par le catalogue.

@@ -72,6 +72,16 @@ Le bridge `tools/call` appelle les opérations de lecture, sauvegarde, générat
 
 `ui/update-model-context` sert à communiquer page/révision/sélection lors d'un changement utile ou d'une validation, pas à lancer l'inférence. `ui/message` reste une action explicite « Transmettre au chat », jamais un événement pour chaque frappe ou poll.
 
+### Rapport et transmission
+
+« Préparer le rapport » fige ou sélectionne une révision explicite, puis produit un `manifest.design-report.v1` associé à son `revisionId`, `snapshotHash` et `catalogLock`. Le rapport contient le brief d'origine et sa spécification structurée, la composition/pages/routes, le thème, les interactions et paramètres d'animation, les règles responsive, les références et licences d'assets, les dépendances versionnées, l'accessibilité/mouvement réduit, les hypothèses, les capacités non prises en charge et la preuve d'éligibilité capturée au moment de la validation.
+
+La provenance d'une proposition (source locale ou API, fournisseur/modèle, job, génération et version source) est copiée du résultat immuable. Elle ne provient jamais du sélecteur courant de la barre. La règle `upToDate` du rapport réutilise le prédicat d'éligibilité de l'aperçu ; une sélection de modèle ne vaut pas preuve d'analyse. La preuve historique enregistre les contrôles de session, intention, version, modèle et synchronisation, ou « non applicable » pour une révision manuelle. `reportHash` est le SHA-256 de la sérialisation JSON canonique JCS/RFC 8785 du rapport, sans le champ hash ni l'état volatil de transmission.
+
+L'utilisateur relit le rapport avant de lancer `ui/message` pour le transmettre au fil courant. Cette action peut accompagner le résumé et le manifeste compact ; l'export complet reste un artefact référencé. Elle ne se déclenche pas lors d'une frappe, d'un poll ou d'une préparation de rapport. Si l'hôte ne fournit pas cette capacité, l'interface offre copie/téléchargement et marque clairement la transmission comme indisponible. Les clés et jetons ne font jamais partie du rapport.
+
+À l'ouverture, le plugin expose une carte « Ouvrir Manifest » depuis le chat. L'invocation fiable documentée est la sélection/mention de l'application ; `/manifest` et `/validate` sont des instructions utilisateur possibles, pas des commandes natives promises sans qualification de l'hôte.
+
 ### Transport des suggestions M1
 
 1. `start_suggestion` retourne rapidement un `jobId` et les versions capturées.
@@ -95,7 +105,7 @@ Le serveur détient le brouillon confirmé. Le client détient ses modifications
 
 Avant une génération, les modifications manuelles sont sauvegardées ou le démarrage attend une résolution. Une génération ne modifie pas elle-même le brouillon. Quand une proposition vérifiée arrive, l'aperçu peut l'afficher automatiquement. « Conserver » applique atomiquement ses opérations au brouillon. Modifier directement un bloc issu de la proposition conserve la proposition et le réglage manuel dans **une seule commande atomique**. Une proposition déjà obsolète demande une nouvelle proposition ou un choix explicite de récupération ; elle n'est pas promue implicitement.
 
-« Approuver et exporter » applique au besoin la proposition affichée puis fige une révision dans une même transaction de domaine. L'export travaille ensuite uniquement sur cette révision, pas sur le brouillon qui continue d'évoluer.
+« Valider la version » peut appliquer la proposition éligible affichée et créer la révision dans une transaction de domaine. La préparation/transmission du rapport et l'export sont des actions distinctes associées à ce `revisionId`. Chaque job d'export travaille uniquement sur la révision initiale, pas sur le brouillon qui continue d'évoluer.
 
 ## Concurrence
 

@@ -16,9 +16,22 @@ Contrat normatif de départ, version 1.0. Le [schéma de domaine](contracts/doma
 | Job | id, projectId, utilisateur, type, état, fournisseur/modèle si IA, lease, usage, curseurs ; résultat durable |
 | Asset | id, propriétaire/projet, SHA-256, MIME, taille, stockage, attribution et état de contrôle |
 | Artifact | id, projectId, revisionId, SHA-256, manifeste, stockage privé, expiration éventuelle du lien |
+| HandoffReport | manifeste dérivé `manifest.design-report.v1`, toujours attaché à une révision immuable |
 | OperationReceipt | projet, clé d'idempotence, hash de requête, résultat et draftVersion issue de la transaction |
 
 Tables proposées : projects, drafts, revisions, proposals, jobs, job_events, assets, artifacts, operation_receipts, provider_connections, audit_events. Ajouter des foreign keys et index owner/project/version/job/sequence. Une ressource d'un autre projet ne devient pas accessible parce que son UUID est connu.
+
+### Rapport de transmission
+
+`manifest.design-report.v1` est un manifeste dérivé d'une révision immuable, et non une deuxième source de vérité. Il porte au minimum `format`, `projectId`, `pageIds`, `revisionId`, `snapshotHash`, `catalogLock`, `originalDescription`, `designSpec`, `pagesAndRoutes`, `themeTokens`, `componentManifest`, `interactions`, `motion`, `responsiveRules`, `assetRefs`, `accessibility`, `modelProvenance`, `eligibilityEvidence`, `assumptions`, `unsupportedFeatures` et `reportHash`. Chaque entrée du manifeste de composants conserve le type, les propriétés utilisées, l'ID/version de catalogue, les dépendances autorisées et l'identification de licence/source. Un schéma JSON strict et ses fixtures seront livrés avec le ticket qui implémente cette capacité ; aucun runtime ne doit traiter cette liste comme un schéma permissif.
+
+`modelProvenance` est absente si aucune proposition de modèle n'a été conservée ; sinon elle référence la provenance capturée dans le job/proposal (source locale ou fournisseur, providerId/modelId, jobId/generationId et `baseDraftVersion`). Elle n'est jamais reconstruite à partir du fournisseur actuellement choisi. L'état « à jour » est calculé avec les mêmes contrôles que l'aperçu. Le rapport ne contient jamais de clé, jeton ou secret.
+
+`eligibilityEvidence` capture le résultat au moment où le domaine valide la révision : `ruleVersion`, `result` (`passed` ou `not_applicable`), `sourceProposalId` nullable, `baseDraftVersion`, `approvedRevisionId`, `approvedSnapshotHash` et les contrôles nommés (session, intention, version source, fournisseur/modèle et absence de modifications manuelles non synchronisées). `not_applicable` signifie que la révision n'a pas retenu de proposition modèle. Ces valeurs sont immuables avec la révision ; un contrôle courant différent ne réécrit pas l'évidence historique.
+
+Le hash est reproductible : `reportHash = SHA-256(JCS(report sans reportHash))`, avec JCS conforme à RFC 8785 sur l'objet JSON UTF-8. Les tableaux suivent l'ordre sémantique du Snapshot ou un ordre stable par ID ; l'état de livraison du message, un horodatage de préparation et les informations volatiles de transport restent hors de l'objet hashé. L'identifiant de révision, l'empreinte du Snapshot, la release et la preuve d'éligibilité font partie des champs hashés.
+
+Le rapport ne peut être préparé qu'à partir d'une révision figée. L'extension présente le résumé et les limites puis transmet explicitement le contenu au chat courant si l'hôte le permet. L'échec ou l'absence de capacité de transmission conserve la révision et propose copie/téléchargement ; aucun succès d'envoi n'est annoncé sans confirmation de l'hôte. Le code complet reste un artefact séparé lié à la révision.
 
 Les IDs sont stables, opaques et générés côté produit ; les exemples utilisent des IDs lisibles pour la spécification. Les URLs de page sont uniques dans le projet et internes (chemin commençant par `/`). Aucun identifiant de bloc n'est réutilisé lors d'une duplication. `catalogLock` désigne une release et une empreinte immuables ; les sources et dépendances détaillées sont dans le manifeste de release.
 
@@ -115,6 +128,7 @@ Les noms et schémas proviennent des mêmes contrats que HTTP. `open_designer` e
 |---|---|
 | open_designer | lire/créer le projet autorisé, session d'éditeur, ressource UI |
 | read_project | lire le brouillon autorisé |
+| prepare_handoff_report | construire le rapport déterministe depuis une révision approuvée et sa release de catalogue, pour relecture dans la vue |
 | get_provider_registry | lire les fournisseurs et modèles publics configurés pour cette session ; jamais les secrets |
 | commit_commands | apply_ops / keep_proposal / approve / restore |
 | start_suggestion | démarrer un job |

@@ -3,7 +3,8 @@ version: alpha
 colors:
   background: "#151515"
   surface: "#1F1F1F"
-  primary: "#D5FF5C"
+  primary: "#68D5E3"
+  suggestion: "#927AE6"
   foreground: "#F4F2EC"
   secondary: "#A6A6A0"
   border: "#FFFFFF14"
@@ -21,14 +22,14 @@ spacing:
   panelPadding: "16px"
 components:
   SelectionOutline:
-    color: "#2454C6"
+    color: "#68D5E3"
   InspectorPanel:
     padding: "16px"
 ---
 
 # Identité de l'éditeur Manifest
 
-Contrat visuel validé pour la coque Manifest, distinct des thèmes créés par ses utilisateurs. Les valeurs sont des décisions de conception partagées par l'éditeur sombre et non une inversion automatique du thème de la page. Les styles de l'éditeur sont générés ou dérivés d'une seule source de tokens ; les autres fichiers ne doivent pas maintenir des copies divergentes.
+Contrat visuel de la coque Manifest, aligné sur les captures de référence validées le 2 novembre 2026. Le cyan signale les actions et la sélection ; le violet distingue les suggestions d'animation. Ces accents appartiennent à l'éditeur et ne dictent pas le thème de la page créée. Les valeurs extraites des captures sont des approximations de départ ; leurs contrastes doivent être vérifiés au ticket UX-01. Les styles de l'éditeur sont générés ou dérivés d'une seule source de tokens ; les autres fichiers ne doivent pas maintenir des copies divergentes.
 
 ## Overview
 
@@ -50,7 +51,7 @@ Les champs et contrôles restent en français M1. Les pages créées acceptent l
 
 ## Layout
 
-Écran de travail : coque sombre proche de Manifest, colonne intention/catalogue à gauche, aperçu blanc dominant au centre, suggestions et inspecteur à droite. Point de départ desktop : gauche 280–320 px, droite 280–320 px, centre fluide. À moins de 1 100 px, un seul panneau latéral à la fois ; à moins de 768 px, panneaux en tiroirs et barre d'actions condensée. Ces seuils sont des propositions à tester sur le viewport réel de l'hôte.
+Écran de travail : coque sombre Manifest, avec les étapes « Décrire », « Composer » et « Transmettre ». À gauche, champ d'intention et état de l'analyse ; au centre, aperçu dominant de la page ; à droite, suggestions de composants et d'animations, repliables pour agrandir l'aperçu. Le canevas vide commence sur un fond blanc comme dans la capture ; le site créé peut adopter un thème clair, sombre ou autre. Point de départ desktop : gauche 250–280 px, droite 250–280 px, centre fluide. La barre supérieure affiche page, fournisseur/modèle choisi, format d'aperçu, historique et préparation du rapport. À moins de 1 100 px, un seul panneau latéral à la fois ; à moins de 768 px, panneaux en tiroirs et barre d'actions condensée. Ces seuils sont des propositions à tester sur le viewport réel de l'hôte.
 
 Rythme 4 px pour les contrôles, espaces de 8/12/16/24 px et alignements continus. Les boutons ne changent pas de largeur pendant une demande. L'aperçu possède son viewport ; ne pas modifier toute la mise en page du shell pour simuler un téléphone.
 
@@ -71,7 +72,9 @@ Le mouvement de l'éditeur explique un changement : sélection, ouverture de pan
 ## Do's and Don'ts
 
 - Donner de la place à la page, garder les outils lisibles.
+- Garder le champ d'intention, l'aperçu et le rail de suggestions visiblement distincts.
 - Indiquer ce qui est proposé, conservé, sauvegardé ou approuvé.
+- Montrer la bibliothèque, la version et la provenance utiles à chaque suggestion ; ne pas confondre « trouvée », « prévisualisée » et « ajoutée ».
 - Montrer un changement ciblé et annulable ; ne pas animer toute la page à chaque réponse.
 - Décrire pourquoi une proposition convient au contenu plutôt que promettre un style « premium » universel.
 - Ne pas confondre la méthode Unslop avec une obligation d'uniformiser les sites.
