@@ -32,7 +32,7 @@
 | Critère / scénario | Vérification exécutée et version | Résultat observé | Preuve | Reste à faire |
 |---|---|---|---|---|
 | Le helper choisit le contrôle selon le vrai breakpoint responsive | Relecture du code `tests/e2e/arc01.spec.ts` et `apps/editor-web/src/style.css` | Réussi à la relecture | Diff local ; CSS mobile à 767 px | Confirmer par Chromium ciblé |
-| La CI Linux termine la reprise et l’ouverture des réglages | Run GitHub Actions #34 sur `36253c5557be6063b40e25cd867fb361c51c9dc1`, 2 nov. 2026 | Réussi : 8/8 E2E ; reprise expirée en 3,1 s ; job complet en succès | [Run 41506223549](https://github.com/HotMb/manifest/actions/runs/41506223549) ; logs du job `125486110832` | Répéter x10 sur Chromium Linux pour vérifier la stabilité si possible |
+| La CI Linux termine la reprise et l’ouverture des réglages | Runs GitHub Actions #33 et #34 sur `36253c5557be6063b40e25cd867fb361c51c9dc1`, 2 nov. 2026 | Tous deux réussis : 8/8 E2E ; reprise expirée en 2,4 s puis 3,1 s ; jobs complets en succès | [Run 41506214308](https://github.com/HotMb/manifest/actions/runs/41506214308) · [Run 41506223549](https://github.com/HotMb/manifest/actions/runs/41506223549) | Répéter x10 sur Chromium Linux pour vérifier davantage la stabilité si possible |
 | Test ciblé et répétition locale | `npm run test:e2e -- --grep "brouillon expiré"`, puis `CI=true npx playwright test --grep "brouillon expiré" --repeat-each=10` | Incomplets : aucun rapport Playwright après environ 60 s et 70 s ; processus interrompus | Sessions locales ; aucun résultat Playwright produit | Diagnostiquer pourquoi le runner local ne rend pas de rapport ; la CI Linux complète, elle, est réussie |
 | Backlog et types restent cohérents | `npm run check`, `npm run typecheck`, `git diff --check` | Réussi : 26 tickets valides, types sans erreur, diff propre | Sortie locale du 2 nov. 2026 | Aucun pour ce changement |
 | Revue indépendante loop-verify | Deux appels sur les critères et preuves de ce changement | Échec : le premier artifact n’incluait pas le compte rendu / les statuts détaillés ; le second n’incluait pas le code du helper | Retours des deux vérifications ; le code est fourni ici et relu séparément par le reviewer Test Automation Engineer | Pas de troisième tentative selon la limite du skill ; aucun verdict global positif revendiqué |
@@ -42,13 +42,13 @@
 | Rôle ayant contribué | Constat vérifiable | Conséquence / recommandation |
 |---|---|---|
 | Revue frontend (`audit_ui_flow`) | Le clic de reprise déclenche une promesse ; l’ancien helper décidait du layout avant le retour garanti de l’éditeur. | Sélectionner le contrôle à partir du viewport, puis attendre son apparition avec l’auto-wait Playwright. |
-| Test Automation Engineer (`arc01_ci_review`) | Après lecture de Quality #34, confirme que les huit scénarios E2E passent sur le commit corrigé, dont la reprise expirée en 3,1 s ; recommande une répétition x10 car une seule exécution est observée. | Le défaut de sélection du helper est vérifié par un run Linux complet ; répéter le test pour réduire le risque de flake. |
+| Test Automation Engineer (`arc01_ci_review`) | Après lecture de Quality #34, confirme que les huit scénarios E2E passent sur le commit corrigé, dont la reprise expirée en 3,1 s ; demande x10 pour une preuve de stabilité plus forte. Le run #33 passe également sur le même SHA : 8/8, reprise en 2,4 s. | Le défaut de sélection du helper passe deux runs Linux complets ; la répétition ciblée x10 reste recommandée. |
 
 ## Dettes, risques et limites
 
 | Nature | Référence | Impact constaté | Propriétaire | Critère de levée et jalon |
 |---|---|---|---|---|
-| Risque résiduel de flakiness après correction | ARC-01 | Un run Linux complet est vert ; aucune répétition x10 n’a été obtenue localement. | QA | Répéter le test sur Chromium Linux ; si l’un échoue, inspecter trace/capture et traiter la cause observée avant d’avancer ARC-01. |
+| Risque résiduel de flakiness après correction | ARC-01 | Deux runs Linux complets sont verts ; aucune répétition ciblée x10 n’a été obtenue localement. | QA | Répéter le test sur Chromium Linux ; si l’un échoue, inspecter trace/capture et traiter la cause observée avant d’avancer ARC-01. |
 | Preuve hôte / identité manquante | ARC-01, blocage existant | Aucun vrai lancement ChatGPT ni preuve d’identité OAuth réelle. | Orchestrateur et propriétaire ARC-01 | Exécuter la matrice de capacités dans le vrai hôte avec compte de test autorisé et consigner la preuve sans jetons. |
 
 Aucune nouvelle dette technique n’est retenue. Les entrées DEBT-001 à DEBT-003 restent inchangées ; l’échec de test et la preuve hôte manquante sont suivis comme défaut/critère ARC-01.
@@ -63,12 +63,12 @@ Aucune nouvelle dette technique n’est retenue. Les entrées DEBT-001 à DEBT-0
 
 ## Verdict et prochaine étape
 
-- **Verdict : terminé pour la correction du helper, ARC-01 reste bloqué.** La CI Linux #34 valide le scénario corrigé une fois dans un run complet ; la répétition x10 recommandée n’est pas obtenue.
-- Critères satisfaits pour le défaut du helper : logs CI antérieurs identifiés ; contrôle sélectionné par viewport au breakpoint correspondant ; run Linux #34 vert, 8/8 E2E ; check, typecheck et diff-check passent.
+- **Verdict : terminé pour la correction du helper, ARC-01 reste bloqué.** Deux runs Linux (#33 et #34) valident le scénario corrigé dans des exécutions complètes ; la répétition x10 recommandée n’est pas obtenue.
+- Critères satisfaits pour le défaut du helper : logs CI antérieurs identifiés ; contrôle sélectionné par viewport au breakpoint correspondant ; deux runs Linux verts, 8/8 E2E chacun ; check, typecheck et diff-check passent.
 - Critères encore manquants pour ARC-01 : répétition x10 si le runner CI est disponible ; vrai hôte ChatGPT et identité réelle.
 - État ARC-01 avant / après : `blocked` / `blocked`, révision du registre inchangée à 3. Aucun ticket M1 n’est éligible.
 - Prochaine étape : répéter le parcours ciblé x10 sur Chromium Linux si possible, puis traiter les preuves hôte et identité. Aucun besoin de décision du commanditaire pour le correctif local réversible.
 
 ## Synthèse partagée dans le chat
 
-Le helper E2E choisissait parfois le bouton mobile pendant la reprise de l’éditeur. Le changement par viewport est poussé et passe le run Linux #34 : 8/8 E2E, reprise expirée en 3,1 s. La répétition locale x10 ne rend pas de rapport et reste à refaire sur CI si possible. ARC-01 reste bloqué en attente du vrai hôte ChatGPT et de l’identité réelle ; aucun ticket suivant n’est débloqué.
+Le helper E2E choisissait parfois le bouton mobile pendant la reprise de l’éditeur. Le changement par viewport est poussé et passe deux runs Linux, #33 et #34 : 8/8 E2E chacun, reprise expirée en 2,4 s puis 3,1 s. La répétition ciblée locale x10 ne rend pas de rapport et reste à refaire sur CI si possible. ARC-01 reste bloqué en attente du vrai hôte ChatGPT et de l’identité réelle ; aucun ticket suivant n’est débloqué.
