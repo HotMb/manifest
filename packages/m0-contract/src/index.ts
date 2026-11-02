@@ -171,3 +171,5 @@ export function makeEditCommand(project: M0Project, nextSnapshot: Snapshot, key:
   validateCommand(command);
   return command;
 }
+
+export * from './providers.ts';

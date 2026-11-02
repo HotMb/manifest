@@ -30,6 +30,7 @@ Cette carte décrit les propriétaires réellement introduits par ARC-01 pour so
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
 | Form | Puck.Fields et heroConfig, apps/editor-web/src/hero.tsx | propriétés admises du contrat M0 et Snapshot | un Hero, texte, radio et couleurs natives | tests/e2e/arc01.spec.ts : édition, focus, mobile |
+| Select/Listbox | ProviderPreparationPanel, apps/editor-web/src/provider-preparation-panel.tsx ; select natif du navigateur | type partagé ModelProviderRegistry et registre fallback de préparation, apps/editor-web/src/provider-preparation.ts | liste courte de fournisseurs sans connexion ; identifiant de modèle libre et non vérifié ; choix temporaire hors Snapshot | apps/editor-web/test/provider-preparation.test.ts et revue navigateur avec suivi réseau |
 | Scrollbar | apps/editor-web/src/style.css | DESIGN.md et défilement défini ici | shell et panneaux ; aperçu responsive distinct | tests/e2e/arc01.spec.ts : largeur étroite et absence de débordement |
 | Toast | footer.statusbar et error-banner, apps/editor-web/src/main.tsx | états de retour définis ici | statut discret, erreur persistante, aucun toast éphémère de remplacement | tests/e2e/arc01.spec.ts : sauvegarde et conflit |
 | CRUD | Editor dans apps/editor-web/src/main.tsx et packages/host-adapters/src/index.ts | commandes canoniques et transport actif | lecture et modification M0 ; navigateur diagnostic ou MCP, sans création/suppression générale | tests/m0-backend.test.ts et tests/e2e/arc01.spec.ts |
@@ -38,7 +39,7 @@ Cette carte décrit les propriétaires réellement introduits par ARC-01 pour so
 
 La première activation de l'analyse automatique montre fournisseur, transmission après pause et limite d'usage. La session conserve ce choix ; un interrupteur « Suspendre l'analyse » stoppe les nouvelles demandes. « Proposer maintenant » existe aussi et ne vide pas le champ. Enter insère une nouvelle ligne ; un raccourci explicite, documenté et compatible IME déclenche l'action manuelle. Une génération ne désactive jamais la saisie.
 
-Après 900 ms sans frappe, hors composition IME : sauvegarder les réglages manuels, puis démarrer un job. Aucun appel si texte vide, intention et contenu inchangés, analyse suspendue, budget épuisé, hors ligne ou conflit de brouillon. Un seul job actif par session d'éditeur ; une nouvelle intention le rend immédiatement obsolète dans la vue.
+Après 1,5 seconde sans frappe, hors composition IME : sauvegarder les réglages manuels, puis démarrer un job. Aucun appel si texte vide, intention et contenu inchangés, analyse suspendue, budget épuisé, hors ligne ou conflit de brouillon. Un seul job actif par session d'éditeur ; une nouvelle intention le rend immédiatement obsolète dans la vue.
 
 | État | Affichage et comportement |
 |---|---|

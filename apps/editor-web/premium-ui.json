@@ -5,6 +5,7 @@
   "canonicalMap": "UX-CONTRACT.md",
   "requiredCapabilities": ["Form", "Scrollbar", "Toast", "CRUD"],
   "requiredCommands": ["typecheck", "build", "unit", "e2e"],
+  "ownership": { "Select/Listbox": "native" },
   "commands": {
     "typecheck": "npm run typecheck",
     "build": "npm run build",

@@ -21,6 +21,7 @@
     "team:brief": "node scripts/start-team.mjs --print",
     "team:start": "node scripts/start-team.mjs",
     "test:m0": "tsx --test tests/m0-backend.test.ts tests/m0-bundle.test.ts packages/host-adapters/test/adapter.test.ts",
+    "test:providers": "tsx --test tests/model-providers.test.ts apps/editor-web/test/provider-preparation.test.ts",
     "build": "npm run build --workspace @design-workbench/editor-web",
     "dev": "npm run dev --workspace @design-workbench/editor-web",
     "typecheck": "npm run typecheck --workspaces --if-present",

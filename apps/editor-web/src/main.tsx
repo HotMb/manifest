@@ -6,6 +6,8 @@ import { createBrowserTransport, createMcpTransport, type EditorTransport } from
 import { heroConfig } from './hero.tsx';
 import { applyDesignHint, DESCRIPTION_PAUSE_MS, type DesignHint } from './manifest-analysis.ts';
 import { useLocalAnalysis } from './use-local-analysis.ts';
+import { INITIAL_PROVIDER_PREPARATION, providerPreparationDeclaration } from './provider-preparation.ts';
+import { ProviderPreparationPanel } from './provider-preparation-panel.tsx';
 import '@puckeditor/core/no-external.css';
 import 'virtual:editor-tokens.css';
 import './style.css';
@@ -53,6 +55,7 @@ function Editor() {
   const [description, setDescription] = useState('');
   const [composing, setComposing] = useState(false);
   const [automaticAnalysis, setAutomaticAnalysis] = useState(true);
+  const [providerPreparation, setProviderPreparation] = useState(INITIAL_PROVIDER_PREPARATION);
   const [reportTab, setReportTab] = useState<'report' | 'version'>('report');
   const [reportFeedback, setReportFeedback] = useState('');
   const [history, setHistory] = useState<{ past: Snapshot[]; future: Snapshot[] }>({ past: [], future: [] });
@@ -242,6 +245,7 @@ function Editor() {
       project: { projectId: confirmed?.projectId, draftVersion: confirmed?.draftVersion, contentHash: confirmed?.contentHash, snapshot: confirmed?.snapshot },
       workingCopy: { hasUncommittedChanges: dirty, snapshot: working },
       brief: { description, persisted: false },
+      providerPreparation: providerPreparationDeclaration(providerPreparation),
       analysis: { source: 'local-rules', status: analysisPhase, upToDate: Boolean(analysis), model: null, recognized: analysis ? analysis.recognized : null },
       capabilities: { approvedRevision: false, codeExport: false, modelInference: false },
     };
@@ -290,6 +294,7 @@ function Editor() {
               <div className="analysis-preference"><label><input type="checkbox" checked={automaticAnalysis} onChange={(event) => setAutomaticAnalysis(event.target.checked)} />Lire après une pause</label><span>{(DESCRIPTION_PAUSE_MS / 1000).toLocaleString('fr-FR')} s</span></div>
               <button className="button analyze-button" onClick={analyzeNow} disabled={!description.trim() || composing}>Analyser la description<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" /></svg></button>
               <p id="description-help" className="description-help">Cette première version utilise des règles locales : fond clair ou sombre, accent bleu, vert ou violet, fondu, et lignes « Titre : » ou « Texte : ». Aucun modèle n’est appelé.</p>
+              <ProviderPreparationPanel value={providerPreparation} onChange={setProviderPreparation} />
               <div className="description-examples"><span>Une direction à explorer</span><button onClick={() => { setDescription('Un fond clair avec un accent bleu.\nTitre : Des espaces qui nous ressemblent\nTexte : Un atelier indépendant pour imaginer vos lieux de vie.'); descriptionInput.current?.focus(); }}>Portfolio clair<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button><button onClick={() => { setDescription('Un fond sombre avec un accent vert et sans animation.'); descriptionInput.current?.focus(); }}>Page plus profonde<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button></div>
             </div>
             <div className="description-footer"><span className="connection-dot" aria-hidden="true" /><span>Ton texte reste dans cette session.<br />Seuls les réglages de la page sont enregistrés.</span></div>
