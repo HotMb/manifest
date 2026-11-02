@@ -4,7 +4,7 @@ Date : 2 novembre 2026. Périmètre : nom produit Manifest, dépôt GitHub, cadr
 
 ## Résultat
 
-- Le dépôt public a été renommé en [`HotMb/manifest`](https://github.com/HotMb/manifest). Son URL a été vérifiée après le changement.
+- Le dépôt public a été renommé en [`HotMb/manifest`](https://github.com/HotMb/manifest) et sa description publique About commence désormais par « Manifest ». Son URL et sa description ont été vérifiées après le changement.
 - Le README, les règles des agents, le brief de lancement, le guide de livraison, le tableau et les liens de suivi utilisent Manifest comme nom produit. Les anciens espaces de noms de packages et clés de stockage `design-workbench` restent des identifiants techniques compatibles.
 - Les 26 Issues ont reçu un bandeau « Projet : Manifest », leurs liens vers le dépôt ont été corrigés et l'Issue ARC-01 indique son état bloqué réel.
 - Les noms transmis par l'adaptateur d'hôte, le serveur MCP, le realm HTTP et les logs ont été alignés sur Manifest/`manifest-m0`.
