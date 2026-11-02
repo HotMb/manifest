@@ -62,6 +62,34 @@ test('une réponse tardive ignorée par un adaptateur devient stale', async () =
   await second;
 });
 
+test('un signal appelant déjà annulé ne lance pas l’adaptateur', async () => {
+  const controller = new AbortController();
+  controller.abort();
+  let called = false;
+  const adapter = createDeterministicModelAdapter();
+  const guardedAdapter = { descriptor: adapter.descriptor, async suggest(input: ManifestModelRequest) { called = true; return adapter.suggest(input); } };
+  const service = new ModelSuggestionOrchestrator({ registry: { schemaVersion: 1, providers: [DETERMINISTIC_SIMULATOR_DESCRIPTOR] }, adapters: [guardedAdapter] });
+  await assert.rejects(service.suggest({ ...request('req-1', 'Sans animation'), signal: controller.signal }), { name: 'AbortError' });
+  assert.equal(called, false);
+});
+
+test('une annulation appelant invalide aussi une réponse tardive', async () => {
+  const controller = new AbortController();
+  const adapter = createDeterministicModelAdapter(1);
+  const ignoringAdapter = {
+    descriptor: adapter.descriptor,
+    async suggest(input: ManifestModelRequest) {
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      return adapter.suggest({ ...input, signal: undefined });
+    },
+  };
+  const service = new ModelSuggestionOrchestrator({ registry: { schemaVersion: 1, providers: [DETERMINISTIC_SIMULATOR_DESCRIPTOR] }, adapters: [ignoringAdapter] });
+  const pending = service.suggest({ ...request('req-1', 'Sans animation'), signal: controller.signal });
+  controller.abort();
+  const outcome = await pending;
+  assert.equal(outcome.status, 'stale');
+});
+
 test('un modèle absent du registre est refusé avant tout appel adaptateur', async () => {
   const service = orchestrator();
   await assert.rejects(service.suggest({ ...request('req-1', 'Fondu'), modelId: 'unknown' }), (error: unknown) => error instanceof ModelOrchestratorError && error.code === 'MODEL_NOT_REGISTERED');

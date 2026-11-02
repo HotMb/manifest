@@ -28,7 +28,7 @@ export type ModelSuggestionOrchestratorOptions = {
   adapters: readonly ModelProviderAdapter[];
 };
 
-type ActiveRequest = { generation: number; controller: AbortController };
+type ActiveRequest = { generation: number; controller: AbortController; cleanup: () => void };
 
 /** Coordinates one active suggestion and protects the editor from late results. */
 export class ModelSuggestionOrchestrator {
@@ -52,8 +52,10 @@ export class ModelSuggestionOrchestrator {
   /** Cancel the current request without changing the Snapshot. */
   cancel(): void {
     this.generation += 1;
-    this.active?.controller.abort();
+    const active = this.active;
     this.active = undefined;
+    active?.cleanup();
+    active?.controller.abort();
   }
 
   async suggest(request: ManifestModelRequest): Promise<ModelSuggestionOutcome> {
@@ -69,19 +71,33 @@ export class ModelSuggestionOrchestrator {
     if (!adapter || adapter.descriptor.models.every((model) => model.id !== request.modelId)) {
       throw new ModelOrchestratorError('MODEL_NOT_REGISTERED', 'Aucun adaptateur actif ne sait exécuter ce modèle.');
     }
+    if (request.signal?.aborted) throw new DOMException('La demande a été annulée.', 'AbortError');
 
     const generation = ++this.generation;
     const controller = new AbortController();
-    this.active = { generation, controller };
-    const onCallerAbort = () => controller.abort();
+    let cleaned = false;
+    const onCallerAbort = () => {
+      if (cleaned) return;
+      this.generation += 1;
+      const active = this.active;
+      this.active = undefined;
+      active?.cleanup();
+      controller.abort();
+    };
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      request.signal?.removeEventListener('abort', onCallerAbort);
+      if (this.active?.generation === generation) this.active = undefined;
+    };
+    this.active = { generation, controller, cleanup };
     request.signal?.addEventListener('abort', onCallerAbort, { once: true });
     try {
       const result = await adapter.suggest({ ...request, signal: controller.signal });
       const current = this.active?.generation === generation && this.generation === generation;
       return current && isModelResultCurrent(request, result) ? { status: 'ready', result } : { status: 'stale', result };
     } finally {
-      request.signal?.removeEventListener('abort', onCallerAbort);
-      if (this.active?.generation === generation) this.active = undefined;
+      cleanup();
     }
   }
 }
