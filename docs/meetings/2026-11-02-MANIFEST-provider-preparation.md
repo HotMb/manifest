@@ -28,4 +28,4 @@ Objet : préparer l'intégration de modèles sans activer de connexion réseau
 
 ## Prochaine étape
 
-Implémenter un adaptateur simulé déterministe qui ne contacte aucun fournisseur, mais exerce le contrat de requête/réponse, l'annulation et le stale guard. Il servira de base aux tests avant l'ajout de clés ou de connexions réelles.
+L'adaptateur simulé déterministe est maintenant livré dans `packages/m0-contract/src/provider-simulator.ts`. Il ne contacte aucun fournisseur, exerce le contrat de requête/réponse, l'annulation et le stale guard, et sert de base aux tests avant l'ajout de clés ou de connexions réelles.
