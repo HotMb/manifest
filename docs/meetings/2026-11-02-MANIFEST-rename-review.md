@@ -8,7 +8,7 @@ Date : 2 novembre 2026. Périmètre : nom produit Manifest, dépôt GitHub, cadr
 - Le README, les règles des agents, le brief de lancement, le guide de livraison, le tableau et les liens de suivi utilisent Manifest comme nom produit. Les anciens espaces de noms de packages et clés de stockage `design-workbench` restent des identifiants techniques compatibles.
 - Les 26 Issues ont reçu un bandeau « Projet : Manifest », leurs liens vers le dépôt ont été corrigés et l'Issue ARC-01 indique son état bloqué réel.
 - Les noms transmis par l'adaptateur d'hôte, le serveur MCP, le realm HTTP et les logs ont été alignés sur Manifest/`manifest-m0`.
-- La branche `work/arc-01-qualification` est poussée jusqu'à `3bf14b9`. Le workflow `Quality` 24 du commit `ee9ec5d` a échoué à `Browser qualification tests`, après les étapes précédentes réussies ; la cause reste à diagnostiquer. Le workflow 26 du HEAD `3bf14b9` était en cours au dernier contrôle ; aucun PASS n'est annoncé.
+- La branche `work/arc-01-qualification` est poussée ; le dernier commit de code couvert par la CI est `3bf14b9`. Les workflows `Quality` 24 (`ee9ec5d`) et 26 (`3bf14b9`) ont échoué au même E2E de reprise d'un brouillon expiré : 7/8 passent, le test attend « Réglages du bloc » et dépasse 30 s. Un run Windows local antérieur passait 8/8. L'écart inter-environnements reste à diagnostiquer ; les commits de suivi seuls n'ont pas de run retourné.
 
 ## Contributions et vérification
 
@@ -28,8 +28,8 @@ Deux tentatives loop-verify ont été faites, chacune conclue FAIL. La première
 
 **Verdict : renommage terminé ; développement produit bloqué sur sa porte actuelle.** ARC-01 attend un essai réel dans ChatGPT et une preuve d'identité. Aucun agent n'a revendiqué ces critères. ARC-02 et les tickets M1 restent inéligibles ; la marque et les tests locaux ne les débloquent pas.
 
-Aucune nouvelle dette technique n'est ouverte. Les dettes préexistantes restent au [registre](../TECH-DEBT.md). Le dépôt public ne signifie pas que l'application est déployée ; le prototype local n'a pas de fournisseur réel ni d'OAuth de production configuré.
+Aucune nouvelle dette technique n'est ouverte : l'échec E2E répété est un défaut de qualification déjà dans le périmètre ARC-01, pas un compromis accepté. Les dettes préexistantes restent au [registre](../TECH-DEBT.md). Le dépôt public ne signifie pas que l'application est déployée ; le prototype local n'a pas de fournisseur réel ni d'OAuth de production configuré.
 
 ## Décision et prochaine action
 
-Conserver le nom Manifest et les anciens identifiants techniques jusqu'à un ticket de migration compatible. Préparer l'accès au vrai hôte ChatGPT et au compte de test autorisé, puis remplir la recette et les preuves ARC-01. Tant que cet accès manque, aucun ticket dépendant ne doit être pris.
+Conserver le nom Manifest et les anciens identifiants techniques jusqu'à un ticket de migration compatible. Diagnostiquer le test E2E Linux de reprise, puis préparer l'accès au vrai hôte ChatGPT et au compte de test autorisé avant de remplir la recette et les preuves ARC-01. Tant que ces critères restent ouverts, aucun ticket dépendant ne doit être pris.
