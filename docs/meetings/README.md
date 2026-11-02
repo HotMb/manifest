@@ -8,7 +8,7 @@ L'orchestrateur ouvre la revue quand un lot possède un résultat démontrable, 
 
 Nom conseillé : `YYYY-MM-DD-<TICKET>-review.md`. Pour plusieurs revues le même jour, ajouter un suffixe ordonné. Partir de [TEMPLATE.md](TEMPLATE.md), puis remplacer tous les champs de travail. Le modèle n'est pas une réunion tenue.
 
-Dernières revues : [renommage et reprise des agents — 2 novembre 2026](2026-11-02-MANIFEST-rename-review.md) · [suggestions réactives dans l’éditeur — 2 novembre 2026](2026-11-02-MANIFEST-live-suggestions.md).
+Dernières revues : [ARC-01 plugin privé local ChatGPT Desktop — 2 novembre 2026](2026-11-02-ARC-01-desktop-plugin.md) · [renommage et reprise des agents — 2 novembre 2026](2026-11-02-MANIFEST-rename-review.md) · [suggestions réactives dans l’éditeur — 2 novembre 2026](2026-11-02-MANIFEST-live-suggestions.md).
 
 ## Participants et contributions réelles
 
