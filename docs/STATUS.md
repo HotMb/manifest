@@ -34,4 +34,4 @@ La boucle locale est maintenant reliée ; le prochain travail est la qualificati
 
 Ouvrir ce dossier dans Codex ou lancer `npm run team:start`. Demander à l'orchestrateur de lire cette passation, `git status` et `npm run team:next`, puis de prendre le prochain ticket éligible. Les agents ne continuent pas seuls après la fermeture de la session.
 
-Pour voir le lot local, lancer `npm run dev` et ouvrir localhost:5173. Les détails d'installation et de transport sont dans [START.md](START.md). Le code de qualification reste sur `work/arc-01-qualification` jusqu’à son push ; aucun déploiement public ni modification des paramètres globaux n'a été effectué.
+Pour voir le lot local, lancer `npm run dev` et ouvrir localhost:5173. Les détails d'installation et de transport sont dans [START.md](START.md). Le lot a été poussé sur `origin/work/arc-01-qualification` au commit `1dd0df6` ; aucun déploiement public ni modification des paramètres globaux n'a été effectué.

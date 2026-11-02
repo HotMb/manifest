@@ -38,8 +38,8 @@ La conservation est une action MCP idempotente qui contrôle la version et appli
 
 ## Actions et verdict
 
-1. Orchestrateur : versionner et pousser le lot sur la branche de travail, en conservant le verdict externe FAIL et la correction postérieure clairement consignés.
+1. Orchestrateur — **fait** : commit `1dd0df6` poussé sur `origin/work/arc-01-qualification`, avec le verdict loop-verify FAIL et les corrections postérieures consignés.
 2. Équipe de qualification : valider la vue dans l’application ChatGPT sur ce PC avec un fournisseur simulé ou un budget de requêtes explicitement contrôlé avant tout appel réel.
 3. Équipe projet : ne pas déclarer ARC-01 clos avant preuve d’intégration à l’hôte et parcours MCP avec fournisseur simulé ou contrôlé.
 
-**Verdict de la tranche locale : prête à pousser avec un écart de revue externe consigné.** Les vérifications locales passent après les corrections. Le deuxième et dernier verdict loop-verify reste FAIL, même si ses défauts de comportement ont été corrigés et testés après la revue. Cela ne clôt pas ARC-01 : l’application ChatGPT sur ce PC, le bridge réel et le parcours de bout en bout avec fournisseur restent à qualifier. Aucun plafond de dépense n’est encore appliqué par le produit ; un essai facturable ne doit pas être lancé sans limite côté fournisseur ou hôte.
+**Verdict de la tranche locale : poussée sur la branche de qualification, avec un écart de revue externe consigné.** Les vérifications locales passent après les corrections. Le deuxième et dernier verdict loop-verify reste FAIL, même si ses défauts de comportement ont été corrigés et testés après la revue. Cela ne clôt pas ARC-01 : l’application ChatGPT sur ce PC, le bridge réel et le parcours de bout en bout avec fournisseur restent à qualifier. Aucun plafond de dépense n’est encore appliqué par le produit ; un essai facturable ne doit pas être lancé sans limite côté fournisseur ou hôte.
