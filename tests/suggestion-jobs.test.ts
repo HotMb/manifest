@@ -13,6 +13,7 @@ import {
 import { MemoryProjectStore } from '../services/api/src/domain.ts';
 import { SuggestionJobException, SuggestionJobManager } from '../services/api/src/suggestion-jobs.ts';
 import { createDesignerMcpServer } from '../services/api/src/mcp.ts';
+import { createDesignerHttpServer } from '../services/api/src/http.ts';
 
 function setup(delayMs = 0) {
   const store = new MemoryProjectStore();
@@ -54,6 +55,59 @@ test('le job produit une proposition ordonnée sans enregistrer le brouillon', a
   assert.equal(proposal.status, 'ready');
   assert.equal(proposal.baseDraftVersion, 0);
   assert.equal(proposal.operations[0]?.op, 'update_props');
+});
+
+test('conserver une proposition l’applique une fois au brouillon et reste rejouable', async () => {
+  const { store, jobs } = setup();
+  const started = jobs.start('project-m0', input());
+  await jobs.waitForCompletion(started.jobId);
+  const proposal = jobs.readProposal(jobs.get(started.jobId).proposalIds[0]!);
+  const first = jobs.keepProposal(proposal.id);
+  const retry = jobs.keepProposal(proposal.id);
+  assert.deepEqual(retry, first);
+  assert.equal(first.proposal.status, 'kept');
+  assert.equal(first.project.draftVersion, 1);
+  assert.equal(store.read('project-m0').snapshot.pages[0]!.composition.content[0]!.props.animation, 'none');
+  assert.equal(jobs.getUpdates(started.jobId).events.at(-1)?.type, 'proposal_kept');
+});
+
+test('garder une proposition sur une version plus ancienne la marque obsolète sans écraser le brouillon', async () => {
+  const { store, jobs } = setup();
+  const started = jobs.start('project-m0', input());
+  await jobs.waitForCompletion(started.jobId);
+  const proposal = jobs.readProposal(jobs.get(started.jobId).proposalIds[0]!);
+  const current = store.read('project-m0'), changed = structuredClone(current.snapshot);
+  changed.pages[0]!.composition.content[0]!.props.title = 'Modification plus récente';
+  store.commit(makeEditCommand(current, changed, 'newer-manual-edit'));
+  assert.throws(() => jobs.keepProposal(proposal.id), (error: unknown) => error instanceof SuggestionJobException && error.code === 'VERSION_CONFLICT');
+  assert.equal(jobs.readProposal(proposal.id).status, 'stale');
+  assert.equal(store.read('project-m0').snapshot.pages[0]!.composition.content[0]!.props.title, 'Modification plus récente');
+});
+
+test('ignorer une proposition est rejouable et ne modifie pas le brouillon', async () => {
+  const { store, jobs } = setup();
+  const before = store.read('project-m0');
+  const started = jobs.start('project-m0', input());
+  await jobs.waitForCompletion(started.jobId);
+  const proposalId = jobs.get(started.jobId).proposalIds[0]!;
+  assert.deepEqual(jobs.rejectProposal(proposalId), jobs.rejectProposal(proposalId));
+  assert.equal(jobs.readProposal(proposalId).status, 'rejected');
+  assert.equal(store.read('project-m0').contentHash, before.contentHash);
+  assert.equal(jobs.getUpdates(started.jobId).events.at(-1)?.type, 'proposal_rejected');
+});
+
+test('marquer une proposition ancienne ne la rejette pas et interdit ensuite sa conservation', async () => {
+  const { store, jobs } = setup();
+  const before = store.read('project-m0');
+  const started = jobs.start('project-m0', input());
+  await jobs.waitForCompletion(started.jobId);
+  const proposalId = jobs.get(started.jobId).proposalIds[0]!;
+  assert.equal(jobs.markProposalStale(proposalId).status, 'stale');
+  assert.equal(jobs.markProposalStale(proposalId).status, 'stale');
+  assert.throws(() => jobs.keepProposal(proposalId), (error: unknown) => error instanceof SuggestionJobException && error.code === 'VERSION_CONFLICT');
+  assert.equal(jobs.readProposal(proposalId).status, 'stale');
+  assert.equal(store.read('project-m0').contentHash, before.contentHash);
+  assert.equal(jobs.getUpdates(started.jobId).events.at(-1)?.type, 'proposal_stale');
 });
 
 test('une clé rejouée retourne le job initial, une autre demande produit un conflit', async () => {
@@ -162,19 +216,21 @@ test('une modification du brouillon pendant le calcul marque la proposition obso
 });
 
 test('les outils MCP exposent le cycle job aux vues autorisées', async (t) => {
-  const { jobs } = setup();
-  const server = createDesignerMcpServer({ suggestionJobs: jobs });
+  const { store, jobs } = setup();
+  const server = createDesignerMcpServer({ store, suggestionJobs: jobs });
   const client = new Client({ name: 'suggestion-test', version: '0.0.0' });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   t.after(async () => { await client.close(); await server.close(); });
   await server.connect(serverTransport); await client.connect(clientTransport);
   const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
-  for (const name of ['start_suggestion', 'get_job', 'get_job_updates', 'cancel_job', 'read_proposal']) assert.ok(names.includes(name));
+  for (const name of ['get_provider_registry', 'start_suggestion', 'get_job', 'get_job_updates', 'cancel_job', 'read_proposal', 'mark_proposal_stale', 'keep_proposal', 'reject_proposal']) assert.ok(names.includes(name));
   const toolList = (await client.listTools()).tools;
-  for (const name of ['start_suggestion', 'get_job', 'get_job_updates', 'cancel_job', 'read_proposal']) {
+  for (const name of ['get_provider_registry', 'start_suggestion', 'get_job', 'get_job_updates', 'cancel_job', 'read_proposal', 'mark_proposal_stale', 'keep_proposal', 'reject_proposal']) {
     const tool = toolList.find((item) => item.name === name)!;
     assert.deepEqual((tool._meta?.ui as { visibility: string[] }).visibility, ['app']);
   }
+  const registry = await client.callTool({ name: 'get_provider_registry', arguments: {} });
+  assert.deepEqual((registry.structuredContent as { providers: unknown[] }).providers.map((item: unknown) => (item as { id: string }).id), ['custom']);
   const started = await client.callTool({ name: 'start_suggestion', arguments: { projectId: 'project-m0', ...input() } });
   const job = started.structuredContent as { jobId: string; state: string };
   assert.equal(job.state, 'queued');
@@ -183,4 +239,16 @@ test('les outils MCP exposent le cycle job aux vues autorisées', async (t) => {
   assert.equal((updates.structuredContent as { state: string }).state, 'succeeded');
   const proposal = await client.callTool({ name: 'read_proposal', arguments: { proposalId: finished.proposalIds[0] } });
   assert.equal((proposal.structuredContent as { status: string }).status, 'ready');
+  const kept = await client.callTool({ name: 'keep_proposal', arguments: { proposalId: finished.proposalIds[0] } });
+  assert.equal((kept.structuredContent as { proposal: { status: string } }).proposal.status, 'kept');
+  const updated = await client.callTool({ name: 'read_project', arguments: { projectId: 'project-m0' } });
+  assert.equal(((updated._meta as { project: { draftVersion: number } }).project).draftVersion, 1);
+});
+
+test('la vue MCP refuse un store différent de celui des jobs de suggestion', () => {
+  const { store, jobs } = setup();
+  assert.equal(jobs.usesProjectStore(store), true);
+  assert.throws(() => createDesignerMcpServer({ suggestionJobs: jobs }), /doivent partager le même store/);
+  assert.throws(() => createDesignerMcpServer({ store: new MemoryProjectStore(), suggestionJobs: jobs }), /doivent partager le même store/);
+  assert.throws(() => createDesignerHttpServer({ token: 'development-token-'.padEnd(36, 'x'), store: new MemoryProjectStore(), suggestionJobs: jobs }), /doivent partager le même store/);
 });

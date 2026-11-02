@@ -8,6 +8,8 @@ L'orchestrateur ouvre la revue quand un lot possède un résultat démontrable, 
 
 Nom conseillé : `YYYY-MM-DD-<TICKET>-review.md`. Pour plusieurs revues le même jour, ajouter un suffixe ordonné. Partir de [TEMPLATE.md](TEMPLATE.md), puis remplacer tous les champs de travail. Le modèle n'est pas une réunion tenue.
 
+Dernière revue : [suggestions réactives dans l’éditeur — 2 novembre 2026](2026-11-02-MANIFEST-live-suggestions.md).
+
 ## Participants et contributions réelles
 
 | Rôle | Contribution attendue |

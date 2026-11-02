@@ -25,8 +25,9 @@ Le transport HTTP se lance avec `npm run start --workspace @design-workbench/api
 | `open_designer` | objet vide | ouvre `ui://design/editor.html` et lit le projet M0 |
 | `read_project` | `projectId` | lit le brouillon sans rouvrir l'interface |
 | `commit_commands` | commande `apply_ops` canonique | enregistre atomiquement les modifications manuelles admises |
+| `get_provider_registry` | objet vide | retourne uniquement les fournisseurs et modèles publics configurés, sans secret |
 
-Quand la configuration fournisseur est complète, des outils MCP réservés à la vue sont aussi disponibles : `start_suggestion`, `get_job`, `get_job_updates`, `cancel_job` et `read_proposal`. Ils suivent le contrat suggestion/job déjà décrit dans `docs/spec/contracts/domain.schema.json`. Le prototype garde jobs, événements et propositions en mémoire ; le client reçoit une proposition complète puis décide explicitement de l'appliquer. Les credentials restent dans le processus hôte et ne sont jamais inclus dans le job.
+Quand la configuration fournisseur est complète, des outils MCP réservés à la vue sont aussi disponibles : `start_suggestion`, `get_job`, `get_job_updates`, `cancel_job`, `read_proposal`, `mark_proposal_stale`, `keep_proposal` et `reject_proposal`. Ils suivent le contrat suggestion/job déjà décrit dans `docs/spec/contracts/domain.schema.json`. Le prototype garde jobs, événements et propositions en mémoire ; le client prévisualise le candidat puis appelle explicitement garder ou ignorer. Un changement d’intention ou de version peut marquer un candidat comme ancien, sans le rejeter à la place de l’utilisateur. `keep_proposal` applique atomiquement les opérations à la version source et renvoie le brouillon vérifié. Les credentials restent dans le processus hôte et ne sont jamais inclus dans le job, les métadonnées MCP ou le rapport de conception.
 
 La ressource utilise `text/html;profile=mcp-app` et lit `apps/editor-web/dist/index.html`. Seul l'outil d'ouverture porte `resourceUri`. Les outils de données déclarent une visibilité `app` ; le respect de cette visibilité dépend de l'hôte et ne remplace aucune autorisation.
 
@@ -40,7 +41,7 @@ La ressource utilise `text/html;profile=mcp-app` et lit `apps/editor-web/dist/in
 - Le Snapshot reste celui du contrat de domaine. Les références de catalogue et de politique de l'exemple sont **fictives** et ne deviennent pas une release M1 par leur utilisation dans cet essai.
 - Les verrous empêchent les modifications des propriétés concernées, y compris manuelles dans ce M0 conservateur. Le déverrouillage ne fait pas partie de l'essai.
 - Stockage et reçus en mémoire, perdus au redémarrage. Le store garde jusqu'à 1 000 reçus puis refuse les nouvelles commandes ; il n'évince pas silencieusement des reçus nécessaires au replay.
-- Les jobs de suggestion facultatifs s'exécutent en mémoire et nécessitent un adaptateur compatible configuré. Sans variables fournisseur, les outils de suggestion ne sont pas enregistrés. Il n'y a toujours pas de jobs durables, d'approbation, d'export ou de persistance PostgreSQL.
+- Les jobs de suggestion facultatifs s'exécutent en mémoire et nécessitent un adaptateur compatible configuré. Sans variables fournisseur, seul `get_provider_registry` répond avec un registre vide ; les outils d'inférence ne sont pas enregistrés. Les fournisseurs Anthropic/Google natifs, jobs durables, approbation, export et persistance PostgreSQL restent absents.
 
 La transaction M0 ne contient aucun `await` ni accès disque : comparaison de version, calcul SHA-256, validation et assignation se terminent dans le même tour JavaScript du processus unique. Une base et plusieurs workers exigeront la vraie transaction décrite dans les contrats, pas la réutilisation de cette hypothèse d'exécution.
 

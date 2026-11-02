@@ -33,7 +33,7 @@ type ActiveRequest = { generation: number; controller: AbortController; cleanup:
 /** Coordinates one active suggestion and protects the editor from late results. */
 export class ModelSuggestionOrchestrator {
   private readonly adapters = new Map<string, ModelProviderAdapter>();
-  private active: ActiveRequest | undefined;
+  private readonly active = new Map<string, ActiveRequest>();
   private generation = 0;
 
   constructor(private readonly options: ModelSuggestionOrchestratorOptions) {
@@ -49,17 +49,24 @@ export class ModelSuggestionOrchestrator {
     }
   }
 
-  /** Cancel the current request without changing the Snapshot. */
-  cancel(): void {
-    this.generation += 1;
-    const active = this.active;
-    this.active = undefined;
-    active?.cleanup();
-    active?.controller.abort();
+  /** Exposes only the public provider catalogue and connection flags, never adapter secrets. */
+  getRegistry(): ModelProviderRegistry {
+    return structuredClone(this.options.registry);
+  }
+
+  /** Cancel one editor request, or all requests during host shutdown. */
+  cancel(requestId?: string): void {
+    const requests = requestId === undefined
+      ? [...this.active.values()]
+      : [this.active.get(requestId)].filter((request): request is ActiveRequest => Boolean(request));
+    for (const active of requests) {
+      active.cleanup();
+      active.controller.abort();
+    }
   }
 
   async suggest(request: ManifestModelRequest): Promise<ModelSuggestionOutcome> {
-    this.cancel();
+    this.cancel(request.requestId);
     const provider = this.options.registry.providers.find((entry) => entry.id === request.providerId);
     if (!provider) throw new ModelOrchestratorError('PROVIDER_NOT_REGISTERED', 'Ce fournisseur n’est pas présent dans le registre actif.');
     if (provider.status === 'disconnected' || provider.status === 'error') {
@@ -78,9 +85,7 @@ export class ModelSuggestionOrchestrator {
     let cleaned = false;
     const onCallerAbort = () => {
       if (cleaned) return;
-      this.generation += 1;
-      const active = this.active;
-      this.active = undefined;
+      const active = this.active.get(request.requestId);
       active?.cleanup();
       controller.abort();
     };
@@ -88,13 +93,13 @@ export class ModelSuggestionOrchestrator {
       if (cleaned) return;
       cleaned = true;
       request.signal?.removeEventListener('abort', onCallerAbort);
-      if (this.active?.generation === generation) this.active = undefined;
+      if (this.active.get(request.requestId)?.generation === generation) this.active.delete(request.requestId);
     };
-    this.active = { generation, controller, cleanup };
+    this.active.set(request.requestId, { generation, controller, cleanup });
     request.signal?.addEventListener('abort', onCallerAbort, { once: true });
     try {
       const result = await adapter.suggest({ ...request, signal: controller.signal });
-      const current = this.active?.generation === generation && this.generation === generation;
+      const current = this.active.get(request.requestId)?.generation === generation;
       return current && isModelResultCurrent(request, result) ? { status: 'ready', result } : { status: 'stale', result };
     } finally {
       cleanup();

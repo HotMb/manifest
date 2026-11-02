@@ -47,11 +47,12 @@ test('le runtime n’accepte que les fournisseurs au protocole compatible actuel
 
 test('aucune métadonnée MCP ne révèle la clé pendant le cycle suggestion', async (t) => {
   const apiKey = 'mcp-only-test-secret';
-  const runtime = createSuggestionRuntime(new MemoryProjectStore(), {
+  const store = new MemoryProjectStore();
+  const runtime = createSuggestionRuntime(store, {
     MANIFEST_PROVIDER: 'openai', MANIFEST_MODEL: 'test-model', MANIFEST_API_BASE_URL: 'https://api.example.test/v1', MANIFEST_API_KEY: apiKey,
   }, async () => ok({ choices: [{ message: { content: '{"operations":[{"op":"update_props","pageId":"page-home","blockId":"block-hero","props":{"animation":"none"}}]}' } }] }));
   assert.ok(runtime);
-  const server = createDesignerMcpServer({ suggestionJobs: runtime });
+  const server = createDesignerMcpServer({ store, suggestionJobs: runtime });
   const client = new Client({ name: 'secret-metadata-test', version: '0.0.0' });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   t.after(async () => { await client.close(); await server.close(); });

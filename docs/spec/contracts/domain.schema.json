@@ -1193,11 +1193,14 @@
             "started",
             "progress",
             "proposal_ready",
+            "proposal_stale",
             "usage",
             "succeeded",
             "failed",
             "cancelled",
-            "outcome_unknown"
+            "outcome_unknown",
+            "proposal_kept",
+            "proposal_rejected"
           ]
         },
         "timestamp": {

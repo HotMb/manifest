@@ -1,6 +1,10 @@
 import { App } from '@modelcontextprotocol/ext-apps';
 import {
   PROJECT_ID, M0Error, initialProject, applyOperations, hashSnapshot, stableStringify, validateSnapshot, validateCommand,
+  validateModelProviderRegistry, validateProposalDecisionResult, validateStartSuggestionInput,
+  validateSuggestionEventPage, validateSuggestionJob, validateSuggestionProposal,
+  type ModelProviderRegistry, type ProposalDecisionResult, type StartSuggestionInput, type SuggestionEventPage,
+  type SuggestionJob, type SuggestionProposal,
   type M0Project, type ApplyOpsCommand,
 } from '@design-workbench/m0-contract';
 
@@ -8,6 +12,15 @@ export type EditorTransport = {
   readonly kind: 'browser-local' | 'browser-memory' | 'mcp';
   read(): Promise<M0Project>;
   commit(command: ApplyOpsCommand): Promise<M0Project>;
+  readProviderRegistry?(): Promise<ModelProviderRegistry>;
+  startSuggestion?(input: StartSuggestionInput): Promise<SuggestionJob>;
+  getSuggestionJob?(jobId: string): Promise<SuggestionJob>;
+  getSuggestionUpdates?(jobId: string, afterSeq: number, limit?: number): Promise<SuggestionEventPage>;
+  cancelSuggestion?(jobId: string): Promise<SuggestionJob>;
+  readSuggestionProposal?(proposalId: string): Promise<SuggestionProposal>;
+  keepSuggestionProposal?(proposalId: string): Promise<ProposalDecisionResult>;
+  rejectSuggestionProposal?(proposalId: string): Promise<SuggestionProposal>;
+  markSuggestionProposalStale?(proposalId: string): Promise<SuggestionProposal>;
   recoverExpired?(): Promise<M0Project>;
   close(): Promise<void>;
 };
@@ -177,10 +190,65 @@ export async function createMcpTransport(): Promise<EditorTransport> {
       throw new TransportError('HOST_UNAVAILABLE', 'La connexion à l’hôte est interrompue. Tes réglages restent ouverts ; vérifie la connexion avant de réessayer.');
     }
   }
+  async function callData(name: string, args: Record<string, unknown>, metaKey: string | null): Promise<unknown> {
+    try {
+      const result = await app.callServerTool({ name, arguments: args }) as { isError?: boolean; _meta?: Record<string, unknown>; structuredContent?: unknown };
+      if (result.isError) {
+        const rawError = result._meta?.error;
+        if (rawError && typeof rawError === 'object') {
+          const details = rawError as { code?: unknown; message?: unknown };
+          throw new TransportError(typeof details.code === 'string' ? details.code : 'HOST_ERROR', typeof details.message === 'string' ? details.message : 'L’hôte n’a pas pu effectuer cette action.');
+        }
+        throw new TransportError('HOST_ERROR', 'L’hôte n’a pas pu effectuer cette action. Réessaie après vérification de la connexion.');
+      }
+      const value = result.structuredContent ?? (metaKey ? result._meta?.[metaKey] : result._meta);
+      if (value === undefined) throw new TransportError('INVALID_RESPONSE', 'La réponse de l’hôte est incomplète.');
+      return value;
+    } catch (error) {
+      if (error instanceof TransportError) throw error;
+      throw new TransportError('HOST_UNAVAILABLE', 'La connexion à l’hôte est interrompue. Tes réglages restent ouverts ; vérifie la connexion avant de réessayer.');
+    }
+  }
+  async function readRegistry(): Promise<ModelProviderRegistry> {
+    const value = await callData('get_provider_registry', {}, 'registry');
+    validateModelProviderRegistry(value);
+    return structuredClone(value);
+  }
+  async function readJob(name: 'start_suggestion' | 'get_job' | 'cancel_job', args: Record<string, unknown>): Promise<SuggestionJob> {
+    const value = await callData(name, args, 'job');
+    validateSuggestionJob(value);
+    return structuredClone(value);
+  }
+  async function readProposal(name: 'read_proposal' | 'reject_proposal' | 'mark_proposal_stale', args: Record<string, unknown>): Promise<SuggestionProposal> {
+    const value = await callData(name, args, 'proposal');
+    validateSuggestionProposal(value);
+    return structuredClone(value);
+  }
   return {
     kind: 'mcp',
     async read() { return call('read_project', { projectId: PROJECT_ID }); },
     async commit(command) { validateCommand(command); return call('commit_commands', { ...command }); },
+    async readProviderRegistry() { return readRegistry(); },
+    async startSuggestion(input) {
+      validateStartSuggestionInput(input);
+      return readJob('start_suggestion', { projectId: PROJECT_ID, ...input });
+    },
+    async getSuggestionJob(jobId) { return readJob('get_job', { jobId }); },
+    async getSuggestionUpdates(jobId, afterSeq, limit = 50) {
+      const value = await callData('get_job_updates', { jobId, afterSeq, limit }, 'page');
+      validateSuggestionEventPage(value);
+      return structuredClone(value);
+    },
+    async cancelSuggestion(jobId) { return readJob('cancel_job', { jobId }); },
+    async readSuggestionProposal(proposalId) { return readProposal('read_proposal', { proposalId }); },
+    async keepSuggestionProposal(proposalId) {
+      const value = await callData('keep_proposal', { proposalId }, null);
+      validateProposalDecisionResult(value);
+      const result = value as ProposalDecisionResult;
+      return { proposal: structuredClone(result.proposal), project: await verifiedProject(result.project) };
+    },
+    async rejectSuggestionProposal(proposalId) { return readProposal('reject_proposal', { proposalId }); },
+    async markSuggestionProposalStale(proposalId) { return readProposal('mark_proposal_stale', { proposalId }); },
     async close() { await app.close(); },
   };
 }

@@ -35,17 +35,18 @@ test('l’orchestrateur route une intention vers l’adaptateur qualifié', asyn
   assert.equal(outcome.result.operations[0]?.op, 'update_props');
 });
 
-test('une nouvelle intention annule la précédente et seule la plus récente reste active', async () => {
+test('deux sessions du même hôte peuvent générer sans annuler le job de l’autre', async () => {
   const service = orchestrator(25);
   const first = service.suggest(request('req-1', 'Fondu'));
   const second = service.suggest(request('req-2', 'Sans animation'));
-  await assert.rejects(first, { name: 'AbortError' });
-  const outcome = await second;
-  assert.equal(outcome.status, 'ready');
-  assert.equal(outcome.result.requestId, 'req-2');
+  const [firstOutcome, secondOutcome] = await Promise.all([first, second]);
+  assert.equal(firstOutcome.status, 'ready');
+  assert.equal(firstOutcome.result.requestId, 'req-1');
+  assert.equal(secondOutcome.status, 'ready');
+  assert.equal(secondOutcome.result.requestId, 'req-2');
 });
 
-test('une réponse tardive ignorée par un adaptateur devient stale', async () => {
+test('une réponse tardive d’une session ne rend pas obsolète celle d’une autre', async () => {
   const adapter = createDeterministicModelAdapter(1);
   const lateAdapter = {
     descriptor: adapter.descriptor,
@@ -57,9 +58,9 @@ test('une réponse tardive ignorée par un adaptateur devient stale', async () =
   const service = new ModelSuggestionOrchestrator({ registry: { schemaVersion: 1, providers: [DETERMINISTIC_SIMULATOR_DESCRIPTOR] }, adapters: [lateAdapter] });
   const first = service.suggest(request('req-1', 'Fondu'));
   const second = service.suggest(request('req-2', 'Sans animation'));
-  const outcome = await first;
-  assert.equal(outcome.status, 'stale');
-  await second;
+  const [firstOutcome, secondOutcome] = await Promise.all([first, second]);
+  assert.equal(firstOutcome.status, 'ready');
+  assert.equal(secondOutcome.status, 'ready');
 });
 
 test('un signal appelant déjà annulé ne lance pas l’adaptateur', async () => {

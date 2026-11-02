@@ -30,16 +30,16 @@ Cette carte décrit les propriétaires réellement introduits par ARC-01 pour so
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
 | Form | Puck.Fields et heroConfig, apps/editor-web/src/hero.tsx | propriétés admises du contrat M0 et Snapshot | un Hero, texte, radio et couleurs natives | tests/e2e/arc01.spec.ts : édition, focus, mobile |
-| Select/Listbox | ProviderPreparationPanel, apps/editor-web/src/provider-preparation-panel.tsx ; select natif du navigateur | type partagé ModelProviderRegistry et registre fallback de préparation, apps/editor-web/src/provider-preparation.ts | liste courte de fournisseurs sans connexion ; identifiant de modèle libre et non vérifié ; choix temporaire hors Snapshot | apps/editor-web/test/provider-preparation.test.ts et revue navigateur avec suivi réseau |
+| Select/Listbox | ModelProviderPanel, apps/editor-web/src/model-provider-panel.tsx ; selects natifs du navigateur | registre configuré par `get_provider_registry`, type partagé ModelProviderRegistry ; sélection temporaire sans secret côté vue | modèles réellement déclarés par l'hôte uniquement ; sélection explicite ; retour au mode local | apps/editor-web/test/model-selection.test.ts, MCP contract tests et revue navigateur |
 | Scrollbar | apps/editor-web/src/style.css | DESIGN.md et défilement défini ici | shell et panneaux ; aperçu responsive distinct | tests/e2e/arc01.spec.ts : largeur étroite et absence de débordement |
 | Toast | footer.statusbar et error-banner, apps/editor-web/src/main.tsx | états de retour définis ici | statut discret, erreur persistante, aucun toast éphémère de remplacement | tests/e2e/arc01.spec.ts : sauvegarde et conflit |
 | CRUD | Editor dans apps/editor-web/src/main.tsx et packages/host-adapters/src/index.ts | commandes canoniques et transport actif | lecture et modification M0 ; navigateur diagnostic ou MCP, sans création/suppression générale | tests/m0-backend.test.ts et tests/e2e/arc01.spec.ts |
 
 ## Intention et suggestions
 
-La première activation de l'analyse automatique montre fournisseur, transmission après pause et limite d'usage. La session conserve ce choix ; un interrupteur « Suspendre l'analyse » stoppe les nouvelles demandes. « Proposer maintenant » existe aussi et ne vide pas le champ. Enter insère une nouvelle ligne ; un raccourci explicite, documenté et compatible IME déclenche l'action manuelle. Une génération ne désactive jamais la saisie.
+Quand un modèle configuré est sélectionné, l'interface dit « configuré » (la disponibilité réelle n'est pas vérifiée) et indique que l'intention et le brouillon enregistré lui seront transmis. Le fournisseur et le modèle sont sélectionnés explicitement et restent temporaires dans la vue ; aucun secret n'est saisi ou stocké par le navigateur. Sans modèle sélectionné, les pistes locales restent disponibles. L'automatique est désactivé par défaut ; son activation explicite peut appeler un modèle facturable après chaque pause de 1,5 seconde. Aucun plafond de dépenses n'est implémenté dans le prototype M0 : le fournisseur ou l'hôte doit limiter le budget avant un essai réel. « Proposer maintenant » existe aussi et ne vide pas le champ. Pendant un job, cette action devient « Annuler la génération ». Enter insère une nouvelle ligne ; un raccourci explicite, documenté et compatible IME déclenche l'action manuelle. Une génération ne désactive jamais la saisie.
 
-Après 1,5 seconde sans frappe, hors composition IME : sauvegarder les réglages manuels, puis démarrer un job. Aucun appel si texte vide, intention et contenu inchangés, analyse suspendue, budget épuisé, hors ligne ou conflit de brouillon. Un seul job actif par session d'éditeur ; une nouvelle intention le rend immédiatement obsolète dans la vue.
+Après 1,5 seconde sans frappe, hors composition IME et uniquement si l'automatique a été activé : sauvegarder les réglages manuels, puis démarrer un job. Aucun appel si texte vide, modèle non sélectionné, automatique suspendu, hors ligne ou conflit de brouillon. Le M0 ne vérifie pas le budget du fournisseur. Un seul job actif par session d'éditeur ; une nouvelle intention l'annule sans interrompre les autres sessions et rend toute réponse tardive inéligible dans la vue. Le M0 prend en charge un seul candidat direct ; les alternatives et les adaptateurs Anthropic/Google natifs restent à développer.
 
 | État | Affichage et comportement |
 |---|---|
@@ -48,7 +48,7 @@ Après 1,5 seconde sans frappe, hors composition IME : sauvegarder les réglages
 | Attente de pause | statut discret ; nouvelle frappe relance le délai |
 | Synchronisation nécessaire | conserver le dernier aperçu ; ne pas générer sur une base inconnue |
 | Recherche de propositions | progression par étapes connues, arrêt disponible ; pas de pourcentage inventé |
-| Proposition prête | aperçu automatique du candidat ; Conserver / Refuser ; base et état en interne |
+| Proposition prête | aperçu automatique du candidat en lecture seule ; Conserver / Ignorer ; base et état en interne |
 | Alternatives | jusqu'à trois choix complets du même fournisseur ; sélection prévisualise sans approuver |
 | Obsolète | résultat non appliqué ; dernier aperçu conservé identifié, nouvelle proposition possible |
 | Échec/refus/quota | explication locale et action adaptée ; contenu et réglages conservés |
@@ -61,7 +61,7 @@ L'aperçu est une projection de `brouillon confirmé + modifications manuelles e
 
 Pour peindre une proposition : generationId actif, même session/intentEpoch et même baseDraftVersion, aucune modification manuelle non synchronisée. Une nouvelle frappe invalide son éligibilité immédiatement ; la dernière image peut rester visible avec « Proposition précédente » pendant l'attente, sans l'exporter implicitement.
 
-« Conserver » applique les opérations par une commande atomique. Une édition manuelle sur une proposition toujours éligible envoie `keep_proposal` avec `operationsAfter` dans la même transaction. Sur une proposition obsolète, demander soit une nouvelle proposition, soit « Reprendre cette proposition » explicitement : cette récupération annule l'intention courante, recharge la base et refait la validation ; elle n'écrase pas les nouvelles données.
+« Conserver » applique les opérations par une commande atomique `keep_proposal` sur la version source, avec contrôle de version et clé d'idempotence. La proposition est prévisualisée en lecture seule ; l'utilisateur peut l'ignorer sans toucher au brouillon. Une proposition devenue obsolète est marquée ancienne, jamais rejetée à la place de l’utilisateur, et ne s'applique jamais. Les changements manuels sont enregistrés après une courte pause avant de lancer une génération.
 
 Annuler/Rétablir porte sur des groupes de modifications du document, pas sur les frappes du prompt ni sur des tokens du modèle. Un groupe IA conservé s'annule en une opération métier. Une réponse de sauvegarde ou de poll ne vole ni focus ni scroll et ne remplace pas un état local plus récent.
 

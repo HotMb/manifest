@@ -3,33 +3,25 @@ import {
   ModelOrchestratorError,
   ModelSuggestionOrchestrator,
   ProviderHttpAdapterError,
+  applyOperations,
+  makeEditCommand,
   stableStringify,
   type ManifestModelRequest,
-  type M0Operation,
-  type ModelProviderId,
+  type ModelProviderRegistry,
+  type ProposalDecisionResult,
+  type SuggestionEventPage,
+  type StartSuggestionInput,
+  type SuggestionJob,
+  type SuggestionJobErrorPayload,
+  type SuggestionJobEvent,
+  type SuggestionJobEventType,
+  type SuggestionJobState,
+  type SuggestionProposal,
+  validateModelProviderRegistry,
 } from '@design-workbench/m0-contract';
 import type { MemoryProjectStore } from './domain.ts';
 
-export type SuggestionMode = 'auto' | 'direct' | 'alternatives';
-export type SuggestionRequest = {
-  idempotencyKey: string;
-  expectedDraftVersion: number;
-  editorSessionId: string;
-  intentEpoch: number;
-  intent: string;
-  provider: ModelProviderId;
-  model: string;
-  mode: SuggestionMode;
-  selectedPageId: string;
-  selectedBlockId: string | null;
-};
-export type SuggestionJobState = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'outcome_unknown';
-export type SuggestionJobErrorPayload = { code: 'NOT_FOUND' | 'INVALID_INPUT' | 'VERSION_CONFLICT' | 'IDEMPOTENCY_CONFLICT' | 'CAPABILITY_UNSUPPORTED' | 'BUDGET_EXCEEDED' | 'RATE_LIMITED' | 'PROVIDER_REFUSAL' | 'PROVIDER_UNAVAILABLE' | 'CURSOR_EXPIRED' | 'INTERNAL_ERROR'; message: string; requestId: string; retryable: boolean; details: Record<string, unknown> };
-export type SuggestionJob = { jobId: string; projectId: string; type: 'suggestion'; state: SuggestionJobState; lastSeq: number; proposalIds: string[]; artifactId: null; error: SuggestionJobErrorPayload | null };
-export type SuggestionProposal = { id: string; jobId: string; generationId: string; editorSessionId: string; intentEpoch: number; baseDraftVersion: number; mode: 'direct' | 'alternatives'; operations: M0Operation[]; explanation: string; status: 'ready' | 'kept' | 'rejected' | 'stale' };
-export type SuggestionJobEventType = 'queued' | 'started' | 'progress' | 'proposal_ready' | 'usage' | 'succeeded' | 'failed' | 'cancelled' | 'outcome_unknown';
-export type SuggestionJobEvent = { jobId: string; seq: number; type: SuggestionJobEventType; timestamp: string; data: Record<string, unknown> };
-export type SuggestionEventPage = { events: SuggestionJobEvent[]; nextSeq: number; state: SuggestionJobState };
+export type SuggestionRequest = StartSuggestionInput;
 export type SuggestionProjectReader = Pick<MemoryProjectStore, 'read'>;
 
 export class SuggestionJobException extends Error {
@@ -43,6 +35,7 @@ type JobRecord = {
   controller: AbortController;
   events: SuggestionJobEvent[];
   proposal?: SuggestionProposal;
+  decision?: ProposalDecisionResult;
   runner?: Promise<void>;
 };
 
@@ -71,7 +64,17 @@ export class SuggestionJobManager {
   private readonly jobs = new Map<string, JobRecord>();
   private readonly idempotency = new Map<string, string>();
 
-  constructor(private readonly projects: SuggestionProjectReader, private readonly orchestrator: ModelSuggestionOrchestrator) {}
+  constructor(private readonly projects: SuggestionProjectReader & Partial<Pick<MemoryProjectStore, 'commit'>>, private readonly orchestrator: ModelSuggestionOrchestrator) {}
+
+  getProviderRegistry(): ModelProviderRegistry {
+    const registry = this.orchestrator.getRegistry();
+    validateModelProviderRegistry(registry);
+    return registry;
+  }
+
+  usesProjectStore(projects: SuggestionProjectReader): boolean {
+    return this.projects === projects;
+  }
 
   start(projectId: string, input: SuggestionRequest): SuggestionJob {
     if (!safeId.test(projectId) || !safeId.test(input.idempotencyKey) || !safeId.test(input.editorSessionId) || !safeId.test(input.selectedPageId) || (input.selectedBlockId !== null && !safeId.test(input.selectedBlockId)) || !Number.isSafeInteger(input.expectedDraftVersion) || input.expectedDraftVersion < 0 || !Number.isSafeInteger(input.intentEpoch) || input.intentEpoch < 0 || typeof input.intent !== 'string' || input.intent.trim().length < 1 || input.intent.length > 12_000 || typeof input.model !== 'string' || input.model.length < 1 || input.model.length > 200) {
@@ -135,6 +138,49 @@ export class SuggestionJobManager {
   readProposal(proposalId: string): SuggestionProposal {
     const record = [...this.jobs.values()].find((candidate) => candidate.proposal?.id === proposalId);
     if (!record?.proposal) throw new SuggestionJobException('NOT_FOUND', 'Proposition inaccessible.');
+    return clone(record.proposal);
+  }
+
+  markProposalStale(proposalId: string): SuggestionProposal {
+    const record = [...this.jobs.values()].find((candidate) => candidate.proposal?.id === proposalId);
+    if (!record?.proposal) throw new SuggestionJobException('NOT_FOUND', 'Proposition inaccessible.');
+    if (record.proposal.status === 'ready') {
+      record.proposal.status = 'stale';
+      this.append(record, 'proposal_stale', { proposalId });
+    }
+    return clone(record.proposal);
+  }
+
+  keepProposal(proposalId: string): ProposalDecisionResult {
+    const record = [...this.jobs.values()].find((candidate) => candidate.proposal?.id === proposalId);
+    if (!record?.proposal) throw new SuggestionJobException('NOT_FOUND', 'Proposition inaccessible.');
+    if (record.decision && record.proposal.status === 'kept') return clone(record.decision);
+    if (record.proposal.status !== 'ready') throw new SuggestionJobException('VERSION_CONFLICT', 'Cette proposition n’est plus disponible pour le brouillon courant.');
+    if (!this.projects.commit) throw new SuggestionJobException('INTERNAL_ERROR', 'La conservation n’est pas disponible dans ce stockage.', true);
+    const current = this.projects.read(record.summary.projectId);
+    if (current.draftVersion !== record.proposal.baseDraftVersion) {
+      record.proposal.status = 'stale';
+      this.append(record, 'proposal_stale', { proposalId, currentDraftVersion: current.draftVersion });
+      throw new SuggestionJobException('VERSION_CONFLICT', 'Le brouillon a changé. Cette proposition doit être recalculée.');
+    }
+    const next = applyOperations(current.snapshot, record.proposal.operations);
+    const command = makeEditCommand(current, next, `keep-${record.proposal.id}`);
+    const committed = this.projects.commit(command);
+    const project = { projectId: committed.projectId, draftVersion: committed.draftVersion, contentHash: committed.contentHash, snapshot: committed.snapshot };
+    record.proposal.status = 'kept';
+    record.decision = { proposal: clone(record.proposal), project };
+    this.append(record, 'proposal_kept', { proposalId, draftVersion: project.draftVersion });
+    return clone(record.decision);
+  }
+
+  rejectProposal(proposalId: string): SuggestionProposal {
+    const record = [...this.jobs.values()].find((candidate) => candidate.proposal?.id === proposalId);
+    if (!record?.proposal) throw new SuggestionJobException('NOT_FOUND', 'Proposition inaccessible.');
+    if (record.proposal.status === 'kept') throw new SuggestionJobException('VERSION_CONFLICT', 'Une proposition conservée ne peut pas être refusée.');
+    if (record.proposal.status !== 'rejected') {
+      record.proposal.status = 'rejected';
+      this.append(record, 'proposal_rejected', { proposalId });
+    }
     return clone(record.proposal);
   }
 

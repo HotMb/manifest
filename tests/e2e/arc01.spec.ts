@@ -46,7 +46,6 @@ test('les réglages modifient la page et une sauvegarde locale survit au recharg
   await expect(page.locator('.site-hero')).toHaveCSS('background-color', 'rgb(219, 233, 236)');
   expect(await page.locator('.topbar').evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(editorBackground);
   await expect(page.locator('.statusbar').getByRole('status')).toContainText('Modifications non enregistrées');
-  await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
   await expect(page.locator('.statusbar').getByRole('status')).toContainText('Brouillon enregistré dans ce navigateur.');
   await expect(page.getByRole('button', { name: 'Voir la version 1', exact: true })).toBeVisible();
   await page.reload();
@@ -82,11 +81,9 @@ test('deux vues ne peuvent écraser silencieusement la même version locale', as
   await openSettings(page);
   await openSettings(second);
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill('Version conservée dans la première vue');
-  await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
-  await expect(page.locator('.statusbar').getByRole('status')).toContainText('Brouillon enregistré dans ce navigateur.');
+  await expect(page.getByRole('button', { name: 'Voir la version 1', exact: true })).toBeVisible();
 
   await second.getByRole('textbox', { name: 'Titre', exact: true }).fill('Réglage encore ouvert dans la seconde vue');
-  await second.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
   await expect(second.getByRole('alert')).toContainText('Le brouillon a changé ailleurs');
   await expect(second.getByRole('textbox', { name: 'Titre', exact: true })).toHaveValue('Réglage encore ouvert dans la seconde vue');
   await expect(second.getByRole('button', { name: 'Enregistrer le brouillon', exact: true })).toBeDisabled();
@@ -121,8 +118,7 @@ test('la largeur 375 px garde les actions accessibles au clavier et un seul pann
   await expect(title).toHaveValue('Un atelier sur mobile');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   await screenshot(page, 'arc01-mobile-settings.png');
-  await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
-  await expect(page.locator('.statusbar').getByRole('status')).toContainText('Brouillon enregistré dans ce navigateur.');
+  await expect(page.getByRole('button', { name: 'Brouillon v1', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Aperçu de la page', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Un atelier sur mobile', exact: true })).toBeVisible();
 });
@@ -150,8 +146,7 @@ test('un brouillon expiré reste intact et se récupère seulement après une ac
   await openSettings(page);
   const title = 'Un brouillon à retrouver après expiration';
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill(title);
-  await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
-  await expect(page.locator('.statusbar').getByRole('status')).toContainText('Brouillon enregistré dans ce navigateur.');
+  await expect(page.getByRole('button', { name: 'Voir la version 1', exact: true })).toBeVisible();
   const expiredRecord = await page.evaluate((key) => {
     const record = JSON.parse(localStorage.getItem(key)!);
     record.expiresAt = Date.now() - 1000;

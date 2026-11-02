@@ -32,7 +32,9 @@ async function readBody(req: IncomingMessage): Promise<unknown> {
 /** Loopback-only bearer-authenticated development transport, explicitly not OAuth. */
 export function createDesignerHttpServer(options: { token: string; store?: MemoryProjectStore; htmlPath?: string; suggestionJobs?: SuggestionJobManager }) {
   if (options.token.length < 32 || /\s/.test(options.token)) throw new Error('M0_ACCESS_TOKEN doit contenir au moins 32 caractères sans espace.');
+  if (options.suggestionJobs && !options.store) throw new Error('Le serveur HTTP et les suggestions doivent partager le même store de projet.');
   const store = options.store ?? new MemoryProjectStore();
+  if (options.suggestionJobs && !options.suggestionJobs.usesProjectStore(store)) throw new Error('Le serveur HTTP et les suggestions doivent partager le même store de projet.');
   return createServer(async (req, res) => {
     const host = req.headers.host;
     const port = (req.socket.localAddress && req.socket.localPort) || 0;

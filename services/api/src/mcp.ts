@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { z } from 'zod';
-import { PROJECT_ID } from '@design-workbench/m0-contract';
+import { PROJECT_ID, disconnectedProviderRegistry } from '@design-workbench/m0-contract';
 import type { M0Project, M0CommandResult } from '@design-workbench/m0-contract';
 import { MemoryProjectStore, publicError } from './domain.ts';
 import { SuggestionJobException, type SuggestionJobManager } from './suggestion-jobs.ts';
@@ -42,9 +42,28 @@ const suggestionInput = z.object({
 }).strict();
 const jobError = z.object({ code: z.string(), message: z.string(), requestId: Id, retryable: z.boolean(), details: z.record(z.string(), z.unknown()) }).strict();
 const jobOutput = z.object({ jobId: Id, projectId: Id, type: z.literal('suggestion'), state: z.enum(['queued', 'running', 'succeeded', 'failed', 'cancelled', 'outcome_unknown']), lastSeq: z.number().int().nonnegative(), proposalIds: z.array(Id).max(3), artifactId: Id.nullable(), error: jobError.nullable() }).strict();
-const jobEvent = z.object({ jobId: Id, seq: z.number().int().positive(), type: z.enum(['queued', 'started', 'progress', 'proposal_ready', 'usage', 'succeeded', 'failed', 'cancelled', 'outcome_unknown']), timestamp: z.string(), data: z.record(z.string(), z.unknown()) }).strict();
+const jobEvent = z.object({ jobId: Id, seq: z.number().int().positive(), type: z.enum(['queued', 'started', 'progress', 'proposal_ready', 'proposal_stale', 'usage', 'succeeded', 'failed', 'cancelled', 'outcome_unknown', 'proposal_kept', 'proposal_rejected']), timestamp: z.string(), data: z.record(z.string(), z.unknown()) }).strict();
 const eventPage = z.object({ events: z.array(jobEvent).max(100), nextSeq: z.number().int().nonnegative(), state: z.enum(['queued', 'running', 'succeeded', 'failed', 'cancelled', 'outcome_unknown']) }).strict();
 const proposalOutput = z.object({ id: Id, jobId: Id, generationId: Id, editorSessionId: Id, intentEpoch: z.number().int().nonnegative(), baseDraftVersion: z.number().int().nonnegative(), mode: z.enum(['direct', 'alternatives']), operations: z.array(z.unknown()).min(1).max(100), explanation: z.string().min(1).max(1000), status: z.enum(['ready', 'kept', 'rejected', 'stale']) }).strict();
+const providerRegistryOutput = z.object({
+  schemaVersion: z.literal(1),
+  providers: z.array(z.object({
+    id: z.enum(['openai', 'anthropic', 'google', 'deepseek', 'custom']),
+    label: z.string().min(1).max(120),
+    protocol: z.enum(['openai-responses', 'anthropic-messages', 'google-generate-content', 'openai-compatible']),
+    status: z.enum(['disconnected', 'configured', 'disabled', 'error']),
+    models: z.array(z.object({
+      id: z.string().min(1).max(200), label: z.string().min(1).max(160),
+      providerId: z.enum(['openai', 'anthropic', 'google', 'deepseek', 'custom']),
+      capabilities: z.array(z.enum(['structured-output', 'streaming', 'vision', 'tool-calling', 'code-generation'])),
+      limits: z.object({ requestsPerMinute: z.number().positive().optional(), inputTokensPerMinute: z.number().positive().optional(), contextWindowTokens: z.number().positive().optional(), maxOutputTokens: z.number().positive().optional() }).strict().optional(),
+      pricing: z.object({ currency: z.enum(['USD', 'EUR']), inputPerMillionTokens: z.number().positive().optional(), outputPerMillionTokens: z.number().positive().optional(), estimatedOnly: z.literal(true) }).strict().optional(),
+    }).strict()).max(100),
+    supportsBYOK: z.boolean(), secretConfigured: z.boolean(),
+    errorCode: z.enum(['MISSING_CREDENTIAL', 'UNAUTHORIZED', 'RATE_LIMITED', 'UNAVAILABLE', 'UNKNOWN']).optional(),
+  }).strict()).max(5),
+}).strict();
+const decisionOutput = z.object({ proposal: proposalOutput, project: z.object({ projectId: Id, draftVersion: z.number().int().nonnegative(), contentHash: z.string().regex(/^[a-f0-9]{64}$/), snapshot: z.unknown() }).strict() }).strict();
 
 function reply(project: M0Project | M0CommandResult) {
   return {
@@ -68,6 +87,7 @@ function failure(error: unknown) {
 }
 
 export function createDesignerMcpServer(options: { store?: MemoryProjectStore; htmlPath?: string; suggestionJobs?: SuggestionJobManager } = {}) {
+  if (options.suggestionJobs && (!options.store || !options.suggestionJobs.usesProjectStore(options.store))) throw new Error('Le serveur MCP et les suggestions doivent partager le même store de projet.');
   const store = options.store ?? new MemoryProjectStore();
   const htmlPath = options.htmlPath ?? defaultHtmlPath;
   const server = new McpServer({ name: 'design-workbench-m0', version: '0.0.0' }, {
@@ -110,6 +130,17 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
     _meta: { ui: { visibility: ['app'] } },
   }, async (command) => {
     try { return reply(store.commit(command)); } catch (error) { return failure(error); }
+  });
+  registerAppTool(server, 'get_provider_registry', {
+    title: 'Lire les fournisseurs configurés',
+    description: 'Retourne le catalogue public des fournisseurs et modèles actifs dans cet atelier. Ne divulgue aucune clé ni valeur dérivée du secret.',
+    inputSchema: z.object({}).strict(),
+    outputSchema: providerRegistryOutput,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    _meta: { ui: { visibility: ['app'] } },
+  }, async () => {
+    const registry = options.suggestionJobs?.getProviderRegistry() ?? disconnectedProviderRegistry();
+    return { content: [{ type: 'text' as const, text: `${registry.providers.length} fournisseur(s) configuré(s).` }], structuredContent: registry, _meta: { registry } };
   });
   if (options.suggestionJobs) {
     const suggestionJobs = options.suggestionJobs;
@@ -169,6 +200,45 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
     }, async ({ proposalId }) => {
       try { const proposal = suggestionJobs.readProposal(proposalId); return { content: [{ type: 'text' as const, text: `Proposition ${proposal.status} (${proposal.id}).` }], structuredContent: proposal, _meta: { proposal } }; }
       catch (error) { return failure(error); }
+    });
+    registerAppTool(server, 'mark_proposal_stale', {
+      title: 'Marquer la proposition comme ancienne',
+      description: 'Rend une proposition non applicable lorsque la description ou le brouillon change, sans décider de la conserver ou de la rejeter.',
+      inputSchema: z.object({ proposalId: Id }).strict(),
+      outputSchema: proposalOutput,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      _meta: { ui: { visibility: ['app'] } },
+    }, async ({ proposalId }) => {
+      try {
+        const proposal = suggestionJobs.markProposalStale(proposalId);
+        return { content: [{ type: 'text' as const, text: `Proposition marquée comme ancienne (${proposal.id}).` }], structuredContent: proposal, _meta: { proposal } };
+      } catch (error) { return failure(error); }
+    });
+    registerAppTool(server, 'keep_proposal', {
+      title: 'Conserver la proposition',
+      description: 'Applique une proposition prête à sa version source, avec contrôle de version et reçu idempotent. Ne l’exporte pas et ne crée pas de révision approuvée.',
+      inputSchema: z.object({ proposalId: Id }).strict(),
+      outputSchema: decisionOutput,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      _meta: { ui: { visibility: ['app'] } },
+    }, async ({ proposalId }) => {
+      try {
+        const result = suggestionJobs.keepProposal(proposalId);
+        return { content: [{ type: 'text' as const, text: `Proposition conservée dans le brouillon v${result.project.draftVersion}.` }], structuredContent: result, _meta: result };
+      } catch (error) { return failure(error); }
+    });
+    registerAppTool(server, 'reject_proposal', {
+      title: 'Ignorer la proposition',
+      description: 'Marque comme ignorée une proposition encore accessible, sans modifier le brouillon.',
+      inputSchema: z.object({ proposalId: Id }).strict(),
+      outputSchema: proposalOutput,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      _meta: { ui: { visibility: ['app'] } },
+    }, async ({ proposalId }) => {
+      try {
+        const proposal = suggestionJobs.rejectProposal(proposalId);
+        return { content: [{ type: 'text' as const, text: `Proposition ignorée (${proposal.id}).` }], structuredContent: proposal, _meta: { proposal } };
+      } catch (error) { return failure(error); }
     });
   }
   return server;

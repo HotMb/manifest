@@ -123,7 +123,7 @@ test('MCP SDK : découverte, ressource UI et réponses réservées à la vue', a
   t.after(async () => { await client.close(); await server.close(); });
   await server.connect(serverTransport); await client.connect(clientTransport);
   const listed = await client.listTools();
-  assert.deepEqual(listed.tools.map((tool) => tool.name).sort(), ['commit_commands', 'open_designer', 'read_project']);
+  assert.deepEqual(listed.tools.map((tool) => tool.name).sort(), ['commit_commands', 'get_provider_registry', 'open_designer', 'read_project']);
   const open = listed.tools.find((tool) => tool.name === 'open_designer')!;
   assert.equal((open._meta?.ui as { resourceUri: string }).resourceUri, EDITOR_URI);
   for (const name of ['read_project', 'commit_commands']) {

@@ -75,7 +75,7 @@ Réponse : projectId, draftVersion, contentHash, snapshot confirmé, revisionId 
 
 Transitions : queued -> running/cancelled ; running -> succeeded/failed/cancelled/outcome_unknown. Les états terminaux ne reviennent pas à running avec le même jobId. Un retry explicite crée un nouveau job et référence le précédent. Une demande d'annulation garde un reçu et rend la proposition inéligible dès confirmation serveur ; la vue l'invalide immédiatement sans attendre.
 
-Événement : jobId, seq entier croissant, type, timestamp, data. Types M1 : queued, started, progress, proposal_ready, usage, succeeded, failed, cancelled, outcome_unknown. `proposal_ready` contient une proposition complète et vérifiée. Le serveur déduplique les événements ; le client ignore seq déjà reçu. Les événements sont des mises à jour du produit, pas des tours de conversation.
+Événement : jobId, seq entier croissant, type, timestamp, data. Types M1 : queued, started, progress, proposal_ready, usage, succeeded, failed, cancelled, outcome_unknown. `proposal_ready` contient une proposition complète et vérifiée. Le serveur déduplique les événements ; le client ignore seq déjà reçu. Les événements sont des mises à jour du produit, pas des tours de conversation. Le prototype M0 émet également `proposal_stale`, `proposal_kept` et `proposal_rejected` pour refléter les décisions et les contrôles de version dans la vue.
 
 Pagination : `afterSeq` exclusif, `limit` 1..100 (défaut 50), réponse events[], nextSeq et état courant. Si le curseur a expiré, réponse `CURSOR_EXPIRED` avec consigne de relire le job/résultat final ; ne pas redémarrer l'inférence. Conservation initiale des événements 7 jours, résultat/propositions selon politique projet.
 
@@ -115,9 +115,11 @@ Les noms et schémas proviennent des mêmes contrats que HTTP. `open_designer` e
 |---|---|
 | open_designer | lire/créer le projet autorisé, session d'éditeur, ressource UI |
 | read_project | lire le brouillon autorisé |
+| get_provider_registry | lire les fournisseurs et modèles publics configurés pour cette session ; jamais les secrets |
 | commit_commands | apply_ops / keep_proposal / approve / restore |
 | start_suggestion | démarrer un job |
 | get_job / get_job_updates / cancel_job / read_proposal | suivre, annuler ou retrouver un résultat |
+| keep_proposal / reject_proposal | conserver explicitement un candidat vérifié ou l'ignorer |
 | list_revisions / read_revision | historique |
 | start_export / get_artifact | artefact approuvé et téléchargement |
 | resolve_assets | résolution autorisée des images pour l'aperçu, résultats réservés à la vue |
