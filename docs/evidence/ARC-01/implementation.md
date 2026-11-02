@@ -8,7 +8,7 @@ Date : 1er novembre 2026. Branche : `work/arc-01-qualification`. Cette preuve d�
 - Un seul Snapshot partagé et les commandes manuelles canoniques du sous-ensemble M0 ; aucune IA ou fonction d'export simulée.
 - Deux adaptateurs : diagnostic navigateur et bridge MCP Apps officiel. Un échec d'hôte ne passe jamais silencieusement en mode local.
 - Sauvegarde explicite, contrôle de version, reçu d'idempotence, conflit entre vues, récupération JSON et reprise explicite d'un document expiré.
-- Serveur MCP avec trois outils, ressource UI autonome et stockage mémoire ; transport HTTP local protégé par bearer, Host/Origin et limite de corps ; transport stdio direct.
+- Serveur MCP avec quatre outils de base (`open_designer`, `read_project`, `commit_commands`, `get_provider_registry`), ressource UI autonome et stockage mémoire ; transport HTTP local protégé par bearer, Host/Origin et limite de corps ; transport stdio direct. Huit outils de suggestion supplémentaires ne sont enregistrés que si un fournisseur est configuré.
 - Règles de réunion après chaque tâche, registre de dettes et critères de reprise conservés dans Git.
 
 Les références de catalogue/politique de la fixture restent fictives. Le serveur n'offre pas de persistance multi-utilisateur, d'OAuth de production ou de modèle connecté.
@@ -35,4 +35,4 @@ Les PNG sont copiés sans modification depuis les captures Playwright réelles. 
 
 ## Verdict et suite
 
-Le lot local possède un résultat exécutable et des tests. **ARC-01 reste incomplet** : ouverture et édition dans le vrai ChatGPT, identité réelle, capacités de fichier/stockage/iframe et poll de l'hôte restent non éprouvés. La [réunion de revue](../../meetings/2026-11-01-ARC-01-review.md) enregistre cette distinction et les dettes attribuées.
+Le lot local possède un résultat exécutable et des tests. **ARC-01 reste incomplet** : ouverture et édition dans le vrai ChatGPT, identité réelle, capacités de fichier/stockage/iframe et poll de l'hôte restent non éprouvés. La [réunion de revue](../../meetings/2026-11-01-ARC-01-review.md) enregistre cette distinction et les dettes attribuées. La tentative d'accès au vrai hôte du 2 novembre est consignée dans [host-attempt-2026-11-02.md](host-attempt-2026-11-02.md) et sa [revue](../../meetings/2026-11-02-ARC-01-host-attempt.md).
