@@ -17,6 +17,7 @@ const overlaps = (a, b) => {
 
 export function validateBoard(board) {
   assert(board?.schemaVersion === 1, 'schemaVersion doit être 1');
+  if (board.productName !== undefined) assert(typeof board.productName === 'string' && board.productName.trim(), 'nom de produit invalide');
   assert(Number.isInteger(board.revision) && board.revision >= 0, 'révision de backlog invalide');
   assert(Array.isArray(board.tickets) && board.tickets.length > 0, 'backlog vide');
   const ids = new Set();
@@ -128,7 +129,7 @@ export function transition(board, command, id, options = {}, root) {
 
 export function renderBoard(board) {
   const ready = new Set(eligibleTickets(board).map((t) => t.id));
-  return `# Tableau de livraison\n\nVue générée depuis tickets.json, révision ${board.revision}. GitHub Issues est un miroir ; les preuves restent dans Git.\n\n| Ticket | Phase | Responsable | État | Dépendances |\n|---|---|---|---|---|\n` + board.tickets.map((t) => `| ${t.id} — ${t.title.replaceAll('|', '/')} | ${t.phase} | ${t.owner} | ${t.status}${ready.has(t.id) ? ' (éligible)' : ''} | ${t.dependencies.join(', ') || '—'} |`).join('\n') + '\n';
+  return `# ${board.productName ?? 'Manifest'} — tableau de livraison\n\nVue générée depuis tickets.json, révision ${board.revision}. GitHub Issues est un miroir ; les preuves restent dans Git.\n\n| Ticket | Phase | Responsable | État | Dépendances |\n|---|---|---|---|---|\n` + board.tickets.map((t) => `| ${t.id} — ${t.title.replaceAll('|', '/')} | ${t.phase} | ${t.owner} | ${t.status}${ready.has(t.id) ? ' (éligible)' : ''} | ${t.dependencies.join(', ') || '—'} |`).join('\n') + '\n';
 }
 
 export function mutateFile(root, command, id, options) {

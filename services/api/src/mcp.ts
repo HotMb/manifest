@@ -90,7 +90,7 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
   if (options.suggestionJobs && (!options.store || !options.suggestionJobs.usesProjectStore(options.store))) throw new Error('Le serveur MCP et les suggestions doivent partager le même store de projet.');
   const store = options.store ?? new MemoryProjectStore();
   const htmlPath = options.htmlPath ?? defaultHtmlPath;
-  const server = new McpServer({ name: 'design-workbench-m0', version: '0.0.0' }, {
+  const server = new McpServer({ name: 'manifest-m0', version: '0.0.0' }, {
     instructions: options.suggestionJobs
       ? 'Prototype local de qualification. Ouvrez open_designer pour modifier le bloc Hero. Les suggestions sont des propositions en mémoire ; elles ne modifient jamais le brouillon sans une action explicite. Le stockage des jobs est éphémère.'
       : 'Prototype local de qualification. Ouvrez open_designer pour modifier le bloc Hero. Les outils de données ne rouvrent pas la vue. Stockage éphémère en mémoire : aucune IA, approbation, export ou identité OAuth de production.',

@@ -1,4 +1,4 @@
-# Travail dans Design Workbench
+# Travail dans Manifest
 
 ## Mission et contexte
 
@@ -22,7 +22,7 @@ Avant d'annoncer une tâche terminée, tenir la revue d'équipe définie dans do
 
 ## Architecture et vérification
 
-Conserver un seul Snapshot et contrôleur ; commandes atomiques et propositions réversibles. Clés uniquement backend. Les tests par défaut n'appellent pas d'API payante. Ne pas publier l'application, envoyer un message à autrui ou déclencher un appel fournisseur facturable sans autorisation correspondante. La création et le push de ce dépôt privé sont autorisés ; une mise en production ne l'est pas.
+Conserver un seul Snapshot et contrôleur ; commandes atomiques et propositions réversibles. Clés uniquement backend. Les tests par défaut n'appellent pas d'API payante. Ne pas publier l'application, envoyer un message à autrui ou déclencher un appel fournisseur facturable sans autorisation correspondante. Le dépôt GitHub public `HotMb/manifest` est le dépôt de référence. Les packages et clés internes peuvent encore porter l'espace de noms historique `design-workbench` : ne les renommer que dans un ticket explicite avec migration compatible. Une mise en production n'est pas autorisée par cette consigne.
 
 Pour toute UI, lire DESIGN.md et UX-CONTRACT.md, utiliser frontend-design et frontend-design-premium si disponibles. Le designer possède les choix durables ; le frontend les traduit en contrôles partagés. Vérifier clavier, états d'erreur, mouvements réduits et vrais viewports de l'hôte.
 

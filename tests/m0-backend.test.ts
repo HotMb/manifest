@@ -122,6 +122,7 @@ test('MCP SDK : découverte, ressource UI et réponses réservées à la vue', a
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   t.after(async () => { await client.close(); await server.close(); });
   await server.connect(serverTransport); await client.connect(clientTransport);
+  assert.equal(client.getServerVersion()?.name, 'manifest-m0');
   const listed = await client.listTools();
   assert.deepEqual(listed.tools.map((tool) => tool.name).sort(), ['commit_commands', 'get_provider_registry', 'open_designer', 'read_project']);
   const open = listed.tools.find((tool) => tool.name === 'open_designer')!;
@@ -154,7 +155,9 @@ test('HTTP local : authentification, origine, corps borné et vrai client MCP', 
   const address = server.address(); assert(address && typeof address === 'object');
   const base = `http://127.0.0.1:${address.port}`;
   assert.equal((await fetch(`${base}/health`)).status, 200);
-  assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 401);
+  const unauthenticated = await fetch(`${base}/mcp`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(unauthenticated.status, 401);
+  assert.equal(unauthenticated.headers.get('www-authenticate'), 'Bearer realm="manifest-m0"');
   assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: 'Bearer invalid', 'Content-Type': 'application/json' }, body: '{}' })).status, 401);
   assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, Origin: 'https://foreign.invalid', 'Content-Type': 'application/json' }, body: '{}' })).status, 403);
   assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{' })).status, 400);

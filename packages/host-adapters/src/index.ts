@@ -168,7 +168,7 @@ export function createBrowserTransport(options: BrowserTransportOptions = {}): E
 
 /** The SDK owns ui/initialize and the postMessage protocol. No credential is sent to the view. */
 export async function createMcpTransport(): Promise<EditorTransport> {
-  const app = new App({ name: 'Design Workbench', version: '0.0.0' }, {});
+  const app = new App({ name: 'Manifest', version: '0.0.0' }, {});
   // Set handlers before connect so the initial tool notification cannot be missed.
   app.ontoolresult = () => {};
   app.onhostcontextchanged = () => {};

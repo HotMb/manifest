@@ -1,4 +1,4 @@
-# Tableau de livraison
+# Manifest — tableau de livraison
 
 Vue générée depuis tickets.json, révision 3. GitHub Issues est un miroir ; les preuves restent dans Git.
 

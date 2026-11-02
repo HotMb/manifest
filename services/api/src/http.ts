@@ -45,7 +45,7 @@ export function createDesignerHttpServer(options: { token: string; store?: Memor
     if (req.method === 'GET' && url.pathname === '/health') { json(res, 200, { status: 'ok', mode: 'memory-m0', productionReady: false }); return; }
     if (url.pathname !== '/mcp') { json(res, 404, { code: 'NOT_FOUND' }); return; }
     if (!validToken(req.headers.authorization, options.token)) {
-      res.setHeader('WWW-Authenticate', 'Bearer realm="design-workbench-m0"');
+      res.setHeader('WWW-Authenticate', 'Bearer realm="manifest-m0"');
       json(res, 401, { code: 'UNAUTHENTICATED', message: 'Jeton de développement requis.' }); return;
     }
     if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); json(res, 405, { code: 'METHOD_NOT_ALLOWED' }); return; }

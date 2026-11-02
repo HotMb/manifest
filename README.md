@@ -1,8 +1,8 @@
-# Design Workbench
+# Manifest
 
-Nom de travail de l'outil de design web assisté par IA. Ce dépôt contient le cadrage, l'équipe d'agents réutilisable et un premier prototype React/Puck avec serveur MCP. **Le prototype local ne qualifie pas encore l'expérience dans le vrai ChatGPT.**
+Manifest est un atelier de conception web assisté par IA. Ce dépôt contient son cadrage, l'équipe d'agents réutilisable et le prototype React/Puck avec serveur MCP. **Le prototype local ne qualifie pas encore l'expérience dans le vrai ChatGPT.**
 
-[Dépôt GitHub privé](https://github.com/HotMb/design-workbench) · [Tickets](https://github.com/HotMb/design-workbench/issues)
+[Dépôt GitHub public](https://github.com/HotMb/manifest) · [Tickets](https://github.com/HotMb/manifest/issues)
 
 L'expérience cible : ouvrir un éditeur dans ChatGPT, écrire dans son champ propre, voir une proposition après une pause, ajuster le design, approuver une version puis exporter un projet React fidèle. L'API du modèle choisi est appelée depuis le backend. Claude, d'autres fournisseurs et la 3D viennent par étapes.
 
@@ -31,7 +31,7 @@ Les règles sont dans [AGENTS.md](AGENTS.md) et les six rôles dans `.codex/agen
 
 ## Suivre les changements
 
-Le Git local et le dépôt GitHub privé conservent les commits. Les Issues reprennent les tickets ; `docs/delivery/tickets.json` reste la source des statuts. Les passages en revue et clôture demandent des preuves, une révision attendue du backlog et un reviewer distinct. Voir [CONTRIBUTING.md](CONTRIBUTING.md).
+Le Git local et le dépôt GitHub public conservent les commits. Les Issues reprennent les tickets ; `docs/delivery/tickets.json` reste la source des statuts. Les passages en revue et clôture demandent des preuves, une révision attendue du backlog et un reviewer distinct. Voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Le premier ticket est **ARC-01** : un bloc modifiable dans le vrai ChatGPT, un échange autorisé et une matrice des capacités observées. La présence de ce dépôt, d'agents ou d'une CI ne remplace pas cette preuve.
 

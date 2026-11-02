@@ -1,5 +1,7 @@
 # Organisation de l'équipe et backlog de départ
 
+Produit : **Manifest**. Les tickets sont le plan de travail de l'application Manifest ; `docs/delivery/tickets.json` est la source des statuts et des dépendances, et les Issues GitHub leur servent de miroir public.
+
 ## Rôles et responsabilité
 
 Le nombre de personnes dépend de la disponibilité et des compétences. Les responsabilités suivantes doivent avoir un propriétaire nommé ; une personne peut en cumuler plusieurs. Aucun effectif, coût ou délai n'est présenté comme estimé sans revue de l'équipe.

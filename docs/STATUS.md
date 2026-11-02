@@ -1,37 +1,39 @@
-# Passation du projet
+# Manifest — suivi du projet
 
-Date : 2 novembre 2026. État : **boucle de suggestion MCP intégrée au prototype local ; hôte ChatGPT et fournisseur réel restent à qualifier**. Branche de travail : `work/arc-01-qualification`. Le nom Design Workbench est provisoire.
+Mise à jour : **2 novembre 2026**. Le dépôt GitHub est désormais public sous [HotMb/manifest](https://github.com/HotMb/manifest). Branche de travail : `work/arc-01-qualification`. Le nom produit est **Manifest** ; les packages et clés internes historiques `design-workbench` restent inchangés pour préserver la compatibilité.
 
-## Préparé
+## Situation actuelle
 
-- Cadrage, architecture, contrats et recette intégrés et versionnables.
-- Six rôles Codex persistants, dont un orchestrateur principal ; trois spécialistes maximum en parallèle.
-- 26 tickets structurés, tableau lisible et commandes de suivi avec dépendances, révisions, propriété et revue.
-- Brief de conception et grille M0 préparés par l'agent conception.
-- Tests de l'outillage et contrôle des contrats automatisés ; [première CI réussie](evidence/CI-BOOTSTRAP.md) avec 21 tests Node et 8 tests Python.
-- Dépôt [GitHub public](https://github.com/HotMb/design-workbench) avec [26 issues liées](delivery/GITHUB.md).
-- Prototype React/Puck à un Hero, transports navigateur/MCP, sauvegarde automatique du brouillon et commandes manuelles du sous-ensemble M0.
-- Registre fournisseur lu depuis MCP ; choix explicite du modèle, debounce 1,5 s, jobs, suivi d'événements, annulation, aperçu candidat en lecture seule et actions serveur idempotentes conserver/ignorer.
-- Adaptateur OpenAI-compatible déjà présent, activable par configuration hôte hors Git. Le flux distant n'a pas encore été exécuté avec une clé réelle ; le runtime supporte pour l'instant les fournisseurs `openai`, `deepseek` et `custom` via ce protocole.
-- **52 tests M0**, **24 tests fournisseurs** et **8 E2E navigateur** réussis ; `npm test` : 20 réussis et 1 ignoré pour une restriction de création de liens Windows. Build et typecheck réussis. Le dernier loop-verify reste FAIL après corrections locales post-revue ; [compte rendu de revue du 2 novembre](meetings/2026-11-02-MANIFEST-live-suggestions.md).
-- [Première revue d'équipe](meetings/2026-11-01-ARC-01-review.md) tenue dans le chat, avec contributions réelles et [trois dettes attribuées](TECH-DEBT.md).
+- Le prototype local comprend l'éditeur React/Puck et la boucle de suggestion MCP. Le nom visible par le transport MCP, le serveur et les logs a été aligné sur Manifest.
+- Le dépôt GitHub et ses 26 Issues ont été renommés/référencés sous `HotMb/manifest`. Les Issues restent des miroirs ; `docs/delivery/tickets.json` fait foi pour les états et dépendances.
+- Le registre est en révision **3**. **ARC-01 est bloqué** jusqu'à l'essai dans le vrai hôte ChatGPT et la preuve d'identité réelle. `npm run team:next` indique **0 ticket éligible** ; ARC-02 et la suite ne démarrent donc pas.
+- Les agents frontend et backend ont relu cette porte de sortie avant de changer uniquement leurs libellés d'application. Leur travail de nommage n'avance ni ne clôture ARC-01.
 
-Les résultats réellement exécutés et le statut distant sont consignés dans [la preuve de bootstrap](evidence/BOOTSTRAP.md). La CI n'est considérée passée qu'après observation de son résultat sur GitHub.
+## Revue du code de nommage
 
-## État produit
+- L'adaptateur d'hôte publie le nom `Manifest` au client MCP. Vérification rapportée par l'agent frontend : typecheck, 16 tests d'adaptateur et `git diff --check` réussis.
+- Le serveur MCP annonce `manifest-m0`, les logs annoncent Manifest et le realm HTTP est `manifest-m0`. Vérification rapportée par l'agent backend : `npm run test:m0` **52/52**, typecheck et `git diff --check` réussis.
+- Le garde-fou exigeant un store partagé par le serveur MCP et les suggestions reste en place ; les changements concurrents ont été préservés.
+- Ces résultats couvrent le code local et ses tests. Ils ne prouvent pas l'intégration dans l'application ChatGPT ni l'identité OAuth.
 
-Le registre est en révision 3 : ARC-01 est passé par review puis blocked, avec preuve du lot local. Aucun des 26 tickets n'est déclaré terminé. Le blocage concerne l'essai dans le vrai hôte et l'identité réelle, pas le démarrage du navigateur local. ARC-02/03 restent dépendants de ces preuves.
+## Produit et livraison
 
-Il existe un éditeur et un serveur MCP de qualification. Le serveur peut exécuter une suggestion si un fournisseur compatible est configuré hors Git ; le chemin par défaut reste sans clé et les tests utilisent des simulateurs. Il n'existe pas de persistance de production, d'OAuth réel, d'alternatives de modèle, d'adaptateurs Anthropic/Google natifs ni d'export de code. Le stockage serveur est en mémoire ; le diagnostic navigateur a sa portée et ses limites propres. Le comportement dans le vrai ChatGPT et l'appel facturable restent des preuves manquantes.
+Manifest vise un éditeur embarqué où l'utilisateur décrit sa page, observe une proposition après une pause, modifie la demande et voit l'aperçu réagir, puis valide une version et transmet un rapport compréhensible au modèle hôte. L'API du fournisseur choisi est appelée côté backend. Les intégrations natives multi-fournisseurs et la 3D sont prévues par étapes.
 
-## Prochain travail
+Le prototype reste un outil de qualification : stockage serveur en mémoire, aucun OAuth de production, aucune persistance multi-utilisateur ni export de code complet. L'appel fournisseur réel et le vrai hôte ChatGPT ne sont pas encore éprouvés. Les commandes de l'équipe n'appellent pas d'API payante par défaut.
 
-L'hôte souhaité est l'application ChatGPT sur ce PC. Préparer son accès et une configuration fournisseur de test à coût contrôlé, puis rouvrir **ARC-01** par le CLI avec un motif et la révision courante. Remplir [la grille M0](design/M0-REVIEW.md) avec le vrai essai, dont toute capacité non exécutée. Une connexion Codex diagnostique ne remplace pas silencieusement le critère ChatGPT : consigner la cible effectivement observée et l'éventuel arbitrage produit.
+## Vérifications récentes du prototype
 
-La boucle locale est maintenant reliée ; le prochain travail est la qualification réelle dans ChatGPT et le premier essai fournisseur contrôlé. ARC-02 verrouille ensuite versions et identité à partir des résultats réels. ARC-03 termine les contrats partagés et les mocks avant le développement M1 en parallèle. Les clés et l'infrastructure réelles sont configurées hors Git ; aucun appel fournisseur payant n'a été lancé pendant cette tranche.
+- 52 tests M0, 24 tests fournisseurs et 8 E2E navigateur ont été rapportés réussis sur les incréments précédents ; typecheck et build réussis.
+- `npm test` avait 20 réussites et un cas ignoré faute de droit de création de lien symbolique sous Windows.
+- Les deux passes loop-verify précédentes sur le code M0 étaient en échec ; les défauts relevés ont reçu des corrections et des tests ciblés, mais aucun PASS global n'est revendiqué.
+- Pour ce renommage, les deux tentatives loop-verify ont aussi rendu FAIL : la seconde a validé 4 critères sur 5 et demandé une preuve explicite des liens dans chaque Issue. L'audit direct des 26 Issues a ensuite confirmé le lien `HotMb/manifest`, le bandeau Manifest et l'absence de l'ancien slug dans chacune ; aucune troisième tentative n'a été effectuée selon la limite du skill.
+- La revue complète de l'hôte ChatGPT, des capacités hôte réelles, de l'identité et de l'appel facturable reste à effectuer.
 
-## Reprendre
+## Prochaine action
 
-Ouvrir ce dossier dans Codex ou lancer `npm run team:start`. Demander à l'orchestrateur de lire cette passation, `git status` et `npm run team:next`, puis de prendre le prochain ticket éligible. Les agents ne continuent pas seuls après la fermeture de la session.
+Préparer un compte de test autorisé et l'accès à l'hôte ChatGPT demandé, puis exécuter et documenter ARC-01 dans `docs/design/M0-REVIEW.md` et `docs/evidence/ARC-01/`. Une fois les critères réels établis, l'orchestrateur rouvre ou fait avancer le ticket avec le CLI du backlog et sa révision attendue. ARC-02 démarre après clôture prouvée d'ARC-01. Aucun agent ne doit contourner ces dépendances ; tant que l'hôte n'est pas disponible, la prochaine action attend l'accès et les preuves nécessaires.
 
-Pour voir le lot local, lancer `npm run dev` et ouvrir localhost:5173. Les détails d'installation et de transport sont dans [START.md](START.md). Le lot a été poussé sur `origin/work/arc-01-qualification` au commit `1dd0df6` ; aucun déploiement public ni modification des paramètres globaux n'a été effectué.
+## Reprendre le travail
+
+Dans ce dépôt, relire `AGENTS.md`, ce fichier, `docs/delivery/ORCHESTRATION.md`, puis lancer `npm run team:status` et `npm run team:next`. `npm run team:start` ouvre une nouvelle session Codex pour l'orchestration ; les agents ne continuent pas après sa fermeture. Voir aussi [le tableau des tickets](delivery/BOARD.md), [leur correspondance GitHub](delivery/GITHUB.md), [la revue de l'incrément local](meetings/2026-11-02-MANIFEST-live-suggestions.md) et [les dettes techniques](TECH-DEBT.md).
