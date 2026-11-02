@@ -174,3 +174,4 @@ export function makeEditCommand(project: M0Project, nextSnapshot: Snapshot, key:
 
 export * from './providers.ts';
 export * from './provider-simulator.ts';
+export * from './provider-orchestrator.ts';

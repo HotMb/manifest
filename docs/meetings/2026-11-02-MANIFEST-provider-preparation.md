@@ -23,9 +23,11 @@ Objet : préparer l'intégration de modèles sans activer de connexion réseau
 
 - Il manque un registre fourni par l'hôte et une politique d'authentification pour chaque fournisseur.
 - Les capacités et prix ne seront fiables qu'avec un reçu d'usage ou une source datée ; ils restent donc déclaratifs.
-- Le contrat d'adaptateur doit encore valider la réponse modèle, les locks, le budget, l'annulation et l'obsolescence d'une intention.
+- Le contrat d'adaptateur doit encore valider la réponse modèle, les locks et le budget ; l'annulation, la sélection et l'obsolescence sont maintenant centralisées par `ModelSuggestionOrchestrator`.
 - Le parcours fournisseur doit être ajouté à une suite E2E dédiée quand le serveur de test local sera stabilisé.
 
 ## Prochaine étape
 
 L'adaptateur simulé déterministe est maintenant livré dans `packages/m0-contract/src/provider-simulator.ts`. Il ne contacte aucun fournisseur, exerce le contrat de requête/réponse, l'annulation et le stale guard, et sert de base aux tests avant l'ajout de clés ou de connexions réelles.
+
+L'orchestrateur `ModelSuggestionOrchestrator` devient la seule porte d'entrée d'une suggestion dans l'éditeur. Il vérifie l'alignement registre/adaptateur/modèle avant l'appel, n'autorise qu'une requête active, annule la précédente lors d'une nouvelle pause d'écriture et étiquette `stale` toute réponse arrivée après un changement de génération ou de base. L'adaptateur conserve la responsabilité du protocole fournisseur ; l'orchestrateur ne reçoit ni clé ni secret. La prochaine réunion doit décider le premier adaptateur distant à implémenter derrière cette frontière et son budget de requêtes.
