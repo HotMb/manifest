@@ -9,8 +9,17 @@ const SCREENSHOTS = fileURLToPath(new URL('../../.team/screenshots/', import.met
 async function openEditor(page: Page) {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: INITIAL_TITLE, exact: true })).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toBeVisible();
   await expect(page.getByText('Diagnostic navigateur · sauvegarde locale', { exact: true })).toBeVisible();
+}
+
+async function openSettings(page: Page) {
+  const desktopSettings = page.locator('.inspector-tabs').getByRole('button', { name: 'Réglages', exact: true });
+  if (await desktopSettings.isVisible()) {
+    await desktopSettings.click();
+  } else {
+    await page.getByRole('button', { name: 'Réglages du bloc', exact: true }).click();
+  }
+  await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toBeVisible();
 }
 
 async function screenshot(page: Page, filename: string) {
@@ -24,6 +33,7 @@ test('les réglages modifient la page et une sauvegarde locale survit au recharg
   await openEditor(page);
   await expect(page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true })).toBeDisabled();
   await screenshot(page, 'arc01-desktop.png');
+  await openSettings(page);
 
   const editorBackground = await page.locator('.topbar').evaluate((element) => getComputedStyle(element).backgroundColor);
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill('Des lieux pour vivre ensemble');
@@ -38,9 +48,10 @@ test('les réglages modifient la page et une sauvegarde locale survit au recharg
   await expect(page.locator('.statusbar').getByRole('status')).toContainText('Modifications non enregistrées');
   await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
   await expect(page.locator('.statusbar').getByRole('status')).toContainText('Brouillon enregistré dans ce navigateur.');
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Voir la version 1', exact: true })).toBeVisible();
   await page.reload();
 
+  await openSettings(page);
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveValue('Des lieux pour vivre ensemble');
   await expect(page.getByRole('textbox', { name: 'Texte de présentation', exact: true })).toHaveValue('Un atelier qui transforme les usages en espaces durables.');
   await expect(page.getByLabel('Fond de la page', { exact: true })).toHaveValue('#dbe9ec');
@@ -52,6 +63,7 @@ test('les réglages modifient la page et une sauvegarde locale survit au recharg
 
 test('annuler puis rétablir restitue le document et le réglage visible', async ({ page }) => {
   await openEditor(page);
+  await openSettings(page);
   await expect(page.getByRole('button', { name: 'Annuler', exact: true })).toBeDisabled();
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill('Une nouvelle direction');
   await expect(page.getByRole('heading', { name: 'Une nouvelle direction', exact: true })).toBeVisible();
@@ -67,6 +79,8 @@ test('deux vues ne peuvent écraser silencieusement la même version locale', as
   await openEditor(page);
   const second = await context.newPage();
   await openEditor(second);
+  await openSettings(page);
+  await openSettings(second);
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill('Version conservée dans la première vue');
   await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
   await expect(page.locator('.statusbar').getByRole('status')).toContainText('Brouillon enregistré dans ce navigateur.');
@@ -91,7 +105,7 @@ test('la largeur 375 px garde les actions accessibles au clavier et un seul pann
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: INITIAL_TITLE, exact: true })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Réglages du bloc', exact: true })).not.toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Panneau de conception', exact: true })).not.toBeVisible();
   await screenshot(page, 'arc01-mobile-preview.png');
 
   const settings = page.getByRole('button', { name: 'Réglages du bloc', exact: true });
@@ -116,6 +130,7 @@ test('la largeur 375 px garde les actions accessibles au clavier et un seul pann
 test('le mouvement réduit laisse la page immédiatement lisible sans animation du Hero', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openEditor(page);
+  await openSettings(page);
   await expect(page.locator('.site-hero__body')).toHaveCSS('animation-name', 'none');
   await expect(page.locator('.site-hero__body')).toHaveCSS('opacity', '1');
 });
@@ -132,6 +147,7 @@ test('un mode MCP sans hôte affiche un échec et ne passe jamais en diagnostic 
 
 test('un brouillon expiré reste intact et se récupère seulement après une action explicite', async ({ page }) => {
   await openEditor(page);
+  await openSettings(page);
   const title = 'Un brouillon à retrouver après expiration';
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill(title);
   await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
@@ -152,8 +168,9 @@ test('un brouillon expiré reste intact et se récupère seulement après une ac
   await screenshot(page, 'arc01-recovery-expired.png');
 
   await page.getByRole('button', { name: 'Reprendre le brouillon expiré', exact: true }).click();
+  await openSettings(page);
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveValue(title);
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Voir la version 1', exact: true })).toBeVisible();
   const recovered = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), STORAGE_KEY);
   expect(recovered.project.snapshot.pages[0].composition.content[0].props.title).toBe(title);
   expect(recovered.project.draftVersion).toBe(1);
@@ -162,6 +179,7 @@ test('un brouillon expiré reste intact et se récupère seulement après une ac
 
 test('une sauvegarde incertaine conserve sa capture puis les nouveaux réglages après vérification', async ({ page }) => {
   await openEditor(page);
+  await openSettings(page);
   await page.evaluate((key) => {
     const original = Storage.prototype.setItem;
     let failNext = true;
@@ -185,15 +203,16 @@ test('une sauvegarde incertaine conserve sa capture puis les nouveaux réglages 
   await page.getByRole('button', { name: 'Vérifier la version enregistrée', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveValue(newerTitle);
   await page.getByRole('button', { name: 'Réessayer l’enregistrement en attente', exact: true }).click();
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Voir la version 1', exact: true })).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveValue(newerTitle);
   const captured = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), STORAGE_KEY);
   expect(captured.project.snapshot.pages[0].composition.content[0].props.title).toBe(capturedTitle);
 
   await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Voir la version 2', exact: true })).toBeVisible();
   const final = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), STORAGE_KEY);
   expect(final.project.snapshot.pages[0].composition.content[0].props.title).toBe(newerTitle);
   await page.reload();
+  await openSettings(page);
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveValue(newerTitle);
 });

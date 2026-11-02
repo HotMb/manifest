@@ -1,0 +1,173 @@
+{
+  "date": "2026-11-02",
+  "target": "http://127.0.0.1:4174",
+  "browser": "Chrome headless local",
+  "checks": [
+    {
+      "name": "Trois colonnes et aperçu central dominant",
+      "pass": true,
+      "detail": {
+        "left": {
+          "x": 0,
+          "width": 276
+        },
+        "center": {
+          "x": 276,
+          "width": 868
+        },
+        "right": {
+          "x": 1144,
+          "width": 296
+        },
+        "background": "rgb(21, 21, 21)",
+        "site": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "name": "La coque sombre reste distincte du site clair",
+      "pass": true,
+      "detail": {
+        "left": {
+          "x": 0,
+          "width": 276
+        },
+        "center": {
+          "x": 276,
+          "width": 868
+        },
+        "right": {
+          "x": 1144,
+          "width": 296
+        },
+        "background": "rgb(21, 21, 21)",
+        "site": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "name": "Le caractère local est annoncé",
+      "pass": true
+    },
+    {
+      "name": "Lecture après pause visible",
+      "pass": true,
+      "detail": {
+        "observedMs": 1877,
+        "expectedPauseMs": 1500
+      }
+    },
+    {
+      "name": "La piste ne modifie pas seule la page",
+      "pass": true
+    },
+    {
+      "name": "Appliquer la palette change uniquement la page",
+      "pass": true
+    },
+    {
+      "name": "Réglages Puck toujours accessibles",
+      "pass": true
+    },
+    {
+      "name": "Focus initial du rapport",
+      "pass": true
+    },
+    {
+      "name": "Aucune révision approuvée simulée",
+      "pass": true
+    },
+    {
+      "name": "Rapport JSON fidèle et capacités explicites",
+      "pass": true
+    },
+    {
+      "name": "Pistes appliquées et enregistrées survivent au reload",
+      "pass": true
+    },
+    {
+      "name": "Description temporaire non persistée",
+      "pass": true
+    },
+    {
+      "name": "Mobile aperçu sans débordement horizontal",
+      "pass": true,
+      "detail": {
+        "width": 375,
+        "scrollWidth": 375
+      }
+    },
+    {
+      "name": "Saisie clavier mobile conserve son focus",
+      "pass": true
+    },
+    {
+      "name": "Mobile description sans débordement horizontal",
+      "pass": true,
+      "detail": {
+        "width": 375,
+        "scrollWidth": 375
+      }
+    },
+    {
+      "name": "Mobile suggestions sans débordement horizontal",
+      "pass": true,
+      "detail": {
+        "width": 375,
+        "scrollWidth": 375
+      }
+    },
+    {
+      "name": "Pas d’erreur JavaScript non gérée",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "Aucune requête extérieure au serveur local",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "steps": [
+    {
+      "name": "01-desktop-start",
+      "note": "Coque initiale, avant toute modification.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - text: Portfolio exemple Accueil\n  - button \"Voir la version 0\": v0\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\" [disabled]\n- complementary \"Description\":\n  - heading \"Description\" [level=2]\n  - text: Local\n  - heading \"Commence par une intention.\" [level=3]\n  - paragraph: Décris ta page. Observe les pistes, puis garde ce qui te ressemble.\n  - text: Description de la page\n  - textbox \"Description de la page\":\n    - /placeholder: \"Un portfolio avec un fond clair et un accent bleu…\\n\\nTitre : Des espaces qui nous ressemblent\"\n  - text: 0 / 6 000\n  - checkbox \"Lire après une pause\" [checked]\n  - text: Lire après une pause 1,5 s\n  - button \"Analyser la description\" [disabled]\n  - paragraph: \"Cette première version utilise des règles locales : fond clair ou sombre, accent bleu, vert ou violet, fondu, et lignes « Titre : » ou « Texte : ». Aucun modèle n’est appelé.\"\n  - text: Une direction à explorer\n  - button \"Portfolio clair\"\n  - button \"Page plus profonde\"\n  - text: Ton texte reste dans cette session. Seuls les réglages de la page sont enregistrés.\n- main \"Aperçu modifiable de la page\":\n  - strong: Aperçu\n  - text: En direct\n  - button \"Ordinateur\" [pressed]\n  - button \"Mobile\"\n  - button \"Annuler\" [disabled]\n  - button \"Rétablir\" [disabled]\n  - text: aperçu / accueil Largeur disponible\n  - button \"Section d’accueil\" [disabled]:\n    - region \"Section d’accueil\":\n      - text: Atelier / Architecture Des lieux de vie Matière, espace, lumière.\n      - heading \"Des espaces conçus pour durer\" [level=1]\n      - paragraph: Architecture et aménagement pour les lieux de vie.\n      - img \"Plan architectural abstrait, dessin de l’atelier\": LUMIÈRE NATURELLE ÉTUDE D’ESPACE ATELIER\n      - text: Architecture & aménagement Concevoir pour habiter.\n  - text: Section d’accueil\n  - paragraph: Une page. Un bloc. Un point de départ.\n  - button \"Modifier le bloc\"\n- complementary \"Panneau de conception\":\n  - heading \"Conception\" [level=2]\n  - text: \"0\"\n  - group \"Panneau de conception\":\n    - button \"Suggestions\" [pressed]\n    - button \"Réglages\"\n  - status:\n    - strong: Une intention, puis des pistes\n    - text: Aucun appel à un modèle.\n  - heading \"La prochaine idée commence à gauche.\" [level=3]\n  - paragraph: Décris une couleur, une entrée ou les mots à afficher. Les pistes locales apparaissent après une pause.\n  - heading \"Dans cette page\" [level=3]\n  - strong: Section d’accueil\n  - text: Hero · contenu modifiable\n  - button \"Régler\"\n  - paragraph: Les suggestions de modèles et l’export de code ne sont pas encore connectés. Ces pistes locales passent par les mêmes règles de document que les réglages manuels.\n- contentinfo:\n  - status: Brouillon de départ\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v0\"\n- status"
+    },
+    {
+      "name": "02-desktop-suggestions",
+      "note": "Pistes locales prêtes ; aperçu encore inchangé.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - text: Portfolio exemple Accueil\n  - button \"Voir la version 0\": v0\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\" [disabled]\n- complementary \"Description\":\n  - heading \"Description\" [level=2]\n  - text: Local\n  - heading \"Commence par une intention.\" [level=3]\n  - paragraph: Décris ta page. Observe les pistes, puis garde ce qui te ressemble.\n  - text: Description de la page\n  - textbox \"Description de la page\":\n    - /placeholder: \"Un portfolio avec un fond clair et un accent bleu…\\n\\nTitre : Des espaces qui nous ressemblent\"\n    - text: \"Un fond sombre avec un accent vert et sans animation. Titre : Une page Manifest à vérifier\"\n  - text: 90 / 6 000\n  - button \"Effacer\"\n  - checkbox \"Lire après une pause\" [checked]\n  - text: Lire après une pause 1,5 s\n  - button \"Analyser la description\"\n  - paragraph: \"Cette première version utilise des règles locales : fond clair ou sombre, accent bleu, vert ou violet, fondu, et lignes « Titre : » ou « Texte : ». Aucun modèle n’est appelé.\"\n  - text: Une direction à explorer\n  - button \"Portfolio clair\"\n  - button \"Page plus profonde\"\n  - text: Ton texte reste dans cette session. Seuls les réglages de la page sont enregistrés.\n- main \"Aperçu modifiable de la page\":\n  - strong: Aperçu\n  - text: En direct\n  - button \"Ordinateur\" [pressed]\n  - button \"Mobile\"\n  - button \"Annuler\" [disabled]\n  - button \"Rétablir\" [disabled]\n  - text: aperçu / accueil Largeur disponible\n  - button \"Section d’accueil\" [disabled]:\n    - region \"Section d’accueil\":\n      - text: Atelier / Architecture Des lieux de vie Matière, espace, lumière.\n      - heading \"Des espaces conçus pour durer\" [level=1]\n      - paragraph: Architecture et aménagement pour les lieux de vie.\n      - img \"Plan architectural abstrait, dessin de l’atelier\": LUMIÈRE NATURELLE ÉTUDE D’ESPACE ATELIER\n      - text: Architecture & aménagement Concevoir pour habiter.\n  - text: Section d’accueil\n  - paragraph: Une page. Un bloc. Un point de départ.\n  - button \"Modifier le bloc\"\n- complementary \"Panneau de conception\":\n  - heading \"Conception\" [level=2]\n  - text: \"3\"\n  - group \"Panneau de conception\":\n    - button \"Suggestions\" [pressed]\n    - button \"Réglages\"\n  - status:\n    - strong: Analyse locale prête\n    - text: 4 indications reconnues\n  - article:\n    - text: Couleurs Règle locale\n    - heading \"Une palette plus profonde\" [level=3]\n    - paragraph: Ajuster le fond, le texte et l’accent de la page. Les couleurs de l’atelier restent indépendantes.\n    - button \"Appliquer la palette\"\n  - article:\n    - text: Mouvement Règle locale\n    - heading \"Laisser parler la composition\" [level=3]\n    - paragraph: Retirer l’animation d’entrée pour un contenu immédiatement stable.\n    - button \"Appliquer l’animation\"\n  - article:\n    - text: Contenu Règle locale\n    - heading \"Tes mots, dans la page\" [level=3]\n    - paragraph: Reprendre le titre ou le texte que tu as indiqué explicitement dans ta description.\n    - button \"Appliquer le contenu\"\n  - heading \"Dans cette page\" [level=3]\n  - strong: Section d’accueil\n  - text: Hero · contenu modifiable\n  - button \"Régler\"\n  - paragraph: Les suggestions de modèles et l’export de code ne sont pas encore connectés. Ces pistes locales passent par les mêmes règles de document que les réglages manuels.\n- contentinfo:\n  - status: Brouillon de départ\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v0\"\n- status"
+    },
+    {
+      "name": "03-desktop-applied",
+      "note": "Pistes de palette et contenu appliquées, encore non enregistrées.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - text: Portfolio exemple Accueil\n  - button \"Voir la version 0\": v0\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\"\n- complementary \"Description\":\n  - heading \"Description\" [level=2]\n  - text: Local\n  - heading \"Commence par une intention.\" [level=3]\n  - paragraph: Décris ta page. Observe les pistes, puis garde ce qui te ressemble.\n  - text: Description de la page\n  - textbox \"Description de la page\":\n    - /placeholder: \"Un portfolio avec un fond clair et un accent bleu…\\n\\nTitre : Des espaces qui nous ressemblent\"\n    - text: \"Un fond sombre avec un accent vert et sans animation. Titre : Une page Manifest à vérifier\"\n  - text: 90 / 6 000\n  - button \"Effacer\"\n  - checkbox \"Lire après une pause\" [checked]\n  - text: Lire après une pause 1,5 s\n  - button \"Analyser la description\"\n  - paragraph: \"Cette première version utilise des règles locales : fond clair ou sombre, accent bleu, vert ou violet, fondu, et lignes « Titre : » ou « Texte : ». Aucun modèle n’est appelé.\"\n  - text: Une direction à explorer\n  - button \"Portfolio clair\"\n  - button \"Page plus profonde\"\n  - text: Ton texte reste dans cette session. Seuls les réglages de la page sont enregistrés.\n- main \"Aperçu modifiable de la page\":\n  - strong: Aperçu\n  - text: En direct\n  - button \"Ordinateur\" [pressed]\n  - button \"Mobile\"\n  - button \"Annuler\"\n  - button \"Rétablir\" [disabled]\n  - text: aperçu / accueil Largeur disponible\n  - button \"Section d’accueil\" [disabled]:\n    - region \"Section d’accueil\":\n      - text: Atelier / Architecture Des lieux de vie Matière, espace, lumière.\n      - heading \"Une page Manifest à vérifier\" [level=1]\n      - paragraph: Architecture et aménagement pour les lieux de vie.\n      - img \"Plan architectural abstrait, dessin de l’atelier\": LUMIÈRE NATURELLE ÉTUDE D’ESPACE ATELIER\n      - text: Architecture & aménagement Concevoir pour habiter.\n  - text: Section d’accueil\n  - paragraph: Une page. Un bloc. Un point de départ.\n  - button \"Modifier le bloc\"\n- complementary \"Panneau de conception\":\n  - heading \"Conception\" [level=2]\n  - text: \"0\"\n  - group \"Panneau de conception\":\n    - button \"Suggestions\" [pressed]\n    - button \"Réglages\"\n  - status:\n    - strong: Lecture après ta pause\n    - text: Continue d’écrire, la page reste disponible.\n  - heading \"La prochaine idée commence à gauche.\" [level=3]\n  - paragraph: Décris une couleur, une entrée ou les mots à afficher. Les pistes locales apparaissent après une pause.\n  - heading \"Dans cette page\" [level=3]\n  - strong: Section d’accueil\n  - text: Hero · contenu modifiable\n  - button \"Régler\"\n  - paragraph: Les suggestions de modèles et l’export de code ne sont pas encore connectés. Ces pistes locales passent par les mêmes règles de document que les réglages manuels.\n- contentinfo:\n  - status: Piste locale appliquée à l’aperçu. Enregistre le brouillon pour la conserver.\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v0\"\n- status"
+    },
+    {
+      "name": "04-desktop-report",
+      "note": "Rapport de conception et distinction des réglages non enregistrés.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - text: Portfolio exemple Accueil\n  - button \"Voir la version 0\": v0\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\"\n- complementary \"Description\":\n  - heading \"Description\" [level=2]\n  - text: Local\n  - heading \"Commence par une intention.\" [level=3]\n  - paragraph: Décris ta page. Observe les pistes, puis garde ce qui te ressemble.\n  - text: Description de la page\n  - textbox \"Description de la page\":\n    - /placeholder: \"Un portfolio avec un fond clair et un accent bleu…\\n\\nTitre : Des espaces qui nous ressemblent\"\n    - text: \"Un fond sombre avec un accent vert et sans animation. Titre : Une page Manifest à vérifier\"\n  - text: 90 / 6 000\n  - button \"Effacer\"\n  - checkbox \"Lire après une pause\" [checked]\n  - text: Lire après une pause 1,5 s\n  - button \"Analyser la description\"\n  - paragraph: \"Cette première version utilise des règles locales : fond clair ou sombre, accent bleu, vert ou violet, fondu, et lignes « Titre : » ou « Texte : ». Aucun modèle n’est appelé.\"\n  - text: Une direction à explorer\n  - button \"Portfolio clair\"\n  - button \"Page plus profonde\"\n  - text: Ton texte reste dans cette session. Seuls les réglages de la page sont enregistrés.\n- main \"Aperçu modifiable de la page\":\n  - strong: Aperçu\n  - text: En direct\n  - button \"Ordinateur\" [pressed]\n  - button \"Mobile\"\n  - button \"Annuler\"\n  - button \"Rétablir\" [disabled]\n  - text: aperçu / accueil Largeur disponible\n  - button \"Section d’accueil\" [disabled]:\n    - region \"Section d’accueil\":\n      - text: Atelier / Architecture Des lieux de vie Matière, espace, lumière.\n      - heading \"Une page Manifest à vérifier\" [level=1]\n      - paragraph: Architecture et aménagement pour les lieux de vie.\n      - img \"Plan architectural abstrait, dessin de l’atelier\": LUMIÈRE NATURELLE ÉTUDE D’ESPACE ATELIER\n      - text: Architecture & aménagement Concevoir pour habiter.\n  - text: Section d’accueil\n  - paragraph: Une page. Un bloc. Un point de départ.\n  - button \"Modifier le bloc\"\n- complementary \"Panneau de conception\":\n  - heading \"Conception\" [level=2]\n  - text: \"0\"\n  - group \"Panneau de conception\":\n    - button \"Suggestions\"\n    - button \"Réglages\" [pressed]\n  - heading \"Section d’accueil\" [level=3]\n  - paragraph: Contenu & apparence\n  - img\n  - text: Titre\n  - textbox \"Titre\": Une page Manifest à vérifier\n  - img\n  - text: Texte de présentation\n  - textbox \"Texte de présentation\": Architecture et aménagement pour les lieux de vie.\n  - img\n  - text: Animation d’entrée\n  - radio \"Aucune\"\n  - text: Aucune\n  - radio \"Fondu discret\" [checked]\n  - text: Fondu discret\n  - group \"Couleurs de la page\":\n    - text: Couleurs de la page\n    - paragraph: Ces réglages s’appliquent au site, pas à l’atelier.\n    - text: Fond de la page\n    - code: \"#172026\"\n    - textbox \"Fond de la page\": \"#172026\"\n    - text: Texte\n    - code: \"#F3F1EB\"\n    - textbox \"Texte\": \"#f3f1eb\"\n    - text: Accent\n    - code: \"#33715B\"\n    - textbox \"Accent\": \"#33715b\"\n  - strong: Un changement reste un choix.\n  - paragraph: Les réglages changent l’aperçu immédiatement. Enregistre le brouillon pour les conserver.\n- contentinfo:\n  - status: Piste locale appliquée à l’aperçu. Enregistre le brouillon pour la conserver.\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v0\"\n- dialog \"Rapport & version\":\n  - banner:\n    - text: Manifest / état du projet\n    - heading \"Rapport & version\" [level=2]\n    - button \"Fermer le rapport\"\n  - group \"Contenu du rapport\":\n    - button \"Rapport de conception\" [pressed]\n    - button \"Version du brouillon\"\n  - heading \"Portfolio exemple\" [level=3]\n  - paragraph: Une page · un composant · trois couleurs\n  - heading \"Intention de conception\" [level=3]\n  - paragraph: \"Un fond sombre avec un accent vert et sans animation. Titre : Une page Manifest à vérifier\"\n  - text: Cette description est temporaire et n’a pas été enregistrée avec le brouillon.\n  - heading \"Palette actuelle\" [level=3]\n  - text: Fond de la page\n  - code: \"#172026\"\n  - text: Texte\n  - code: \"#F3F1EB\"\n  - text: Accent\n  - code: \"#33715B\"\n  - heading \"Analyse\" [level=3]\n  - paragraph: Règles locales · aucun modèle appelé · 0 indication(s) reconnue(s).\n  - text: Le rapport sépare le document enregistré des réglages encore ouverts.\n  - contentinfo:\n    - status: Un rapport de conception, prêt à être partagé.\n    - button \"Télécharger le rapport JSON\"\n    - button \"Copier le rapport\"\n- status"
+    },
+    {
+      "name": "05-desktop-version",
+      "note": "Version de brouillon et limites explicitement affichées.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - text: Portfolio exemple Accueil\n  - button \"Voir la version 0\": v0\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\"\n- complementary \"Description\":\n  - heading \"Description\" [level=2]\n  - text: Local\n  - heading \"Commence par une intention.\" [level=3]\n  - paragraph: Décris ta page. Observe les pistes, puis garde ce qui te ressemble.\n  - text: Description de la page\n  - textbox \"Description de la page\":\n    - /placeholder: \"Un portfolio avec un fond clair et un accent bleu…\\n\\nTitre : Des espaces qui nous ressemblent\"\n    - text: \"Un fond sombre avec un accent vert et sans animation. Titre : Une page Manifest à vérifier\"\n  - text: 90 / 6 000\n  - button \"Effacer\"\n  - checkbox \"Lire après une pause\" [checked]\n  - text: Lire après une pause 1,5 s\n  - button \"Analyser la description\"\n  - paragraph: \"Cette première version utilise des règles locales : fond clair ou sombre, accent bleu, vert ou violet, fondu, et lignes « Titre : » ou « Texte : ». Aucun modèle n’est appelé.\"\n  - text: Une direction à explorer\n  - button \"Portfolio clair\"\n  - button \"Page plus profonde\"\n  - text: Ton texte reste dans cette session. Seuls les réglages de la page sont enregistrés.\n- main \"Aperçu modifiable de la page\":\n  - strong: Aperçu\n  - text: En direct\n  - button \"Ordinateur\" [pressed]\n  - button \"Mobile\"\n  - button \"Annuler\"\n  - button \"Rétablir\" [disabled]\n  - text: aperçu / accueil Largeur disponible\n  - button \"Section d’accueil\" [disabled]:\n    - region \"Section d’accueil\":\n      - text: Atelier / Architecture Des lieux de vie Matière, espace, lumière.\n      - heading \"Une page Manifest à vérifier\" [level=1]\n      - paragraph: Architecture et aménagement pour les lieux de vie.\n      - img \"Plan architectural abstrait, dessin de l’atelier\": LUMIÈRE NATURELLE ÉTUDE D’ESPACE ATELIER\n      - text: Architecture & aménagement Concevoir pour habiter.\n  - text: Section d’accueil\n  - paragraph: Une page. Un bloc. Un point de départ.\n  - button \"Modifier le bloc\"\n- complementary \"Panneau de conception\":\n  - heading \"Conception\" [level=2]\n  - text: \"0\"\n  - group \"Panneau de conception\":\n    - button \"Suggestions\"\n    - button \"Réglages\" [pressed]\n  - heading \"Section d’accueil\" [level=3]\n  - paragraph: Contenu & apparence\n  - img\n  - text: Titre\n  - textbox \"Titre\": Une page Manifest à vérifier\n  - img\n  - text: Texte de présentation\n  - textbox \"Texte de présentation\": Architecture et aménagement pour les lieux de vie.\n  - img\n  - text: Animation d’entrée\n  - radio \"Aucune\"\n  - text: Aucune\n  - radio \"Fondu discret\" [checked]\n  - text: Fondu discret\n  - group \"Couleurs de la page\":\n    - text: Couleurs de la page\n    - paragraph: Ces réglages s’appliquent au site, pas à l’atelier.\n    - text: Fond de la page\n    - code: \"#172026\"\n    - textbox \"Fond de la page\": \"#172026\"\n    - text: Texte\n    - code: \"#F3F1EB\"\n    - textbox \"Texte\": \"#f3f1eb\"\n    - text: Accent\n    - code: \"#33715B\"\n    - textbox \"Accent\": \"#33715b\"\n  - strong: Un changement reste un choix.\n  - paragraph: Les réglages changent l’aperçu immédiatement. Enregistre le brouillon pour les conserver.\n- contentinfo:\n  - status: Piste locale appliquée à l’aperçu. Enregistre le brouillon pour la conserver.\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v0\"\n- dialog \"Rapport & version\":\n  - banner:\n    - text: Manifest / état du projet\n    - heading \"Rapport & version\" [level=2]\n    - button \"Fermer le rapport\"\n  - group \"Contenu du rapport\":\n    - button \"Rapport de conception\"\n    - button \"Version du brouillon\" [pressed]\n  - text: Version chargée\n  - strong: v0\n  - paragraph: Des modifications restent à enregistrer.\n  - term: Projet\n  - definition: Portfolio exemple\n  - term: Conservation\n  - definition: Ce navigateur · sept jours\n  - term: Révision approuvée\n  - definition: Aucune — brouillon de travail\n  - term: Empreinte du document enregistré\n  - definition:\n    - code: 2cc78efcbea8b854de4e33b8cb8e441372f102e5c92b3141d57122f9329ab990\n  - paragraph: Cette étape ne crée pas encore d’historique de versions approuvées ni d’export de code. Le numéro ci-dessus suit les sauvegardes du brouillon.\n  - contentinfo:\n    - status: Un rapport de conception, prêt à être partagé.\n    - button \"Télécharger le rapport JSON\"\n    - button \"Copier le rapport\"\n- status"
+    },
+    {
+      "name": "06-mobile-preview",
+      "note": "Écran de prévisualisation à 375 × 812.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\" [disabled]\n- group \"Zone de travail\":\n  - button \"Description\"\n  - button \"Aperçu de la page\" [pressed]\n  - button \"Suggestions\"\n  - button \"Réglages du bloc\"\n- main \"Aperçu modifiable de la page\":\n  - strong: Aperçu\n  - button \"Aperçu ordinateur\" [pressed]\n  - button \"Aperçu mobile\"\n  - button \"Annuler\" [disabled]\n  - button \"Rétablir\" [disabled]\n  - text: aperçu / accueil\n  - button \"Section d’accueil\" [disabled]:\n    - region \"Section d’accueil\":\n      - text: Atelier / Architecture Matière, espace, lumière.\n      - heading \"Une page Manifest à vérifier\" [level=1]\n      - paragraph: Architecture et aménagement pour les lieux de vie.\n      - img \"Plan architectural abstrait, dessin de l’atelier\": LUMIÈRE NATURELLE ÉTUDE D’ESPACE ATELIER\n      - text: Architecture & aménagement Concevoir pour habiter.\n  - text: Section d’accueil\n  - paragraph: Une page. Un bloc. Un point de départ.\n  - button \"Modifier le bloc\"\n- contentinfo:\n  - status: Brouillon local enregistré\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v1\"\n- status"
+    },
+    {
+      "name": "07-mobile-description",
+      "note": "Panneau Description et champ actif à largeur étroite.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\" [disabled]\n- group \"Zone de travail\":\n  - button \"Description\" [pressed]\n  - button \"Aperçu de la page\"\n  - button \"Suggestions\"\n  - button \"Réglages du bloc\"\n- complementary \"Description\":\n  - heading \"Commence par une intention.\" [level=3]\n  - paragraph: Décris ta page. Observe les pistes, puis garde ce qui te ressemble.\n  - text: Description de la page\n  - textbox \"Description de la page\":\n    - /placeholder: \"Un portfolio avec un fond clair et un accent bleu…\\n\\nTitre : Des espaces qui nous ressemblent\"\n    - text: Un fond clair avec un accent bleu\n  - text: 33 / 6 000\n  - button \"Effacer\"\n  - checkbox \"Lire après une pause\" [checked]\n  - text: Lire après une pause 1,5 s\n  - button \"Analyser la description\"\n  - paragraph: \"Cette première version utilise des règles locales : fond clair ou sombre, accent bleu, vert ou violet, fondu, et lignes « Titre : » ou « Texte : ». Aucun modèle n’est appelé.\"\n  - text: Une direction à explorer\n  - button \"Portfolio clair\"\n  - button \"Page plus profonde\"\n  - text: Ton texte reste dans cette session. Seuls les réglages de la page sont enregistrés.\n- contentinfo:\n  - status: Brouillon local enregistré\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v1\"\n- status"
+    },
+    {
+      "name": "08-mobile-suggestions",
+      "note": "Pistes locales sur mobile.",
+      "snapshot": "- banner:\n  - link \"Aller à l’aperçu\":\n    - /url: \"#page-preview\"\n  - strong: manifest.\n  - button \"Rapport & version\"\n  - button \"Enregistrer le brouillon\" [disabled]\n- group \"Zone de travail\":\n  - button \"Description\"\n  - button \"Aperçu de la page\"\n  - button \"Suggestions\" [pressed]\n  - button \"Réglages du bloc\"\n- complementary \"Panneau de conception\":\n  - group \"Panneau de conception\":\n    - button \"Suggestions\" [pressed]\n    - button \"Réglages\"\n  - status:\n    - strong: Analyse locale prête\n    - text: 2 indications reconnues\n  - article:\n    - text: Couleurs Règle locale\n    - heading \"Une palette à ton intention\" [level=3]\n    - paragraph: Ajuster le fond, le texte et l’accent de la page. Les couleurs de l’atelier restent indépendantes.\n    - button \"Appliquer la palette\"\n  - heading \"Dans cette page\" [level=3]\n  - strong: Section d’accueil\n  - text: Hero · contenu modifiable\n  - button \"Régler\"\n  - paragraph: Les suggestions de modèles et l’export de code ne sont pas encore connectés. Ces pistes locales passent par les mêmes règles de document que les réglages manuels.\n- contentinfo:\n  - status: Brouillon local enregistré\n  - text: Diagnostic navigateur · sauvegarde locale\n  - button \"Brouillon v1\"\n- status"
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": []
+}

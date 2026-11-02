@@ -1,12 +1,12 @@
 ---
 version: alpha
 colors:
-  background: "#F3F5F7"
-  surface: "#FFFFFF"
-  primary: "#2454C6"
-  foreground: "#1C2533"
-  secondary: "#5B6675"
-  border: "#DCE2EA"
+  background: "#151515"
+  surface: "#1F1F1F"
+  primary: "#D5FF5C"
+  foreground: "#F4F2EC"
+  secondary: "#A6A6A0"
+  border: "#FFFFFF14"
 typography:
   sans:
     fontFamily: "Instrument Sans, Arial, sans-serif"
@@ -26,9 +26,9 @@ components:
     padding: "16px"
 ---
 
-# Identité de l'éditeur
+# Identité de l'éditeur Manifest
 
-Contrat initial proposé pour l'outil, distinct des thèmes créés par ses utilisateurs. Les valeurs sont des décisions de conception, pas une implémentation déjà vérifiée. Les styles de l'éditeur seront générés ou dérivés d'une seule source de tokens ; les autres fichiers ne doivent pas maintenir des copies divergentes.
+Contrat visuel validé pour la coque Manifest, distinct des thèmes créés par ses utilisateurs. Les valeurs sont des décisions de conception partagées par l'éditeur sombre et non une inversion automatique du thème de la page. Les styles de l'éditeur sont générés ou dérivés d'une seule source de tokens ; les autres fichiers ne doivent pas maintenir des copies divergentes.
 
 ## Overview
 
@@ -40,7 +40,7 @@ Signature : une proposition et son bloc se mettent en évidence ensemble. Ce lie
 
 Les six couleurs de frontmatter définissent les surfaces, textes et sélection. Primary signifie sélection/action principale ; ne pas teinter tous les panneaux avec l'accent. Les états d'erreur, d'avertissement et de succès reçoivent des tokens sémantiques distincts à vérifier au ticket UX-01 ; ils ne sont jamais indiqués par la couleur seule.
 
-Le contenu de la page possède son propre thème. Un fond sombre choisi pour le site n'assombrit pas automatiquement les champs de l'éditeur. La compatibilité avec les thèmes imposés par l'hôte est testée ; un mode sombre de l'éditeur est une variante explicitement conçue après M1, pas une inversion automatique.
+Le contenu de la page possède son propre thème. Un fond sombre choisi pour le site n'assombrit pas automatiquement les champs de l'éditeur, et la coque sombre de Manifest ne force pas les couleurs du site créé. La compatibilité avec les thèmes imposés par l'hôte est testée ; l'éditeur conserve ses tokens dédiés.
 
 ## Typography
 
@@ -50,7 +50,7 @@ Les champs et contrôles restent en français M1. Les pages créées acceptent l
 
 ## Layout
 
-Écran de travail : barre supérieure stable, colonne intention/catalogue, centre dominant, inspecteur. Point de départ desktop : gauche 280–320 px, droite 280–320 px, centre fluide. À moins de 1 100 px, un seul panneau latéral à la fois ; à moins de 768 px, panneaux en tiroirs et barre d'actions condensée. Ces seuils sont des propositions à tester sur le viewport réel de l'hôte.
+Écran de travail : coque sombre proche de Manifest, colonne intention/catalogue à gauche, aperçu blanc dominant au centre, suggestions et inspecteur à droite. Point de départ desktop : gauche 280–320 px, droite 280–320 px, centre fluide. À moins de 1 100 px, un seul panneau latéral à la fois ; à moins de 768 px, panneaux en tiroirs et barre d'actions condensée. Ces seuils sont des propositions à tester sur le viewport réel de l'hôte.
 
 Rythme 4 px pour les contrôles, espaces de 8/12/16/24 px et alignements continus. Les boutons ne changent pas de largeur pendant une demande. L'aperçu possède son viewport ; ne pas modifier toute la mise en page du shell pour simuler un téléphone.
 

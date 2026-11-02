@@ -27,6 +27,7 @@ export function editorTokensCss(document: string): string {
   }
   entries.push(['--editor-font', quotedValue(frontmatter + '\n', 'typography', 'sans', 'fontFamily')]);
   entries.push(['--editor-mono', quotedValue(frontmatter + '\n', 'typography', 'mono', 'fontFamily')]);
+  entries.push(['--editor-selection', quotedValue(frontmatter + '\n', 'components', 'SelectionOutline', 'color')]);
   for (const key of ['control', 'panel']) entries.push([`--radius-${key}`, quotedValue(frontmatter + '\n', 'rounded', key)]);
   for (const key of ['unit', 'controlGap', 'panelPadding']) entries.push([`--space-${key}`, quotedValue(frontmatter + '\n', 'spacing', key)]);
   return `/* Generated from DESIGN.md at build time. */\n:root{${entries.map(([key, value]) => `${key}:${value}`).join(';')}}`;
