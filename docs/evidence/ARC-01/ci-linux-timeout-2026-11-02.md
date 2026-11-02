@@ -13,9 +13,10 @@ Dans `tests/e2e/arc01.spec.ts`, `openSettings` choisit maintenant entre l’ongl
 ## Résultats et limites
 
 - Réussis localement : `npm run check` (26 tickets valides, révision 3), `npm run typecheck`, `git diff --check`.
-- Test ciblé `npm run test:e2e -- --grep "brouillon expiré"` : lancé mais sans rapport de fin après environ 60 secondes ; processus interrompu. Ce n’est pas un succès ni un échec de l’assertion.
-- Reviewer Test Automation Engineer : juge le changement causalement adéquat, recommande le test ciblé Chromium, une répétition et le run Linux ; aucun de ces tests n’a été exécuté par le reviewer.
+- CI GitHub Actions Quality #34 sur le commit `36253c5557be6063b40e25cd867fb361c51c9dc1` : job complet réussi ; **8/8 E2E**, le parcours de reprise expirée réussit en 3,1 s, puis les validations de contrats passent. [Run 41506223549](https://github.com/HotMb/manifest/actions/runs/41506223549).
+- Les tests ciblés locaux (`npm run test:e2e -- --grep "brouillon expiré"` et `CI=true npx playwright test --grep "brouillon expiré" --repeat-each=10`) n’ont produit aucun rapport après environ 60 s puis 70 s ; ils ont été interrompus. Ce n’est ni un succès ni un échec d’assertion.
+- Reviewer Test Automation Engineer : confirme le run Linux 8/8 et recommande une répétition x10, non encore obtenue ; le reviewer n’a pas lancé de test.
 - Loop-verify : deux tentatives, toutes deux FAIL parce que le premier envoi omettait le compte rendu et l’état détaillé des tickets, puis le second omettait l’implémentation du helper. La limite du skill interdit une troisième tentative ; aucun PASS global n’est revendiqué.
-- État : correctif local, run CI après correction à venir. ARC-01 reste bloqué jusqu’à la confirmation E2E et aux preuves réelles du vrai hôte ChatGPT / identité.
+- État : correction E2E validée par un run CI complet, répétition x10 recommandée ; ARC-01 reste bloqué jusqu’aux preuves réelles du vrai hôte ChatGPT / identité.
 
 Voir le [compte rendu de revue](../../meetings/2026-11-02-ARC-01-ci-followup.md).
