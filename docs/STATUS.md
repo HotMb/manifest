@@ -6,6 +6,7 @@ Mise à jour : **2 novembre 2026**. Le dépôt GitHub est désormais public sous
 
 - Le prototype local comprend l'éditeur React/Puck et la boucle de suggestion MCP. Le nom visible par le transport MCP, le serveur et les logs a été aligné sur Manifest.
 - Le dépôt GitHub et ses 26 Issues ont été renommés/référencés sous `HotMb/manifest`. Les Issues restent des miroirs ; `docs/delivery/tickets.json` fait foi pour les états et dépendances.
+- Le commit `ee9ec5d` a été poussé sur `work/arc-01-qualification`. Le workflow GitHub Actions `Quality` de ce commit était **en cours** lors de la dernière vérification (run 41497641045) ; aucun résultat n'est annoncé comme réussi.
 - Le registre est en révision **3**. **ARC-01 est bloqué** jusqu'à l'essai dans le vrai hôte ChatGPT et la preuve d'identité réelle. `npm run team:next` indique **0 ticket éligible** ; ARC-02 et la suite ne démarrent donc pas.
 - Les agents frontend et backend ont relu cette porte de sortie avant de changer uniquement leurs libellés d'application. Leur travail de nommage n'avance ni ne clôture ARC-01.
 

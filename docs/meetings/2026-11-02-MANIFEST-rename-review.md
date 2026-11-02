@@ -8,6 +8,7 @@ Date : 2 novembre 2026. Périmètre : nom produit Manifest, dépôt GitHub, cadr
 - Le README, les règles des agents, le brief de lancement, le guide de livraison, le tableau et les liens de suivi utilisent Manifest comme nom produit. Les anciens espaces de noms de packages et clés de stockage `design-workbench` restent des identifiants techniques compatibles.
 - Les 26 Issues ont reçu un bandeau « Projet : Manifest », leurs liens vers le dépôt ont été corrigés et l'Issue ARC-01 indique son état bloqué réel.
 - Les noms transmis par l'adaptateur d'hôte, le serveur MCP, le realm HTTP et les logs ont été alignés sur Manifest/`manifest-m0`.
+- Le commit `ee9ec5d` a été poussé sur `work/arc-01-qualification`. Le workflow GitHub Actions `Quality` (run 41497641045) était en cours au dernier contrôle ; son résultat reste à observer.
 
 ## Contributions et vérification
 
