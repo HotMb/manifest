@@ -13,6 +13,7 @@ Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https
 - Champ principal décrivant la page et ses mouvements ; proposition manuelle ou analyse après activation, avec une pause de 1,5 s. Les propositions locales et le simulateur sont prévisualisés avant conservation.
 - Ajout manuel d’une section M0, annuler/rétablir, sauvegarde navigateur et affichage mobile.
 - Ajustements de hiérarchie, ouverture directe à 375 px dans l’étape Décrire, disparition du message vide sous un candidat et contraste des champs Puck vérifié à ≥ 4,5:1.
+- Le paquet du plugin privé ChatGPT Desktop a été reconstruit et actualisé en version **0.1.1** ; le smoke local passe. Cela ne prouve pas son rendu dans l’hôte. Voir la [revue du rafraîchissement](meetings/2026-11-03-ARC-01-plugin-refresh-review.md) et la [preuve du paquet](evidence/ARC-01/plugin-refresh-2026-11-03.md).
 - Les détails de compatibilité, résultats et limites figurent dans la [preuve datée](evidence/ARC-01/implementation-2026-11-03.md) et la [comparaison explicite à la maquette](evidence/ARC-01/figma-alignment-2026-11-03.md). Les références Figma antérieures restent dans [la revue de direction](meetings/2026-11-02-MANIFEST-design-direction.md).
 
 ## Ce qui n’est pas encore livré
