@@ -27,7 +27,7 @@ Le contrôle python scripts/check_contracts.py et la suite Python n’ont pas pu
 
 ## Vérification GitHub après publication de bd21c25
 
-GitHub Actions a exécuté deux jobs `contracts-and-orchestration` sur le HEAD `bd21c25780e2d92d4a31081c52e4a08265234e43` (runs 41714496715 et 41714490176). Dans les deux jobs, les 28 E2E ont réussi ; `scripts/check_contracts.py` a ensuite échoué uniquement parce que les six liens de sources de ce rapport remontaient d’un seul niveau insuffisant (`../../packages`, `../../services`, `../../integrations`, `../../tests`). Les chemins sont corrigés dans la version locale de ce rapport ; cette correction n’est pas encore poussée et son résultat CI reste donc à confirmer.
+GitHub Actions a exécuté deux jobs `contracts-and-orchestration` sur le HEAD `bd21c25780e2d92d4a31081c52e4a08265234e43` (runs 41714496715 et 41714490176). Dans les deux jobs, les 28 E2E ont réussi ; `scripts/check_contracts.py` a échoué uniquement parce que les six liens de sources de ce rapport remontaient d’un seul niveau insuffisant. Les chemins ont été corrigés puis poussés dans `ae30e58444855ee815135bb67836e7fe6185a25b`. Sur ce HEAD, les deux jobs CI ont terminé avec succès (runs 41715501015 et 41715512819), ce qui couvre l’orchestration, la cohérence du dépôt, le typecheck, le build, M0, les 28 E2E, la validation de contrats et les tests de mutation Python. L’audit CleanCode séparé est `neutral` : il est en lecture seule et signale que la preuve d’analyse fermée n’est pas configurée ; ce n’est pas un échec de la suite Quality.
 
 ## Critères encore sans preuve
 

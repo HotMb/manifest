@@ -2,7 +2,7 @@
 
 Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https://github.com/HotMb/manifest), branche locale `work/arc-01`, registre **révision 14**. Les Issues GitHub sont des miroirs ; `docs/delivery/tickets.json` fait foi.
 
-**Dernière vérification ARC-01 :** PR [#27](https://github.com/HotMb/manifest/pull/27) toujours en brouillon, HEAD `bd21c25780e2d92d4a31081c52e4a08265234e43`. Les deux jobs CI ont terminé en échec après 28/28 E2E réussis, à cause de six liens Markdown mal relatifs dans la nouvelle preuve ; les chemins sont corrigés localement et le rerun CI attend le prochain push. Les preuves ChatGPT Desktop/OAuth restent manquantes. L’arbre local ne contient que ce correctif documentaire non commité à cette étape.
+**Dernière vérification ARC-01 :** PR [#27](https://github.com/HotMb/manifest/pull/27) toujours en brouillon. Après correction des liens documentaires dans `ae30e58444855ee815135bb67836e7fe6185a25b`, les deux jobs GitHub Actions Quality sont verts (runs 41715501015 et 41715512819). Les preuves ChatGPT Desktop/OAuth restent manquantes ; voir le [dossier des preuves bridge et identité](evidence/ARC-01/bridge-identity-proof-2026-11-03.md). Le rapport CI précédent documentait correctement un échec de contrat désormais résolu.
 
 ## État actuel
 
