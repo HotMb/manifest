@@ -519,6 +519,7 @@ function Editor() {
 
       {error && <div className="error-banner" role="alert"><div><strong>{conflict ? 'Le brouillon a changé ailleurs' : 'Enregistrement à vérifier'}</strong><p>{error}</p></div><div className="error-banner__actions"><button className="button" onClick={downloadDraft}>Télécharger mes réglages</button><button className="button" disabled={saving} onClick={() => void verifySave()}>Vérifier la version enregistrée</button>{retryRef.current && !conflict && recoveryCode !== 'LOCAL_RECOVERY_EXPIRED' && <button className="button" disabled={saving} onClick={() => void save(true)}>Réessayer l’enregistrement en attente</button>}{recoveryCode === 'LOCAL_RECOVERY_EXPIRED' && transport.recoverExpired && <button className="button" disabled={saving} onClick={() => void recoverExpired()}>Reprendre le brouillon expiré</button>}{conflict && <button className="button" disabled={saving} onClick={() => reloadDialog.current?.showModal()}>Recharger…</button>}</div></div>}
 
+      <div className="workbench-content">
         <Puck config={config} data={canvasSnapshot!.pages[0]!.composition} onChange={onPuckChange} iframe={{ enabled: false }} permissions={{ drag: false, insert: false, delete: false, duplicate: false, edit: !previewingAnyProposal && !saving }} ui={{ itemSelector: hasCanvasHero ? { index: 0, zone: 'root:default-zone' } : null }} dictionary={dictionary}>
         <PuckSync composition={canvasSnapshot!.pages[0]!.composition} epoch={`${syncEpoch}:${previewingLaunch ? launchContext?.id : previewingProposal || previewingPreviousProposal ? modelProposal?.generationId : previewingLocalInsertion ? 'local-insertion' : 'manual'}`} />
         <div className="workspace">
@@ -559,7 +560,8 @@ function Editor() {
 
           </aside>
         </div>
-      </Puck>
+        </Puck>
+      </div>
 
       <footer className="statusbar"><span className="save-state" role="status" aria-live="polite"><span className="connection-dot" aria-hidden="true" />{feedback || saveLabel}</span><span>{connectionLabel}</span><button className="text-button footer-version" onClick={() => openReport('version')}>Brouillon v{confirmed.draftVersion}<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4l4 4-4 4" /></svg></button></footer>
       <dialog ref={reloadDialog} className="dialog" aria-labelledby="reload-title"><h2 id="reload-title">Recharger la version enregistrée ?</h2><p>Les réglages non enregistrés de cette page seront remplacés. Tu peux d’abord télécharger ton brouillon.</p><div className="dialog-actions"><button className="button" autoFocus onClick={() => reloadDialog.current?.close()}>Garder mes réglages</button><button className="button" onClick={downloadDraft}>Télécharger le brouillon</button><button className="button button--primary" disabled={saving} onClick={() => void reloadConfirmed()}>Recharger la version</button></div></dialog>

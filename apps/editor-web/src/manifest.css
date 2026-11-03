@@ -548,3 +548,28 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round
   .history-controls { margin-left: auto; }
   .page-meta > .live-label { display: inline; }
 }
+
+/* The desktop atelier fits the host window; only its panels and canvas scroll. */
+@media (min-width: 768px) {
+  html, body, #root { width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+  .app-shell { width: 100%; height: 100dvh; min-height: 0; overflow: hidden; }
+  .topbar, .statusbar { flex: 0 0 auto; }
+  .workbench-content { display: flex; flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden; }
+  .workbench-content > * { display: flex; flex: 1 1 0; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+  .workspace {
+    display: grid;
+    flex: 1 1 0;
+    grid-template-columns: clamp(190px, 22vw, 276px) minmax(0, 1fr) clamp(190px, 22vw, 276px);
+    grid-template-rows: minmax(0, 1fr);
+    width: 100%;
+    height: 0;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  .description-panel, .inspector { min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
+  .inspector { grid-column: auto; border-top: 0; }
+  .canvas-region { height: 100%; min-height: 0; overflow: hidden; }
+  .workspace-toolbar, .canvas-ruler, .canvas-bottom { flex: 0 0 auto; }
+  .canvas-stage { flex: 1 1 0; height: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+}

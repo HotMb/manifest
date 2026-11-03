@@ -6,6 +6,8 @@ Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https
 
 ## État actuel
 
+- **Affichage de l’atelier — correction locale du 3 novembre :** sur ordinateur, Manifest est borné à la hauteur de la fenêtre ChatGPT. Brief, aperçu et suggestions restent sur la même surface ; le défilement se fait dans les panneaux latéraux et dans le canevas. La compilation, le typecheck et la revue visuelle indépendante à 1280×720 passent. Sous 768 px, la disposition mobile empile encore les panneaux. Voir le [compte rendu](meetings/2026-11-03-MANIFEST-viewport-fit-review.md) et la [preuve locale](evidence/MANIFEST-viewport-fit-2026-11-03.md). Aucun ticket n’a été modifié : `team:next` indique zéro ticket actif éligible.
+
 - **ARC-01 : bloqué** après livraison et revue du sous-ensemble local. Il reste à prouver le parcours dans ChatGPT Desktop, le bridge et l’identité OAuth, l’actualisation, les capacités d’hôte et une modification réelle. Voir [l’audit de disponibilité et des PR du 3 novembre](meetings/2026-11-03-ARC-01-delivery-review.md), le [compte rendu du lot local](meetings/2026-11-03-ARC-01-review.md) et la [preuve d’implémentation locale](evidence/ARC-01/implementation-2026-11-03.md).
 - La release privée 0.1.3 est confirmée comme courante. Le smoke stdio, les tests du bridge local, l’authentification Bearer de développement et le préremplissage simulé passent ; aucun n’établit un rendu dans ChatGPT Desktop ou une identité OAuth. Voir les [preuves bridge et identité](evidence/ARC-01/bridge-identity-proof-2026-11-03.md).
 - `npm run team:next` doit afficher **0 nouveau ticket éligible**. ARC-02 dépend de la fin d’ARC-01. Ne pas contourner ce prérequis.
