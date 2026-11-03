@@ -4,9 +4,9 @@ Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https
 
 ## État actuel
 
-- **ARC-01 : bloqué** après livraison et revue du sous-ensemble local. Il reste à prouver le parcours dans ChatGPT Desktop, le bridge et l’identité OAuth, l’actualisation, les capacités d’hôte et une modification réelle. Voir [le compte rendu du 3 novembre](meetings/2026-11-03-ARC-01-review.md) et la [preuve d’implémentation locale](evidence/ARC-01/implementation-2026-11-03.md).
+- **ARC-01 : bloqué** après livraison et revue du sous-ensemble local. Il reste à prouver le parcours dans ChatGPT Desktop, le bridge et l’identité OAuth, l’actualisation, les capacités d’hôte et une modification réelle. Voir [l’audit de disponibilité et des PR du 3 novembre](meetings/2026-11-03-ARC-01-delivery-review.md), le [compte rendu du lot local](meetings/2026-11-03-ARC-01-review.md) et la [preuve d’implémentation locale](evidence/ARC-01/implementation-2026-11-03.md).
 - `npm run team:next` doit afficher **0 nouveau ticket éligible**. ARC-02 dépend de la fin d’ARC-01. Ne pas contourner ce prérequis.
-- Le cadrage de la direction Figma a été précisé le 3 novembre : une seule surface de travail, brief/proposition à gauche, candidat modifiable au centre et recherche catalogue à droite ; pas de navigation par étapes ni de page séparée de réglage de bloc. Cette direction cible n’est pas encore réalisée dans le prototype local, qui conserve son parcours M0 actuel. Le canevas d’un nouveau brouillon y est réellement vide et l’ancien brouillon Hero reste intact.
+- Le cadrage de la direction Figma a été précisé le 3 novembre : une seule surface de travail, brief/proposition à gauche, candidat modifiable au centre et recherche catalogue à droite ; pas de navigation par étapes ni de page séparée de réglage de bloc. Une modification locale non attribuée, non commitée et hors PR #27 a depuis changé l’éditeur vers une première version de cette surface unique. Elle ne livre pas encore le catalogue ni le transfert `/validate` et n’est pas intégrée au dépôt partagé. Le canevas et les autres critères restent soumis aux tickets et au gate ARC-01.
 
 ## Cadrage enregistré en révision 14
 
@@ -46,6 +46,10 @@ Les tâches M1 sont encore `todo` en raison de leurs dépendances. L’absence d
 | Contrats Python | non exécutés : `jsonschema` est absent de cet environnement |
 
 Une revue indépendante du code M0 et une revue design sur la capture finale ont été réalisées. Le compte rendu distingue les captures et simulateurs locaux de l’environnement hôte réel.
+
+L’audit de disponibilité du 3 novembre a relancé les tests backend et navigateur avec l’accès loopback requis, vérifié le smoke MCP et interrogé l’inventaire complet des PR ouvertes. GitHub Actions Quality run 56 est vert sur le HEAD commité `f95c297`. L’inventaire ne contient qu’une PR ouverte, la #27, encore en brouillon ; sa description renvoie à l’ancienne révision 3 au lieu du registre 14. Après le premier contrôle, des changements applicatifs locaux non attribués sont apparus dans l’arbre de travail ; ils ne font pas partie du HEAD, de la PR ni de la CI verte. Ils passent le typecheck, le build, 21 tests généraux, 66 tests M0, 28 tests providers, 25 tests E2E, le smoke MCP et `npm run check`. Le contrôle des contrats Python n’a pas pu démarrer, faute du module `jsonschema`. L’audit UI strict signale aussi un propriétaire non défini pour un `<select>` natif dans le panneau fournisseur/modèle. La revue de code relève encore un défaut de contraste sur certains fonds gris. Voir la [preuve datée](evidence/ARC-01/delivery-readiness-2026-11-03.md) et la [revue d’équipe](meetings/2026-11-03-ARC-01-delivery-review.md).
+
+La relecture loop-verify a passé 6/6 critères sur le rapport d’audit en français avant que les changements applicatifs locaux non attribués ne soient découverts. Ce résultat porte sur le rapport initial, pas sur ce code local, et ne remplace pas la preuve d’exécution dans ChatGPT Desktop ni ne lève ARC-01. La revue ARC-01 précédente conserve séparément son résultat historique.
 
 La relecture loop-verify a utilisé ses deux passes : la seconde a validé 4/5 critères, mais le paquet omettait le fichier de dettes contenant DEBT-004. Aucun PASS global n’est revendiqué ; la limite de tentatives est atteinte.
 
