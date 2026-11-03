@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productName": "Manifest",
-  "revision": 9,
+  "revision": 14,
   "tickets": [
     {
       "id": "ARC-01",
@@ -108,9 +108,9 @@
         "docs/evidence/DOM-01"
       ],
       "acceptance": [
-        "Sérialisation et validation structurelle plus catalogue contrôlent IDs, slots, routes, tokens, assets, profondeur et limites.",
-        "Les fixtures valides passent ; bloc inconnu, doublon imbriqué, cycle de déplacement et référence hors projet sont refusés.",
-        "Le domaine ne dépend ni du réseau, ni de React, ni d'un SDK fournisseur."
+        "Le Snapshot valide `dataIntegrationSpecs[]` avec schéma strict : identifiants, source/référence non secrète, dataset, types de champs, mappings de graphiques, transformations/filtres, rafraîchissement, previewMode et référence de connecteur admise.",
+        "Les fixtures synthétiques et connectées autorisées passent ; une source inconnue, un mapping invalide, un secret/credential ou une ligne sensible brute sont refusés.",
+        "La validation structurelle et catalogue contrôle aussi IDs, slots, routes, tokens, assets, profondeur et limites ; bloc inconnu, doublon imbriqué, cycle et référence hors projet sont refusés. Le domaine ne dépend ni du réseau, ni de React, ni d’un SDK fournisseur."
       ],
       "evidence": [],
       "blockers": [],
@@ -131,9 +131,9 @@
         "docs/evidence/DOM-02"
       ],
       "acceptance": [
-        "Les quatre actions de CONTRACTS.md sont implémentées dans une transaction complète.",
+        "Les quatre commandes transactionnelles de CONTRACTS.md restent appliquées atomiquement ; `apply_ops` inclut `set_data_integration_spec` comme opération de domaine versionnée.",
         "Un retry identique retourne le même reçu ; une clé réutilisée pour un autre corps provoque un conflit.",
-        "Deux écritures sur une même version ne donnent qu'un gagnant ; locks, version du brouillon et head sont contrôlés atomiquement.",
+        "Deux écritures sur une même version ne donnent qu’un gagnant ; une modification de spécification incrémente draftVersion et les vérifications de lock/version/head se font dans la transaction sans lot partiel.",
         "Reçu et nouvelle version sont écrits ensemble ; AT-05/06/09/10 sont prouvés sans lot partiel."
       ],
       "evidence": [],
@@ -249,8 +249,8 @@
       ],
       "acceptance": [
         "Le mapping DESIGN.md vers styles, contrôles partagés, états et scroll est unique.",
-        "La sélection de l'éditeur est distincte du thème de page ; focus visible et menus clavier sont opérationnels.",
-        "Les popups ouverts et l'écran étroit sont vérifiés sans dupliquer les valeurs normatives."
+        "Le shell est une surface unique à trois zones, sans parcours Décrire/Composer/Transmettre ni écran séparé de réglage de bloc ; le contexte distingue nouveau projet, nouvelle page et modification de page. Focus visible et menus clavier sont opérationnels.",
+        "Les popups ouverts et l’écran étroit sont vérifiés sans dupliquer les valeurs normatives."
       ],
       "evidence": [],
       "blockers": [],
@@ -274,9 +274,9 @@
         "docs/evidence/UI-01"
       ],
       "acceptance": [
-        "La composition Puck est branchée au contrôleur ; sélection, champs et viewport mobile sont opérants.",
-        "Un rechargement restitue le document confirmé et changer une propriété change le rendu.",
-        "Déplacer un bloc conserve les IDs ; la sélection de l'éditeur n'apparaît pas dans l'export."
+        "La composition Puck contrôlée charge la bonne base pour create_project, create_page ou modify_page dans l’espace de travail unique ; sélection et propriétés contextuelles sont opérantes sans écran séparé de réglage de bloc.",
+        "Créer une page dans un projet relit d’abord son Snapshot ; modifier une page cible son ID et sa baseDraftVersion. Un candidat reste distinct du brouillon confirmé jusqu’à conservation explicite.",
+        "Un rechargement restitue le document confirmé ; changer une propriété change le rendu. Déplacer un bloc conserve les IDs et la sélection éditeur n’apparaît pas dans l’export."
       ],
       "evidence": [],
       "blockers": [],
@@ -298,9 +298,9 @@
         "docs/evidence/UI-02"
       ],
       "acceptance": [
-        "Un champ de recherche distinct de l'intention de page filtre localement les releases admises par composant, animation et usage (ex. « menu ») ; recherche et filtres ne déclenchent aucun appel modèle.",
-        "Chaque candidat montre un rendu réel, son animation, son emplacement, sa bibliothèque/source, sa version, sa licence et sa compatibilité. Les états chargement, vide, sans résultat et erreur sont testés ; aucune carte ou provenance fictive n'est admise.",
-        "Prévisualiser ne modifie pas le document. Ajouter par glisser-déposer ou action clavier/tactile équivalente applique au bon slot et à la bonne position, puis affiche un jeton lisible/identifiant sous l'intention et inscrit l'ID, la release et la configuration dans le brief et le rapport. Le texte libre n'est pas réécrit. Une cible incompatible est expliquée sans insertion silencieuse."
+        "Un champ de recherche distinct de l’intention de page filtre localement les releases admises par composant, animation et usage (ex. « menu ») ; recherche et filtres ne déclenchent aucun appel modèle.",
+        "Chaque candidat montre un rendu réel, son animation, son emplacement, sa bibliothèque/source, sa version, sa licence et sa compatibilité. Le survol joue une démonstration dans la carte sans modifier le canevas ; le clavier et le tactile ont un équivalent. Les états chargement, vide, sans résultat et erreur sont testés ; aucune carte ou provenance fictive n’est admise.",
+        "Prévisualiser ne modifie pas le document. Ajouter par glisser-déposer ou action clavier/tactile équivalente applique au bon slot et à la bonne position, puis affiche un jeton lisible/identifiant sous l’intention et inscrit l’ID, la release et la configuration dans le brief et le rapport. Le texte libre n’est pas réécrit. Une cible incompatible est expliquée sans insertion silencieuse."
       ],
       "evidence": [],
       "blockers": [],
@@ -324,9 +324,9 @@
         "docs/evidence/UI-03"
       ],
       "acceptance": [
-        "Le champ principal accepte une nouvelle page ou la modification d'une page sélectionnée ; tout contexte de lancement fourni par l'hôte est montré comme suggestion éditable, jamais lu depuis le texte non envoyé.",
-        "Après activation explicite, pause de 1,5 s, composition IME, arrêt, reprise et causalité fonctionnent sans requête par frappe ; la recherche de catalogue reste indépendante et ne déclenche pas d'inférence.",
-        "Les événements dupliqués/hors ordre et les anciens résultats n'altèrent pas l'état courant. Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
+        "Le LaunchContext a un schéma runtime strict et des fixtures qui valident operation et ses cibles : create_project sans cible, create_page avec projectId/baseDraftVersion, modify_page avec projectId/pageId/baseDraftVersion ; il transmet la proposition ChatGPT et, facultativement, un candidat structuré lié à sa cible/baseDraftVersion. Les Snapshots existants sont relus avant aperçu ; les champs/version manquants ou incohérents sont refusés ; aucun texte non envoyé du compositeur natif n’est lu.",
+        "Un handoff textuel seul préremplit le brief sans déclencher de job. Après activation explicite du mode automatique, une modification déclenche après 1,5 s de pause (hors IME) un job borné au Snapshot et au fournisseur sélectionné ; « Proposer maintenant » peut lancer l’action manuelle. Arrêt, reprise et causalité fonctionnent sans requête par frappe ; la recherche catalogue reste indépendante.",
+        "Les événements dupliqués/hors ordre et anciens résultats n’altèrent pas l’état courant. Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
       ],
       "evidence": [],
       "blockers": [],
@@ -465,9 +465,9 @@
         "docs/evidence/AI-02"
       ],
       "acceptance": [
-        "Le contexte réduit comprend mode nouveau/existant, cible page/projet et dernier message déjà envoyé seulement s'ils sont explicitement fournis par l'hôte, sélection, locks, opérations autorisées, profil versionné et références catalogue choisies.",
-        "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global.",
-        "Une intention ambiguë propose des variantes ; les références du panneau catalogue enrichissent la demande sans altérer le texte saisi ; plusieurs briefs de référence sont vérifiés."
+        "Le contexte réduit comprend l’opération create_project/create_page/modify_page, la cible et baseDraftVersion, la proposition de l’assistant et le candidat initial seulement s’ils sont explicitement fournis, le Snapshot/version, sélection, locks, opérations autorisées, profil versionné, références catalogue et intention de données non secrète issue du Snapshot.",
+        "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global. Aucune clé, aucun jeton et aucun secret n’entre dans le contexte. Une connexion réelle exige une capacité/connecteur autorisé séparément.",
+        "Le modèle reçoit les spécifications de données versionnées avec le Snapshot et les utilise pour relier sources/champs et graphiques sans inventer de connexion réelle. Une intention ambiguë propose des variantes ; les références catalogue enrichissent la demande sans altérer le texte saisi ; plusieurs briefs de référence sont vérifiés."
       ],
       "evidence": [],
       "blockers": [],
@@ -540,7 +540,7 @@
       "acceptance": [
         "Révisions hors snapshots, parent immuable et comparaison sont implémentés.",
         "Restaurer crée une nouvelle révision et conserve le head précédent ; éditer ne modifie pas les snapshots historiques.",
-        "Le rapport immuable de chaque révision préserve les références exactes de catalogue, releases, bibliothèques/sources et licences ; l'export vise l'état approuvé exact ; AT-10/13 passent."
+        "Le rapport immuable est dérivé du Snapshot exact de la révision approuvée et conserve la proposition ChatGPT, les références catalogue/releases/sources/licences et `dataIntegrationSpecs[]` versionnées. /validate transmet schéma, liaisons, filtres/transformation, rafraîchissement, mode synthétique/connecté et prérequis d’accès sans credentials ni lignes sensibles, après accusé hôte ou avec fallback ; l’export vise l’état approuvé exact ; AT-10/13 passent."
       ],
       "evidence": [],
       "blockers": [],
@@ -660,7 +660,7 @@
       "acceptance": [
         "Les fixtures et tests préparatoires sont construits par les tickets dès ARC-03 ; TEST-01 en rassemble les preuves et clôt la recette après toutes ses dépendances.",
         "Tous les tickets M1 sont clos avec preuves avant de terminer cette recette.",
-        "Le parcours couvre création vs modification, contexte hôte explicite, intention indépendante de la recherche catalogue, menu animé, aperçu, insertion par drag/drop et action accessible, référence visible/rapport, puis /validate avec reçu ou fallback ; le parcours complet ChatGPT et l'archive reconstruite sont exécutés, AT-01 à AT-25 passent ou chaque écart est accepté explicitement.",
+        "Le parcours couvre les trois opérations : nouveau projet, nouvelle page dans un projet chargé, modification d’une page ciblée avec contrôle de baseDraftVersion ; il vérifie proposition assistant explicite, texte seul sans appel avant activation, candidat modifiable et absence de lecture non envoyée/remplacement silencieux. Il couvre la surface unique, le debounce activé, recherche indépendante, démonstration au survol et équivalents clavier/tactile, menu animé, insertion, référence visible/rapport, et /validate avec reçu ou fallback. Une intention de données éditée est versionnée dans le Snapshot et recopiée depuis la révision approuvée vers le rapport sans secret ; une connexion réelle est affirmée seulement si un connecteur autorisé existe. Le parcours ChatGPT et l’archive reconstruite sont exécutés, AT-01 à AT-25 passent ou chaque écart est accepté explicitement.",
         "Le registre des limites, versions, résultats et décision produit est livré ; un PASS de modèle ou build seul ne vaut pas cette preuve."
       ],
       "evidence": [],
@@ -754,6 +754,78 @@
       "actor": "orchestrator",
       "at": "2026-11-03T05:31:18.677Z",
       "reason": "Le sous-ensemble local est relu et testé, mais ARC-01 exige encore une exécution dans ChatGPT Desktop avec preuve du bridge, identité OAuth, rafraîchissement, capacités d’hôte et parcours réel. Sans cette preuve, ARC-02 ne peut pas démarrer."
+    },
+    {
+      "revision": 10,
+      "ticketId": "UX-01",
+      "relatedTicketIds": [
+        "UI-01",
+        "UI-02",
+        "UI-03",
+        "AI-02",
+        "REV-01",
+        "TEST-01"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:42:58.245Z",
+      "action": "criteria_updated",
+      "reason": "Aligne l’espace unique sans page de réglage, le handoff de la proposition ChatGPT en nouveau/existant, les aperçus catalogue accessibles et la spécification de connexion aux données transmise dans le rapport. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 11,
+      "ticketId": "UI-03",
+      "relatedTicketIds": [
+        "UX-01",
+        "UI-01",
+        "UI-02",
+        "AI-02",
+        "REV-01",
+        "TEST-01"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:48:22.567Z",
+      "action": "criteria_updated",
+      "reason": "Précise les trois opérations de lancement, la cible et la version du candidat, le déclenchement uniquement après activation et la source de vérité versionnée des intentions de données. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 12,
+      "ticketId": "DOM-01",
+      "relatedTicketIds": [
+        "DOM-02",
+        "AI-02"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:49:25.782Z",
+      "action": "criteria_updated",
+      "reason": "Attribue explicitement la validation et la mutation atomique des spécifications de données au domaine, puis leur lecture contextuelle à AI-02. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 13,
+      "ticketId": "UI-03",
+      "relatedTicketIds": [],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:50:16.211Z",
+      "action": "criteria_updated",
+      "reason": "Lie le LaunchContext normatif à un schéma runtime strict et à des fixtures vérifiables dans UI-03. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 14,
+      "ticketId": "UI-03",
+      "relatedTicketIds": [],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:52:21.057Z",
+      "action": "criteria_updated",
+      "reason": "Rend obligatoire la version de base également lors de la création d’une page dans un projet existant. Aucun statut ni aucune dépendance ne change."
     }
   ]
 }

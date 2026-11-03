@@ -1,6 +1,6 @@
 # Manifest — tableau de livraison
 
-Vue générée depuis tickets.json, révision 9. GitHub Issues est un miroir ; les preuves restent dans Git.
+Vue générée depuis tickets.json, révision 14. GitHub Issues est un miroir ; les preuves restent dans Git.
 
 | Ticket | Phase | Responsable | État | Dépendances |
 |---|---|---|---|---|

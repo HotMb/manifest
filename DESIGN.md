@@ -29,7 +29,7 @@ components:
 
 # Identité de l'éditeur Manifest
 
-Contrat visuel de la coque Manifest, aligné sur les captures de référence validées le 2 novembre 2026. Le cyan signale les actions et la sélection ; le violet distingue les suggestions d'animation. Ces accents appartiennent à l'éditeur et ne dictent pas le thème de la page créée. Les valeurs extraites des captures sont des approximations de départ ; leurs contrastes doivent être vérifiés au ticket UX-01. Les styles de l'éditeur sont générés ou dérivés d'une seule source de tokens ; les autres fichiers ne doivent pas maintenir des copies divergentes.
+Contrat visuel de la coque Manifest. Les captures validées le 2 novembre 2026 restent la référence d'identité ; le cadrage du 3 novembre ci-dessous remplace leur navigation par étapes par une surface unique de travail. Le cyan signale les actions et la sélection ; le violet distingue les suggestions d'animation. Ces accents appartiennent à l'éditeur et ne dictent pas le thème de la page créée. Les valeurs extraites des captures sont des approximations de départ ; leurs contrastes doivent être vérifiés au ticket UX-01. Les styles de l'éditeur sont générés ou dérivés d'une seule source de tokens ; les autres fichiers ne doivent pas maintenir des copies divergentes.
 
 ## Overview
 
@@ -51,7 +51,13 @@ Les champs et contrôles restent en français M1. Les pages créées acceptent l
 
 ## Layout
 
-Écran de travail : coque sombre Manifest, avec les étapes « Décrire », « Composer » et « Transmettre ». À gauche, champ d'intention et état de l'analyse ; au centre, aperçu dominant de la page ; à droite, suggestions de composants et d'animations, repliables pour agrandir l'aperçu. Le canevas vide commence sur un fond blanc comme dans la capture ; le site créé peut adopter un thème clair, sombre ou autre. Point de départ desktop : gauche 250–280 px, droite 250–280 px, centre fluide. La barre supérieure affiche page, fournisseur/modèle choisi, format d'aperçu, historique et préparation du rapport. À moins de 1 100 px, un seul panneau latéral à la fois ; à moins de 768 px, panneaux en tiroirs et barre d'actions condensée. Ces seuils sont des propositions à tester sur le viewport réel de l'hôte.
+Une seule surface et une seule route de travail réunissent les trois zones. Aucun onglet ni parcours « Décrire / Composer / Transmettre », aucune page séparée de réglage de bloc. À gauche : brief éditable, proposition explicitement transmise par ChatGPT, état de pause/analyse et choix du modèle. Au centre : candidat dominant, modifiable par sélection et commandes contextuelles, avec un aperçu du rendu. À droite : champ de recherche dans le catalogue, résultats de composants et d'animations, provenance et démonstrations. Le lancement distingue nouveau projet, nouvelle page dans un projet existant et modification d'une page existante ; la cible/version est visible. Le rail catalogue se replie pour agrandir le canevas ; les explications de la proposition restent associées au brief à gauche.
+
+Le lancement indique explicitement nouveau ou existant, la cible projet/page et la proposition de ChatGPT. Pour une nouvelle page, la base du document est vierge et le candidat reçu apparaît immédiatement en aperçu s'il est valide ; un canevas blanc vide est réservé à l'absence de candidat utilisable. Pour une page existante, charger son Snapshot avant de prévisualiser la proposition comme une modification. Ne jamais remplacer la page existante par une démonstration ou appliquer silencieusement le candidat. L'état proposé, les retouches et la conservation restent visibles dans les deux modes.
+
+Point de départ desktop : gauche 250–280 px, droite 250–280 px, centre fluide. La barre supérieure conserve cible projet/page, fournisseur/modèle choisi, format d'aperçu, Annuler/Rétablir, historique et validation/rapport. Les propriétés d'un bloc sont accessibles depuis sa sélection, dans le canevas ou dans une zone contextuelle à gauche ; elles ne remplacent pas la recherche catalogue à droite et n'exigent pas de changer de page. Le thème du site peut être clair, sombre ou autre, indépendamment de la coque.
+
+À moins de 1 100 px, ne garder qu'un panneau latéral ouvert à la fois ; à moins de 768 px, utiliser des tiroirs Brief et Catalogue et une barre d'actions condensée. Il s'agit de commandes de la même surface, sans navigation par étapes ni onglet de réglage séparé. Préserver la sélection, le texte, le scroll et l'accès au clavier virtuel lors des ouvertures et fermetures. Ces seuils sont des propositions à tester sur le viewport réel de l'hôte.
 
 Rythme 4 px pour les contrôles, espaces de 8/12/16/24 px et alignements continus. Les boutons ne changent pas de largeur pendant une demande. L'aperçu possède son viewport ; ne pas modifier toute la mise en page du shell pour simuler un téléphone.
 
@@ -67,12 +73,14 @@ Contrôles 8 px, panneaux 12 px. Une forme ne signale pas à elle seule un état
 
 Les contrôles partagés sont définis dans la carte canonique de UX-CONTRACT.md. Les listes de modèles/composants utilisent un Select ou une Combobox accessible, avec états ouvert/vide/erreur. Les icônes viennent d'une seule famille et ne remplacent pas les libellés des actions importantes.
 
+Chaque résultat du catalogue montre une démonstration du composant ou de l'animation au survol, avec le même accès au focus clavier et par une action tactile « Voir la démo ». La démonstration ne modifie pas le document. Prévoir une représentation sans mouvement, un arrêt de la lecture et des actions explicites de prévisualisation et d'ajout. L'édition contextuelle et la recherche restent disponibles dans la même surface.
+
 Le mouvement de l'éditeur explique un changement : sélection, ouverture de panneau, confirmation de conservation. Pas de pulsations ou de mouvements continus. Respecter prefers-reduced-motion. Les indicateurs d'activité ne font pas sauter les contrôles.
 
 ## Do's and Don'ts
 
 - Donner de la place à la page, garder les outils lisibles.
-- Garder le champ d'intention, l'aperçu et le rail de suggestions visiblement distincts.
+- Garder le brief/proposition à gauche, le candidat/aperçu au centre et la recherche catalogue à droite visiblement distincts.
 - Indiquer ce qui est proposé, conservé, sauvegardé ou approuvé.
 - Montrer la bibliothèque, la version et la provenance utiles à chaque suggestion ; ne pas confondre « trouvée », « prévisualisée » et « ajoutée ».
 - Montrer un changement ciblé et annulable ; ne pas animer toute la page à chaque réponse.

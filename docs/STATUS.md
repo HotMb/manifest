@@ -1,12 +1,19 @@
 # Manifest — suivi du projet
 
-Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https://github.com/HotMb/manifest), branche locale `work/arc-01`, registre **révision 9**. Les Issues GitHub sont des miroirs ; `docs/delivery/tickets.json` fait foi.
+Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https://github.com/HotMb/manifest), branche locale `work/arc-01`, registre **révision 14**. Les Issues GitHub sont des miroirs ; `docs/delivery/tickets.json` fait foi.
 
 ## État actuel
 
 - **ARC-01 : bloqué** après livraison et revue du sous-ensemble local. Il reste à prouver le parcours dans ChatGPT Desktop, le bridge et l’identité OAuth, l’actualisation, les capacités d’hôte et une modification réelle. Voir [le compte rendu du 3 novembre](meetings/2026-11-03-ARC-01-review.md) et la [preuve d’implémentation locale](evidence/ARC-01/implementation-2026-11-03.md).
 - `npm run team:next` doit afficher **0 nouveau ticket éligible**. ARC-02 dépend de la fin d’ARC-01. Ne pas contourner ce prérequis.
-- La direction Figma approuvée est reflétée dans l’éditeur local : description principale à gauche, aperçu au centre, suggestions/réglages à droite. Le canevas d’un nouveau brouillon est réellement vide et l’ancien brouillon Hero reste intact.
+- Le cadrage de la direction Figma a été précisé le 3 novembre : une seule surface de travail, brief/proposition à gauche, candidat modifiable au centre et recherche catalogue à droite ; pas de navigation par étapes ni de page séparée de réglage de bloc. Cette direction cible n’est pas encore réalisée dans le prototype local, qui conserve son parcours M0 actuel. Le canevas d’un nouveau brouillon y est réellement vide et l’ancien brouillon Hero reste intact.
+
+## Cadrage enregistré en révision 14
+
+- Le lancement attendu distingue nouveau projet, nouvelle page dans un projet existant et modification d’une page existante ; il transmet la cible/version et la proposition déjà formulée par ChatGPT. Les Snapshots existants sont relus, un candidat est contrôlé contre sa version de base et reste éditable avant conservation. Un texte seul préremplit le champ mais ne lance pas de modèle avant activation automatique ou action manuelle. Manifest ne lit jamais le texte non envoyé du compositeur natif.
+- Le champ principal sert au brief et à ses modifications réactives ; le catalogue à droite reste une recherche distincte, locale et sans appel de modèle. Survol, clavier et toucher permettent de voir les démonstrations sans modifier la page ; l’ajout reste une action explicite.
+- L’intention de données est conservée dans `Snapshot.dataIntegrationSpecs` et suit la version du brouillon et la révision approuvée. `/validate` doit transmettre au modèle hôte cette spécification non secrète (source/référence, schéma, liaisons aux graphiques, transformations, rafraîchissement, aperçu synthétique/connecté et prérequis d’autorisation). Cela explique à ChatGPT l’intégration souhaitée ; le rapport ne confère pas lui-même l’accès et n’emporte aucun secret ou ligne sensible.
+- Ces décisions sont inscrites dans le cadrage et les critères de UX-01, UI-01, UI-02, UI-03, DOM-01, DOM-02, AI-02, REV-01 et TEST-01. Elles sont à construire après levée des dépendances ; elles ne constituent pas une preuve d’implémentation. Les schémas JSON exécutables et les capacités réelles de l’hôte restent à aligner/qualifier par les tickets concernés.
 
 ## Ce qui est livré dans la tranche locale
 
@@ -18,9 +25,9 @@ Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https
 
 ## Ce qui n’est pas encore livré
 
-- Le second champ pour rechercher « menu » dans un vrai catalogue versionné, ses cartes de prévisualisation/provenance/licence, et l’ajout par glisser-déposer ou action accessible : UI-02/CAT-01/CAT-02.
-- Le choix nouveau projet/existant et un contexte de chat transmis explicitement : UI-03/AI-02.
-- La pièce jointe de référence sous le champ principal, son inclusion dans le rapport, `/validate` avec accusé et transmission au chat : UI-02/AI-02/REV-01.
+- La surface cible unique, le catalogue à droite pour rechercher « menu » dans un vrai catalogue versionné, ses cartes de démonstration/provenance/licence, et l’ajout par glisser-déposer ou action accessible : UX-01/UI-01/UI-02/CAT-01/CAT-02.
+- Le LaunchContext à trois opérations (nouveau projet, nouvelle page, modification de page) avec proposition de l’assistant et candidat/version, puis le comportement associé : UI-03/AI-02.
+- La pièce jointe de référence sous le champ principal, la spécification d’intégration des données dans le rapport, `/validate` avec accusé et transmission au chat : UI-02/AI-02/REV-01.
 - La création/modification générale de projets, plusieurs pages, un export d’application complète et un modèle réel. Le prototype actuel est borné à un projet/page et zéro ou un Hero ; aucun fournisseur n’a été appelé dans cette tranche.
 - Le rendu final dans ChatGPT Desktop et la matrice de capacités réelles restent à vérifier. Le badge « WebMCP unavailable » observé précédemment n’est pas remplacé par une preuve de réussite.
 
