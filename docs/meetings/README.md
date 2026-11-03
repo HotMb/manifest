@@ -12,6 +12,8 @@ Dernières revues : [ARC-01 — canevas vide et alignement local — 3 novembre 
 
 Dernière mise à jour de paquet : [ARC-01 — rafraîchissement du plugin privé — 3 novembre 2026](2026-11-03-ARC-01-plugin-refresh-review.md).
 
+Dernier cadrage : [lancement contextuel, versionnement des données et rapport `/validate` — 3 novembre 2026](2026-11-03-MANIFEST-context-and-data-handoff-review.md).
+
 ## Participants et contributions réelles
 
 | Rôle | Contribution attendue |
