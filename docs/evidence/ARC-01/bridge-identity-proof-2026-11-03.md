@@ -21,9 +21,13 @@
 | Lecture/modification authentifiées de développement | npm run test:m0 réussit 66/66, dont HTTP local : absence de jeton et jeton invalide refusés en 401, origine étrangère refusée en 403, jeton de test accepté par un client MCP et sauvegarde lue. | Bearer local statique avec serveur loopback de test ; ce n’est pas OAuth ni une identité ChatGPT. |
 | Prévisualisation de lancement | npm run test:e2e réussit 28/28. Les tests de lancement couvrent texte reçu, aperçu noir conservable/annulable, version obsolète et conflit avec une retouche. | Le test injecte un adaptateur d’hôte simulé dans le navigateur ; aucun ChatGPT Desktop n’est contacté. |
 | Outil de cette session | open_designer a renvoyé project-m0, draftVersion 0, storage memory-m0, revisionId null, receiptId null. | Le retour MCP ne constitue pas un reçu d’identité, une preuve d’affichage ou une persistance. |
-| Contrôles généraux | npm run typecheck, npm test (20 réussis, 1 ignoré), npm run test:providers (28/28), npm run check (26 tickets, révision 14), npm run package:desktop-plugin et git diff --check réussissent. | Vérifications sur l’arbre local actuel. Le run GitHub vert porte sur le HEAD commité antérieur, pas sur ces changements locaux. |
+| Contrôles généraux | npm run typecheck, npm test (20 réussis, 1 ignoré), npm run test:providers (28/28), npm run check (26 tickets, révision 14), npm run package:desktop-plugin et git diff --check réussissent. | Vérifications locales consignées avant le correctif documentaire ci-dessous. |
 
 Le contrôle python scripts/check_contracts.py et la suite Python n’ont pas pu s’exécuter : jsonschema n’est pas installé dans Python 3.14. Le build affiche des avertissements de bundling « use client » ; Playwright signale aussi que Puck.setData peut être coûteux.
+
+## Vérification GitHub après publication de bd21c25
+
+GitHub Actions a exécuté deux jobs `contracts-and-orchestration` sur le HEAD `bd21c25780e2d92d4a31081c52e4a08265234e43` (runs 41714496715 et 41714490176). Dans les deux jobs, les 28 E2E ont réussi ; `scripts/check_contracts.py` a ensuite échoué uniquement parce que les six liens de sources de ce rapport remontaient d’un seul niveau insuffisant (`../../packages`, `../../services`, `../../integrations`, `../../tests`). Les chemins sont corrigés dans la version locale de ce rapport ; cette correction n’est pas encore poussée et son résultat CI reste donc à confirmer.
 
 ## Critères encore sans preuve
 
@@ -47,9 +51,9 @@ Ne pas marquer ARC-01 prêt et ne pas fusionner la PR #27. La release 0.1.3, le 
 
 ### Sources dans le dépôt
 
-- [packages/host-adapters/src/index.ts](../../packages/host-adapters/src/index.ts)
-- [services/api/src/mcp.ts](../../services/api/src/mcp.ts)
-- [services/api/src/http.ts](../../services/api/src/http.ts)
-- [integrations/chatgpt-desktop/README.md](../../integrations/chatgpt-desktop/README.md)
-- [tests/m0-backend.test.ts](../../tests/m0-backend.test.ts)
-- [tests/e2e/launch-context.spec.ts](../../tests/e2e/launch-context.spec.ts)
+- [packages/host-adapters/src/index.ts](../../../packages/host-adapters/src/index.ts)
+- [services/api/src/mcp.ts](../../../services/api/src/mcp.ts)
+- [services/api/src/http.ts](../../../services/api/src/http.ts)
+- [integrations/chatgpt-desktop/README.md](../../../integrations/chatgpt-desktop/README.md)
+- [tests/m0-backend.test.ts](../../../tests/m0-backend.test.ts)
+- [tests/e2e/launch-context.spec.ts](../../../tests/e2e/launch-context.spec.ts)

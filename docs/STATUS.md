@@ -2,6 +2,8 @@
 
 Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https://github.com/HotMb/manifest), branche locale `work/arc-01`, registre **révision 14**. Les Issues GitHub sont des miroirs ; `docs/delivery/tickets.json` fait foi.
 
+**Dernière vérification ARC-01 :** PR [#27](https://github.com/HotMb/manifest/pull/27) toujours en brouillon, HEAD `bd21c25780e2d92d4a31081c52e4a08265234e43`. Les deux jobs CI ont terminé en échec après 28/28 E2E réussis, à cause de six liens Markdown mal relatifs dans la nouvelle preuve ; les chemins sont corrigés localement et le rerun CI attend le prochain push. Les preuves ChatGPT Desktop/OAuth restent manquantes. L’arbre local ne contient que ce correctif documentaire non commité à cette étape.
+
 ## État actuel
 
 - **ARC-01 : bloqué** après livraison et revue du sous-ensemble local. Il reste à prouver le parcours dans ChatGPT Desktop, le bridge et l’identité OAuth, l’actualisation, les capacités d’hôte et une modification réelle. Voir [l’audit de disponibilité et des PR du 3 novembre](meetings/2026-11-03-ARC-01-delivery-review.md), le [compte rendu du lot local](meetings/2026-11-03-ARC-01-review.md) et la [preuve d’implémentation locale](evidence/ARC-01/implementation-2026-11-03.md).

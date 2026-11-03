@@ -26,7 +26,7 @@
 - Le smoke du paquet local passe : quatre outils MCP sont listés, le brouillon mémoire s’ouvre, le contexte explicite est vérifié et la ressource HTML autonome est lue.
 - Le test backend passe 66/66. Il couvre l’auth Bearer de développement, le refus d’un jeton invalide, les contrôles d’origine, MCP stdio et la lecture/écriture du store mémoire.
 - La suite providers passe 28/28 sans appel à un fournisseur réel. Les E2E passent 28/28, incluant contexte reçu, aperçu noir, conflit de version, recherche et tailles responsive ; la frontière d’hôte est simulée.
-- Le test général passe 20/20 avec un test ignoré parce que Windows ne permet pas la création de lien symbolique. Typecheck, build/package, smoke, check de backlog et git diff --check passent. Les contrats Python ne démarrent pas, jsonschema manquant.
+- Le test général passe avec 20 tests réussis et un test ignoré parce que Windows ne permet pas la création de lien symbolique. Typecheck, build/package, smoke, check de backlog et git diff --check passent. Les contrats Python ne démarrent pas localement, jsonschema manquant.
 
 ## Bridge et identité — décision technique
 
@@ -41,6 +41,10 @@ L’identité décrit quel utilisateur appelle le service et quels droits s’ap
 - L’audit strict UI antérieur signale ownership.native-select-undecided dans model-provider-panel.tsx:21. Des contrastes gris intermédiaires et l’action de rejeu en mouvement réduit restent aussi documentés dans les revues précédentes.
 - Les avertissements Vite use client et Puck setData restent à surveiller ; aucune mesure de performance n’a été faite.
 - Décision : garder ARC-01 bloqué et la PR en brouillon. Les preuves obtenues ne démontrent pas l’hôte Desktop ni OAuth. Ne pas fusionner et ne pas lancer ARC-02.
+
+### Suivi CI du HEAD bd21c25
+
+Après la publication du compte rendu, GitHub Actions a exécuté les deux jobs `contracts-and-orchestration` sur `bd21c25780e2d92d4a31081c52e4a08265234e43` (runs 41714496715 et 41714490176). Les 28 tests E2E passent dans chaque job, puis `scripts/check_contracts.py` échoue parce que les six liens de sources du nouveau rapport d’évidence utilisent `../../` au lieu de `../../../`. Les cibles existent dans le dépôt ; les liens ont été corrigés localement, et une nouvelle exécution CI doit confirmer le correctif. Ce contrôle est distinct du gate externe ChatGPT Desktop/OAuth, qui reste non observé/non implémenté.
 
 ## Actions suivantes
 
