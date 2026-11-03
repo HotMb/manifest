@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { initialProject, makeEditCommand, hashSnapshot, type M0Project, type ApplyOpsCommand } from '@design-workbench/m0-contract';
-import { createBrowserTransport, projectFromToolResult, readProjectValue, verifiedProject } from '../src/index.ts';
+import { createBrowserTransport, launchContextFromToolResult, projectFromToolResult, readProjectValue, verifiedProject } from '../src/index.ts';
 import { heroProject } from '../../../tests/fixtures/m0-project.ts';
 
 function edit(project: M0Project, title: string, key: string) {
@@ -205,4 +205,19 @@ test('aucun résultat MCP résumé ou projet étranger n’est pris pour un docu
   assert.throws(() => projectFromToolResult({ structuredContent: { projectId: 'project-m0', draftVersion: 0 } }), { code: 'INVALID_RESPONSE' });
   assert.throws(() => readProjectValue({ ...initialProject(), projectId: 'project-other' }), { code: 'INVALID_RESPONSE' });
   assert.deepEqual(projectFromToolResult({ _meta: { project: initialProject() }, structuredContent: { projectId: 'project-m0' } }), initialProject());
+});
+
+test('lancement : seul le contexte explicite validé de l’hôte est transmis à la vue', () => {
+  const launch = { id: 'launch-one', projectId: 'project-m0', baseDraftVersion: 3, userRequest: 'Un fond noir', assistantProposal: 'Page sombre', backgroundColor: '#000000' };
+  const result = { _meta: { launchContext: launch } };
+  assert.deepEqual(launchContextFromToolResult(result), launch);
+  const clone = launchContextFromToolResult(result)!;
+  clone.userRequest = 'Une retouche locale';
+  assert.equal(launch.userRequest, 'Un fond noir');
+  assert.equal(launchContextFromToolResult({ _meta: { project: initialProject() } }), undefined);
+  assert.equal(launchContextFromToolResult({ structuredContent: { launchContext: launch } }), undefined);
+  assert.equal(launchContextFromToolResult({ isError: true, _meta: { launchContext: launch } }), undefined);
+  for (const invalid of [{ ...launch, projectId: 'foreign' }, { ...launch, baseDraftVersion: -1 }, { ...launch, userRequest: 'x'.repeat(6001) }, { ...launch, backgroundColor: 'black' }, { ...launch, conversation: [] }]) {
+    assert.throws(() => launchContextFromToolResult({ _meta: { launchContext: invalid } }), { code: 'INVALID_INPUT' });
+  }
 });

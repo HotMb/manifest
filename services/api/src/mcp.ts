@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { z } from 'zod';
-import { PROJECT_ID, disconnectedProviderRegistry } from '@design-workbench/m0-contract';
+import { PROJECT_ID, disconnectedProviderRegistry, MAX_LAUNCH_TEXT_LENGTH, validateEditorLaunchContext } from '@design-workbench/m0-contract';
 import type { M0Project, M0CommandResult } from '@design-workbench/m0-contract';
 import { MemoryProjectStore, publicError } from './domain.ts';
 import { SuggestionJobException, type SuggestionJobManager } from './suggestion-jobs.ts';
@@ -12,6 +12,11 @@ import { SuggestionJobException, type SuggestionJobManager } from './suggestion-
 export const EDITOR_URI = 'ui://design/editor.html';
 const defaultHtmlPath = fileURLToPath(new URL('../../../apps/editor-web/dist/index.html', import.meta.url));
 const Id = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/);
+const launchInput = z.object({
+  userRequest: z.string().min(1).max(MAX_LAUNCH_TEXT_LENGTH).refine((value) => Boolean(value.trim())).optional().describe('Demande déjà envoyée par l’utilisateur, à préremplir dans Manifest. Ne pas inclure de texte non envoyé ni de secrets.'),
+  assistantProposal: z.string().min(1).max(MAX_LAUNCH_TEXT_LENGTH).refine((value) => Boolean(value.trim())).optional().describe('Proposition de page déjà formulée par l’assistant, si elle existe. Ne pas en inventer une.'),
+  backgroundColor: z.string().regex(/^#[a-fA-F0-9]{6}$/).optional().describe('Couleur de fond explicitement demandée, au format #RRGGBB ; noir = #000000. Prévisualisée sans remplacer le brouillon.'),
+}).strict();
 const summarySchema = z.object({
   projectId: Id,
   draftVersion: z.number().int().nonnegative(),
@@ -92,8 +97,8 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
   const htmlPath = options.htmlPath ?? defaultHtmlPath;
   const server = new McpServer({ name: 'manifest-m0', version: '0.0.0' }, {
     instructions: options.suggestionJobs
-      ? 'Prototype local de qualification. Ouvrez open_designer pour modifier le bloc Hero. Les suggestions sont des propositions en mémoire ; elles ne modifient jamais le brouillon sans une action explicite. Le stockage des jobs est éphémère.'
-      : 'Prototype local de qualification. Ouvrez open_designer pour modifier le bloc Hero. Les outils de données ne rouvrent pas la vue. Stockage éphémère en mémoire : aucune IA, approbation, export ou identité OAuth de production.',
+      ? 'Ouvrez open_designer en transmettant la demande envoyée dans userRequest, la proposition déjà formulée dans assistantProposal si elle existe et backgroundColor si une couleur précise est demandée. Manifest ne lit pas la conversation. Les suggestions sont des propositions en mémoire ; elles ne modifient jamais le brouillon sans une action explicite.'
+      : 'Ouvrez open_designer en transmettant la demande envoyée dans userRequest, la proposition déjà formulée dans assistantProposal si elle existe et backgroundColor si une couleur précise est demandée. Manifest ne lit pas la conversation. Les outils de données ne rouvrent pas la vue. Stockage éphémère en mémoire : aucune IA, approbation, export ou identité OAuth de production.',
   });
   registerAppResource(server, 'design-editor', EDITOR_URI, { mimeType: RESOURCE_MIME_TYPE }, async () => ({
     contents: [{
@@ -105,12 +110,19 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
   }));
   registerAppTool(server, 'open_designer', {
     title: 'Ouvrir l’atelier de design',
-    description: 'Ouvre le prototype local à un bloc. Les changements sont en mémoire et ne constituent pas une approbation.',
-    inputSchema: z.object({}).strict(),
+    description: 'Ouvre l’espace Manifest et lui transmet explicitement la demande du chat dans userRequest, une proposition déjà formulée dans assistantProposal et, si demandé, backgroundColor (#000000 pour noir). Sans ces arguments le champ reste vide. Le lancement ne remplace pas le brouillon et ne lance pas de modèle.',
+    inputSchema: launchInput,
     outputSchema: summarySchema,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     _meta: { ui: { resourceUri: EDITOR_URI } },
-  }, async () => reply(store.read(PROJECT_ID)));
+  }, async (input) => {
+    const project = store.read(PROJECT_ID);
+    const result = reply(project);
+    if (!Object.values(input).some((value) => value !== undefined)) return result;
+    const launchContext = { id: `launch-${randomUUID()}`, projectId: PROJECT_ID, baseDraftVersion: project.draftVersion, ...input };
+    validateEditorLaunchContext(launchContext);
+    return { ...result, _meta: { ...result._meta, launchContext } };
+  });
   registerAppTool(server, 'read_project', {
     title: 'Lire le brouillon',
     description: 'Lit le brouillon autorisé de la vue, sans ouvrir un nouvel éditeur.',

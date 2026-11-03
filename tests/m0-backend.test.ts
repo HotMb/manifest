@@ -252,6 +252,35 @@ test('MCP SDK : découverte, ressource UI et réponses réservées à la vue', a
   assert.equal(malformed.isError, true);
 });
 
+test('MCP lancement : transmet le brief et le fond noir sans modifier un brouillon existant', async (t) => {
+  const store = new MemoryProjectStore(heroProject());
+  store.commit(make('launch-base-edit', 'Titre déjà conservé'));
+  const before = store.read('project-m0');
+  assert.equal(before.draftVersion, 1);
+  const server = createDesignerMcpServer({ store, htmlPath });
+  const client = new Client({ name: 'launch-test', version: '0.0.0' });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  t.after(async () => { await client.close(); await server.close(); });
+  await server.connect(serverTransport); await client.connect(clientTransport);
+  const request = { userRequest: 'Affiche un fond noir.', assistantProposal: 'Une page sur fond noir.', backgroundColor: '#000000' };
+  const opened = await client.callTool({ name: 'open_designer', arguments: request });
+  assert.equal(opened.isError, undefined);
+  const launch = opened._meta?.launchContext as Record<string, unknown>;
+  assert.match(String(launch.id), /^launch-/);
+  assert.deepEqual({ ...launch, id: undefined }, { id: undefined, projectId: before.projectId, baseDraftVersion: before.draftVersion, ...request });
+  assert.deepEqual(store.read('project-m0'), before);
+  assert.deepEqual(opened._meta?.project, before);
+  assert.equal((opened.structuredContent as Record<string, unknown>).userRequest, undefined);
+  const oldClient = await client.callTool({ name: 'open_designer', arguments: {} });
+  assert.equal(oldClient.isError, undefined);
+  assert.equal(oldClient._meta?.launchContext, undefined);
+  for (const arguments_ of [{ userRequest: 'x'.repeat(6001) }, { userRequest: '   ' }, { backgroundColor: 'black' }, { backgroundColor: '#000000', projectId: 'foreign' }]) {
+    const invalid = await client.callTool({ name: 'open_designer', arguments: arguments_ });
+    assert.equal(invalid.isError, true);
+  }
+  assert.deepEqual(store.read('project-m0'), before);
+});
+
 test('HTTP local : authentification, origine, corps borné et vrai client MCP', async (t) => {
   const token = 'test-only-token-never-use-in-production-0000001';
   const server = createDesignerHttpServer({ token, htmlPath });

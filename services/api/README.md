@@ -22,7 +22,7 @@ Le transport HTTP se lance avec `npm run start --workspace @design-workbench/api
 
 | Outil | Entrée | Effet |
 |---|---|---|
-| `open_designer` | objet vide | ouvre `ui://design/editor.html` et lit le projet M0 |
+| `open_designer` | `userRequest?`, `assistantProposal?` (1–6 000 caractères), `backgroundColor?` (`#RRGGBB`) ; objet vide compatible | ouvre `ui://design/editor.html`, lit le projet M0 et transmet `_meta.launchContext` sans modifier le brouillon ni appeler un modèle |
 | `read_project` | `projectId` | lit le brouillon sans rouvrir l'interface |
 | `commit_commands` | commande `apply_ops` canonique | enregistre atomiquement les modifications manuelles admises |
 | `get_provider_registry` | objet vide | retourne uniquement les fournisseurs et modèles publics configurés, sans secret |

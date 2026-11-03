@@ -5,8 +5,9 @@ Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https
 ## État actuel
 
 - **ARC-01 : bloqué** après livraison et revue du sous-ensemble local. Il reste à prouver le parcours dans ChatGPT Desktop, le bridge et l’identité OAuth, l’actualisation, les capacités d’hôte et une modification réelle. Voir [l’audit de disponibilité et des PR du 3 novembre](meetings/2026-11-03-ARC-01-delivery-review.md), le [compte rendu du lot local](meetings/2026-11-03-ARC-01-review.md) et la [preuve d’implémentation locale](evidence/ARC-01/implementation-2026-11-03.md).
+- La release privée 0.1.3 est confirmée comme courante. Le smoke stdio, les tests du bridge local, l’authentification Bearer de développement et le préremplissage simulé passent ; aucun n’établit un rendu dans ChatGPT Desktop ou une identité OAuth. Voir les [preuves bridge et identité](evidence/ARC-01/bridge-identity-proof-2026-11-03.md).
 - `npm run team:next` doit afficher **0 nouveau ticket éligible**. ARC-02 dépend de la fin d’ARC-01. Ne pas contourner ce prérequis.
-- Le cadrage de la direction Figma a été précisé le 3 novembre : une seule surface de travail, brief/proposition à gauche, candidat modifiable au centre et recherche catalogue à droite ; pas de navigation par étapes ni de page séparée de réglage de bloc. Une évolution locale non commitée a maintenant un champ de recherche et sept démos codées en dur. Ce n’est pas le catalogue versionné avec ajout/glisser-déposer, et le transfert `/validate` manque. La recherche et les démos ne font pas encore partie du dépôt partagé. Le canevas et les autres critères restent soumis aux tickets et au gate ARC-01.
+- Le cadrage de la direction Figma a été précisé le 3 novembre : une seule surface de travail, brief/proposition à gauche, candidat modifiable au centre et recherche catalogue à droite ; pas de navigation par étapes ni de page séparée de réglage de bloc. L’incrément ARC-01 de cette branche ajoute un champ de recherche et sept démos codées en dur. Ce n’est pas le catalogue versionné avec ajout/glisser-déposer, et le transfert `/validate` manque. Le canevas et les autres critères restent soumis aux tickets et au gate ARC-01.
 
 ## Cadrage enregistré en révision 14
 
@@ -20,7 +21,7 @@ Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https
 - Champ principal décrivant la page et ses mouvements ; proposition manuelle ou analyse après activation, avec une pause de 1,5 s. Les propositions locales et le simulateur sont prévisualisés avant conservation.
 - Ajout manuel d’une section M0, annuler/rétablir, sauvegarde navigateur et affichage mobile.
 - Ajustements de hiérarchie, ouverture directe à 375 px dans l’étape Décrire, disparition du message vide sous un candidat et contraste des champs Puck vérifié à ≥ 4,5:1.
-- Le paquet du plugin privé ChatGPT Desktop a été reconstruit et actualisé en version **0.1.1** ; le smoke local passe. Cela ne prouve pas son rendu dans l’hôte. Voir la [revue du rafraîchissement](meetings/2026-11-03-ARC-01-plugin-refresh-review.md) et la [preuve du paquet](evidence/ARC-01/plugin-refresh-2026-11-03.md).
+- Le plugin privé ChatGPT Desktop a la release courante **0.1.3** (scope utilisateur, visibilité privée). Son paquet local passe le smoke MCP stdio ; son rendu réel dans l’hôte reste à observer. Voir la [revue du rafraîchissement](meetings/2026-11-03-ARC-01-plugin-refresh-review.md), la [preuve du paquet](evidence/ARC-01/plugin-refresh-2026-11-03.md) et les [preuves bridge/identité](evidence/ARC-01/bridge-identity-proof-2026-11-03.md).
 - Les détails de compatibilité, résultats et limites figurent dans la [preuve datée](evidence/ARC-01/implementation-2026-11-03.md) et la [comparaison explicite à la maquette](evidence/ARC-01/figma-alignment-2026-11-03.md). Les références Figma antérieures restent dans [la revue de direction](meetings/2026-11-02-MANIFEST-design-direction.md).
 
 ## Ce qui n’est pas encore livré
@@ -37,12 +38,12 @@ Les tâches M1 sont encore `todo` en raison de leurs dépendances. L’absence d
 
 | Vérification | Résultat |
 |---|---|
-| E2E navigateur | **17/17 réussis**, dont canevas vide, ajout manuel, prévisualisation, viewport 375 px et contraste |
-| M0 backend/MCP/adaptateurs/jobs | **64/64 réussis** avec l’autorisation de serveur HTTP local |
+| E2E navigateur | **28/28 réussis**, dont contexte de lancement, aperçu de fond, recherche, canevas vide, mobile et sauvegarde ; adaptateur d’hôte simulé |
+| M0 backend/MCP/adaptateurs/jobs | **66/66 réussis** avec loopback local autorisé ; couvre stdio/MCP et le Bearer de développement |
 | Fournisseurs et simulateur | **28/28 réussis**, aucun appel à une API de modèle |
 | Tests UI du propriétaire frontend | **14 réussis** |
 | `npm test` | **20 réussis, 1 ignoré** faute de droit de création de lien symbolique sous Windows |
-| Typecheck, build, audit strict, `npm run check`, `git diff --check` | réussis ; avertissements de dépendances Vite/Puck documentés dans le compte rendu |
+| Typecheck, build/package, smoke stdio, `npm run check`, `git diff --check` | réussis ; les avertissements Vite/Puck sont documentés. L’audit UI strict antérieur conserve ses findings listés plus bas. |
 | Contrats Python | non exécutés : `jsonschema` est absent de cet environnement |
 
 Une revue indépendante du code M0 et une revue design sur la capture finale ont été réalisées. Le compte rendu distingue les captures et simulateurs locaux de l’environnement hôte réel.

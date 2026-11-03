@@ -48,3 +48,5 @@ Correctif local et paquet privé : [ARC-01 — espace unique, contexte du chat e
 
 
 [ARC-01 — recherche et exemples dans le panneau droit — 3 novembre 2026](2026-11-03-ARC-01-component-examples-review.md).
+
+[ARC-01 — preuves du bridge et de l’identité — 3 novembre 2026](2026-11-03-ARC-01-bridge-identity-review.md).

@@ -3,6 +3,7 @@ import {
   PROJECT_ID, M0Error, initialProject, applyOperations, hashSnapshot, stableStringify, validateSnapshot, validateCommand,
   validateModelProviderRegistry, validateProposalDecisionResult, validateStartSuggestionInput,
   validateSuggestionEventPage, validateSuggestionJob, validateSuggestionProposal,
+  validateEditorLaunchContext, type EditorLaunchContext,
   type ModelProviderRegistry, type ProposalDecisionResult, type StartSuggestionInput, type SuggestionEventPage,
   type SuggestionJob, type SuggestionProposal,
   type M0Project, type ApplyOpsCommand,
@@ -11,6 +12,8 @@ import {
 export type EditorTransport = {
   readonly kind: 'browser-local' | 'browser-memory' | 'mcp';
   read(): Promise<M0Project>;
+  /** Replays the last explicit launch and receives later host notifications. Unsubscribe on close. */
+  subscribeLaunchContext?(listener: (context: EditorLaunchContext) => void): () => void;
   commit(command: ApplyOpsCommand): Promise<M0Project>;
   readProviderRegistry?(): Promise<ModelProviderRegistry>;
   startSuggestion?(input: StartSuggestionInput): Promise<SuggestionJob>;
@@ -27,6 +30,14 @@ export type EditorTransport = {
 
 export class TransportError extends Error {
   constructor(public readonly code: string, message: string) { super(message); this.name = 'TransportError'; }
+}
+
+export function launchContextFromToolResult(value: unknown): EditorLaunchContext | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const result = value as { isError?: boolean; _meta?: Record<string, unknown> };
+  if (result.isError || result._meta?.launchContext === undefined) return undefined;
+  validateEditorLaunchContext(result._meta.launchContext);
+  return structuredClone(result._meta.launchContext);
 }
 
 export function readProjectValue(value: unknown): M0Project {
@@ -169,8 +180,17 @@ export function createBrowserTransport(options: BrowserTransportOptions = {}): E
 /** The SDK owns ui/initialize and the postMessage protocol. No credential is sent to the view. */
 export async function createMcpTransport(): Promise<EditorTransport> {
   const app = new App({ name: 'Manifest', version: '0.0.0' }, {});
+  let launchContext: EditorLaunchContext | undefined;
+  const launchListeners = new Set<(context: EditorLaunchContext) => void>();
   // Set handlers before connect so the initial tool notification cannot be missed.
-  app.ontoolresult = () => {};
+  app.ontoolresult = (result) => {
+    // A malformed host notification must never replace the current draft or valid launch.
+    let received: EditorLaunchContext | undefined;
+    try { received = launchContextFromToolResult(result); } catch { return; }
+    if (!received || received.id === launchContext?.id) return;
+    launchContext = received;
+    for (const listener of launchListeners) listener(structuredClone(received));
+  };
   app.onhostcontextchanged = () => {};
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -226,6 +246,11 @@ export async function createMcpTransport(): Promise<EditorTransport> {
   }
   return {
     kind: 'mcp',
+    subscribeLaunchContext(listener) {
+      launchListeners.add(listener);
+      if (launchContext) listener(structuredClone(launchContext));
+      return () => { launchListeners.delete(listener); };
+    },
     async read() { return call('read_project', { projectId: PROJECT_ID }); },
     async commit(command) { validateCommand(command); return call('commit_commands', { ...command }); },
     async readProviderRegistry() { return readRegistry(); },
@@ -249,6 +274,6 @@ export async function createMcpTransport(): Promise<EditorTransport> {
     },
     async rejectSuggestionProposal(proposalId) { return readProposal('reject_proposal', { proposalId }); },
     async markSuggestionProposalStale(proposalId) { return readProposal('mark_proposal_stale', { proposalId }); },
-    async close() { await app.close(); },
+    async close() { launchListeners.clear(); await app.close(); },
   };
 }

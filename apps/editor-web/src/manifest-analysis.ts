@@ -35,7 +35,7 @@ export function analyzeDescription(description: string, snapshot: Snapshot): Loc
   const dark = /\b(fond sombre|fond noir|theme sombre|page sombre)\b/.test(normalized);
   const light = /\b(fond clair|fond blanc|theme clair|page claire)\b/.test(normalized);
   if (dark !== light) {
-    background = dark ? '#172026' : '#ffffff'; text = dark ? '#f3f1eb' : '#1c2533';
+    background = dark ? /\bfond noir\b/.test(normalized) ? '#000000' : '#172026' : '#ffffff'; text = dark ? '#f3f1eb' : '#1c2533';
     recognized.push(dark ? 'fond sombre' : 'fond clair');
   }
   const accentNames: [RegExp, string, string][] = [

@@ -30,8 +30,8 @@ test('un nouveau projet affiche un canevas blanc réellement vide, sans Hero ni 
 
   await page.setViewportSize({ width: 375, height: 844 });
   await capture(page, '02-empty-mobile');
-  await page.getByRole('button', { name: 'Réglages du bloc', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Aucun composant dans cette page', exact: true })).toBeVisible();
+  await expect(page.locator('.canvas-region')).toBeVisible();
+  await expect(page.locator('.inspector')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });
@@ -55,14 +55,13 @@ test('l’ajout manuel du premier Hero est annulable, sauvegardable et conservé
   await expect(page.getByRole('button', { name: 'Ajouter une section d’accueil', exact: true })).toHaveCount(0);
 });
 
-test('une ouverture directement à 375 px présente la description et l’étape Décrire actives', async ({ page }) => {
+test('une ouverture à 375 px présente toutes les zones dans la même page', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 844 });
   await page.goto('/');
   const description = page.getByRole('textbox', { name: 'Description de la page', exact: true });
   await expect(description).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Description', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('button', { name: 'Décrire', exact: true })).toHaveAttribute('aria-current', 'step');
-  await expect(page.getByRole('main', { name: 'Aperçu modifiable de la page', exact: true })).toBeHidden();
+  await expect(page.locator('.mobile-tabs, .workflow-bar')).toHaveCount(0);
+  await expect(page.getByRole('main', { name: 'Aperçu modifiable de la page', exact: true })).toBeVisible();
   await capture(page, '06-direct-mobile-description');
   await description.fill('Une intention à saisir sur mobile');
   await expect(description).toHaveValue('Une intention à saisir sur mobile');

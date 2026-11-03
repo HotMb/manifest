@@ -24,6 +24,11 @@ try {
   const opened = await client.callTool({ name: 'open_designer', arguments: {} });
   assert.equal(opened.isError, undefined);
   assert.equal(opened.structuredContent?.storage, 'memory-m0');
+  const seeded = await client.callTool({ name: 'open_designer', arguments: { userRequest: 'Affiche un fond noir.', backgroundColor: '#000000' } });
+  assert.equal(seeded.isError, undefined);
+  assert.equal(seeded._meta?.launchContext?.userRequest, 'Affiche un fond noir.');
+  assert.equal(seeded._meta?.launchContext?.backgroundColor, '#000000');
+  assert.equal(seeded._meta?.project?.contentHash, opened._meta?.project?.contentHash);
   const resource = await client.readResource({ uri: 'ui://design/editor.html' });
   assert.equal(resource.contents[0]?.mimeType, 'text/html;profile=mcp-app');
   assert(resource.contents[0]?.text?.includes('Manifest'));
