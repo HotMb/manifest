@@ -45,3 +45,6 @@ Une tâche ne passe pas `done` au seul motif qu'une réunion s'est tenue. Les r�
 
 
 Correctif local et paquet privé : [ARC-01 — espace unique, contexte du chat et fond noir — 3 novembre 2026](2026-11-03-ARC-01-single-workspace-review.md).
+
+
+[ARC-01 — recherche et exemples dans le panneau droit — 3 novembre 2026](2026-11-03-ARC-01-component-examples-review.md).
