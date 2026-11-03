@@ -4,18 +4,19 @@
 
 Permettre à un créateur de composer une interface web avec une IA, de voir et corriger ses choix avant de générer le projet. Premier utilisateur : le commanditaire sur ses projets réels. Évolutions possibles : développeurs, designers techniques et petites équipes. La demande commerciale n'est pas considérée comme validée.
 
-L'outil est un atelier de composition utilisable dans ChatGPT, puis Claude, avec un cœur autonome. Il ne lit pas le champ natif de l'assistant : l'utilisateur écrit dans le champ de l'éditeur. Les suggestions utilisent les API des fournisseurs sélectionnés ; l'abonnement de l'assistant n'est pas supposé financer ces appels.
+L'outil est un atelier de composition utilisable dans ChatGPT, puis Claude, avec un cœur autonome. Il ne lit pas le champ non envoyé de l'assistant : il accepte uniquement le contexte de lancement transmis explicitement par l'hôte. L'intention de page et la recherche de composants sont deux entrées distinctes. Les suggestions de conception utilisent l'API du fournisseur sélectionné ; la recherche de catalogue reste locale et l'abonnement de l'assistant n'est pas supposé financer les appels API.
 
 ## Parcours de référence
 
-1. Dans le chat de projet, sélectionner `@Manifest` ou l'application, puis ouvrir la carte « Ouvrir Manifest ». `/manifest` est un raccourci d'usage souhaité ; sa disponibilité comme commande native dépend de l'hôte et reste à qualifier.
-2. Ouvrir l'éditeur embarqué ; retrouver page, thème et version. La coque reste sombre, le champ d'intention est à gauche, l'aperçu de la page au centre et les suggestions à droite.
-3. Choisir explicitement un modèle disponible et activer l'analyse automatique, avec état et limite d'usage visibles.
-4. Écrire une intention. Après 1,5 seconde d'inactivité hors composition IME, une proposition complète et vérifiée devient éligible ; le délai de génération reste variable.
-5. Voir la proposition dans la page sans envoyer un message. Explorer les suggestions du catalogue et les alternatives lorsqu'une demande est ambiguë.
-6. Modifier la description ou les propriétés, observer l'aperçu réagir, puis conserver/annuler les changements. Une proposition nouvelle ne remplace pas silencieusement le dernier état conservé.
-7. Valider une révision immuable, préparer le rapport et le relire. « Transmettre au chat » envoie explicitement le rapport dans la conversation active ; l'éditeur ne se ferme pas.
-8. Exporter la révision, exécuter le projet et retrouver la même composition et les interactions annoncées.
+1. Dans le chat de projet, sélectionner `@Manifest` ou l'application, puis ouvrir la carte « Ouvrir Manifest ». L'hôte peut transmettre l'identifiant du projet/page et le dernier message utilisateur envoyé comme contexte explicite. `/manifest` reste une commande native à qualifier selon l'hôte.
+2. Choisir « Nouveau projet/page » ou ouvrir un projet/page existant. Si le contexte du chat contient une demande de page, Manifest la présente comme une suggestion éditable dans le champ principal ; il ne la traite pas comme un choix déjà approuvé.
+3. L'espace s'ouvre sur une composition réellement vide pour un nouveau projet. Le champ principal, à gauche, décrit la page, sa logique et ses animations ; l'aperçu dominant au centre reflète les propositions. Le second champ, à droite, recherche des composants/animations du catalogue sans appeler de modèle.
+4. Choisir explicitement un fournisseur et un modèle. Une fois l'analyse automatique activée pour la session, le champ principal déclenche une proposition après 1,5 seconde d'inactivité hors IME ; le modèle, le coût/usage applicable et l'état restent visibles. La recherche du catalogue ne redémarre pas cette génération.
+5. Chercher par exemple « menu », puis comparer des composants qui affichent leur rendu, animation, emplacement admissible, source, version, licence et compatibilité. Prévisualiser, puis insérer à l'endroit voulu par glisser-déposer ou par une action clavier/tactile équivalente.
+6. L'insertion affiche sous le champ principal une référence lisible et son identifiant stable (ID de catalogue, bibliothèque, release et configuration). Cette pièce jointe enrichit le contexte des propositions et suit le projet jusque dans le rapport, sans réécrire le texte de l'utilisateur.
+7. Modifier la description ou les propriétés, observer l'aperçu réagir, puis conserver/annuler les changements. Une proposition nouvelle ne remplace pas silencieusement le dernier état conservé.
+8. Taper `/validate` dans le champ principal pour figer la composition visible et produire le rapport. Si l'hôte confirme l'envoi, Manifest transmet le rapport à la conversation et rend la main au modèle ; si l'hôte ne permet pas cet envoi, il garde le rapport ouvert avec copie/téléchargement. `/validate` reste une commande Manifest, pas une commande native promise à l'hôte.
+9. Le modèle hôte utilise le rapport pour générer l'application complète ; l'export Manifest reste une étape séparée et vérifiable.
 
 La prévisualisation automatique n'est pas une approbation. Une nouvelle proposition ne détruit pas le dernier brouillon conservé. La sélection d'une proposition et ses modifications restent réversibles.
 
@@ -25,7 +26,7 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 |---|---|---|
 | RQ-01 | Ouvrir l'éditeur dans ChatGPT avec un utilisateur autorisé | M0/M1 |
 | RQ-02 | Saisie propre, pause configurable, arrêt, action manuelle équivalente | M1 |
-| RQ-03 | Aperçu automatique de propositions valides sans envoyer de message au chat | M1 |
+| RQ-03 | Aperçu automatique des propositions valides sans envoyer un message au chat à chaque frappe | M1 |
 | RQ-04 | Modifier composition, thème, texte, images et animations locales | M1 |
 | RQ-05 | Liberté de composition par primitives et blocs ; propriétés contrôlées | M1 |
 | RQ-06 | Annulation, conservation et récupération après erreur | M1 |
@@ -41,6 +42,9 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 | RQ-16 | Extensions 3D, effets spécialisés et exports supplémentaires | M3 |
 | RQ-17 | Préparer un rapport reproductible lié à une révision et le transmettre explicitement au chat actif | M1 |
 | RQ-18 | Afficher pour chaque suggestion la raison, l'état, la bibliothèque, la version et la compatibilité utile | M1 |
+| RQ-19 | Séparer l'intention de page de la recherche non IA de composants/animations ; garder leurs références dans le brief et le rapport | M1 |
+| RQ-20 | Distinguer la création d'un projet/page vide de la modification d'un projet/page choisi et intégrer uniquement le contexte d'hôte transmis explicitement | M1 |
+| RQ-21 | Afficher les références de catalogue ajoutées comme pièces jointes structurées sous l'intention, les inclure dans le contexte des propositions et dans le rapport sans modifier le texte libre | M1 |
 
 ## Périmètre M1
 
@@ -68,7 +72,7 @@ M1 produit du React. Les interfaces de document et de catalogue déclarent leurs
 |---|---|---|
 | Pause avant analyse IA | 1 500 ms, hors composition IME | Valeur M1 ; ajuster seulement après mesure et décision produit |
 | Sauvegarde du brouillon | 1 s après modification, une écriture en vol | Désactivation autorisée, état explicite |
-| Analyse automatique | Désactivée jusqu'à activation dans la session | Arrêt immédiat et mode manuel |
+| Analyse automatique | Déclenchée après sélection du fournisseur et activation explicite dans la session ; ensuite, propositions après pause de 1 500 ms | Arrêt immédiat, indicateur d'usage et mode manuel |
 | Proposition ambiguë | Jusqu'à trois alternatives, jamais trois fournisseurs implicites | Choix utilisateur |
 | Révision approuvée | Action explicite, pas une conséquence de l'autosave | Invariant |
 | Langue interface | Français ; architecture localisable | Anglais ensuite |

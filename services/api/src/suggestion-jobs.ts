@@ -229,6 +229,10 @@ export class SuggestionJobManager {
       const outcome = await this.orchestrator.suggest(request);
       if ((record.summary.state as SuggestionJobState) === 'cancelled') return;
       if (!outcome.result.operations.length) throw new SuggestionJobException('PROVIDER_REFUSAL', 'Le modèle n’a pas proposé de changement applicable.');
+      // Every adapter, including injected local adapters, must pass the same domain projection.
+      // This validates empty-to-Hero insertions without changing the authoritative project.
+      try { applyOperations(project.snapshot, outcome.result.operations); }
+      catch { throw new SuggestionJobException('PROVIDER_REFUSAL', 'Le modèle a proposé une modification incompatible avec le brouillon M0.'); }
       const latest = this.projects.read(record.summary.projectId);
       const stale = outcome.status === 'stale' || latest.draftVersion !== record.request.expectedDraftVersion;
       const proposal: SuggestionProposal = {

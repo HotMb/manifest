@@ -32,7 +32,7 @@ function orchestrator(delayMs = 0) {
 test('l’orchestrateur route une intention vers l’adaptateur qualifié', async () => {
   const outcome = await orchestrator().suggest(request('req-1', 'Sans animation'));
   assert.equal(outcome.status, 'ready');
-  assert.equal(outcome.result.operations[0]?.op, 'update_props');
+  assert.equal(outcome.result.operations[0]?.op, 'insert_block');
 });
 
 test('deux sessions du même hôte peuvent générer sans annuler le job de l’autre', async () => {

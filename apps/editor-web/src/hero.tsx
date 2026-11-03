@@ -1,6 +1,6 @@
 import { type Config } from '@puckeditor/core';
 import type { CSSProperties, ReactNode } from 'react';
-import type { HeroProps, Snapshot } from '@design-workbench/m0-contract';
+import { createHeroBlock, type HeroProps, type Snapshot } from '@design-workbench/m0-contract';
 
 export type Components = { Hero: Omit<HeroProps, 'id'> };
 
@@ -35,6 +35,7 @@ function Hero({ title, body, animation, backgroundToken, theme }: HeroProps & { 
 }
 
 export function heroConfig(theme: Snapshot['theme']): Config {
+  const { id: _id, ...defaultProps } = createHeroBlock().props;
   return {
     root: { label: 'Page', fields: {}, render: ({ children }: { children: ReactNode }) => <>{children}</> },
     components: {
@@ -46,7 +47,7 @@ export function heroConfig(theme: Snapshot['theme']): Config {
           animation: { type: 'radio', label: 'Animation d’entrée', options: [{ label: 'Aucune', value: 'none' }, { label: 'Fondu discret', value: 'fade' }] },
           backgroundToken: { type: 'custom', render: () => <></> },
         },
-        defaultProps: { title: 'Des espaces conçus pour durer', body: 'Architecture et aménagement pour les lieux de vie.', backgroundToken: 'color.background', animation: 'none' },
+        defaultProps,
         permissions: { delete: false, duplicate: false, insert: false, drag: false },
         render: (props) => <Hero id={props.id} title={props.title} body={props.body} backgroundToken={props.backgroundToken} animation={props.animation} theme={theme} />,
       },

@@ -1,55 +1,56 @@
 # Manifest — suivi du projet
 
-Mise à jour : **2 novembre 2026**. Le dépôt GitHub est désormais public sous [HotMb/manifest](https://github.com/HotMb/manifest). Branche de travail : `work/arc-01-qualification`. Le nom produit est **Manifest** ; les packages et clés internes historiques `design-workbench` restent inchangés pour préserver la compatibilité.
+Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https://github.com/HotMb/manifest), branche locale `work/arc-01`, registre **révision 9**. Les Issues GitHub sont des miroirs ; `docs/delivery/tickets.json` fait foi.
 
-## Situation actuelle
+## État actuel
 
-### Direction de conception validée
+- **ARC-01 : bloqué** après livraison et revue du sous-ensemble local. Il reste à prouver le parcours dans ChatGPT Desktop, le bridge et l’identité OAuth, l’actualisation, les capacités d’hôte et une modification réelle. Voir [le compte rendu du 3 novembre](meetings/2026-11-03-ARC-01-review.md) et la [preuve d’implémentation locale](evidence/ARC-01/implementation-2026-11-03.md).
+- `npm run team:next` doit afficher **0 nouveau ticket éligible**. ARC-02 dépend de la fin d’ARC-01. Ne pas contourner ce prérequis.
+- La direction Figma approuvée est reflétée dans l’éditeur local : description principale à gauche, aperçu au centre, suggestions/réglages à droite. Le canevas d’un nouveau brouillon est réellement vide et l’ancien brouillon Hero reste intact.
 
-Le commanditaire a validé le 2 novembre le parcours montré dans les captures. Les documents de référence décrivent maintenant : carte « Ouvrir Manifest » dans le chat avec mention explicite comme voie fiable ; éditeur à trois zones (intention / aperçu / suggestions) ; délai unique de 1,5 s ; cartes de suggestions avec provenance et états distincts ; rapport lié à une révision, relu puis transmis au chat par action explicite. Voir le [brief de conception](design/CONCEPTION.md), le [contrat UX](../UX-CONTRACT.md), l'[addendum de livraison](spec/DELIVERY.md), la [revue de direction](meetings/2026-11-02-MANIFEST-design-direction.md) et la [preuve documentaire](evidence/MANIFEST/design-direction-2026-11-02.md).
+## Ce qui est livré dans la tranche locale
 
-Cette mise à jour porte sur le cadrage ; elle n'implémente pas le nouveau layout et ne prouve ni la commande slash native, ni la transmission de messages depuis l'hôte. L'état des tickets reste inchangé : ARC-01 est bloqué sur la qualification Desktop réelle et `npm run team:next` n'a aucun ticket éligible. La revue a aussi repéré que le rapport M0 lit le fournisseur/modèle sélectionné au moment de sa production et calcule « à jour » avec des critères différents de l'aperçu. Rattacher la provenance au job/proposal et unifier le prédicat d'éligibilité avant la première transmission réelle ; le propriétaire frontend devra intégrer ce défaut au ticket de correction éligible.
+- Champ principal décrivant la page et ses mouvements ; proposition manuelle ou analyse après activation, avec une pause de 1,5 s. Les propositions locales et le simulateur sont prévisualisés avant conservation.
+- Ajout manuel d’une section M0, annuler/rétablir, sauvegarde navigateur et affichage mobile.
+- Ajustements de hiérarchie, ouverture directe à 375 px dans l’étape Décrire, disparition du message vide sous un candidat et contraste des champs Puck vérifié à ≥ 4,5:1.
+- Les détails de compatibilité, résultats et limites figurent dans la [preuve datée](evidence/ARC-01/implementation-2026-11-03.md) et la [comparaison explicite à la maquette](evidence/ARC-01/figma-alignment-2026-11-03.md). Les références Figma antérieures restent dans [la revue de direction](meetings/2026-11-02-MANIFEST-design-direction.md).
 
-### Prototype et blocages
+## Ce qui n’est pas encore livré
 
-- Le prototype local comprend l'éditeur React/Puck et la boucle de suggestion MCP. Le nom visible par le transport MCP, le serveur et les logs a été aligné sur Manifest.
-- Le dépôt GitHub et ses 26 Issues ont été renommés/référencés sous `HotMb/manifest`. Les Issues restent des miroirs ; `docs/delivery/tickets.json` fait foi pour les états et dépendances.
-- Les runs `Quality` 24 et 26 avant correction échouaient à `Browser qualification tests` : 7/8 E2E passaient, le parcours de reprise d'un brouillon expiré attendait le bouton « Réglages du bloc » pendant 30 s. La trace Linux montrait que `openSettings` choisissait ce contrôle mobile à partir d'une vérification instantanée de visibilité alors que l'éditeur sortait encore de l'écran de reprise ; ce bouton est masqué au-dessus de 767 px. La correction par viewport est poussée au commit `36253c5`. Les runs Linux `Quality` #33 et #34 sur ce commit réussissent tous deux : 8/8 E2E chacun, parcours expiré en 2,4 s et 3,1 s, jobs complets en succès. La correction est donc passée deux fois en CI ; la répétition ciblée x10 recommandée reste à faire. Les essais ciblés locaux n'ont produit aucun rapport après environ 60 s (un essai) et 70 s (répétition x10 sous `CI=true`) ; ils ont été interrompus et ne sont comptés ni comme réussite ni comme échec.
-- Le registre est en révision **3**. **ARC-01 est bloqué** jusqu'à l'essai dans le vrai hôte ChatGPT et la preuve d'identité réelle. La capture Webroom du commanditaire affiche **« WebMCP unavailable »** dans cette session/page. Pour continuer sans WebMCP, un package local privé ChatGPT Desktop a été construit et enregistré en version `0.1.0` via Plugin Creator; aucune soumission publique n'a été faite. Son serveur stdio empaqueté passe le smoke test local et le SDK retourne l'UI `text/html;profile=mcp-app`, mais rien ne prouve encore le démarrage du processus ou le rendu dans ChatGPT Desktop. La lecture d'`open_designer` dans ce contexte Codex confirme uniquement la disponibilité du tool. Voir [la preuve plugin Desktop](evidence/ARC-01/desktop-plugin-2026-11-02.md), [la tentative d'accès hôte](evidence/ARC-01/host-attempt-2026-11-02.md) et [la revue précédente](meetings/2026-11-02-ARC-01-host-attempt.md). `npm run team:next` indique **0 ticket éligible** ; ARC-02 ne démarre pas.
-- Les agents frontend et backend ont relu cette porte de sortie avant de changer uniquement leurs libellés d'application. Leur travail de nommage n'avance ni ne clôture ARC-01.
+- Le second champ pour rechercher « menu » dans un vrai catalogue versionné, ses cartes de prévisualisation/provenance/licence, et l’ajout par glisser-déposer ou action accessible : UI-02/CAT-01/CAT-02.
+- Le choix nouveau projet/existant et un contexte de chat transmis explicitement : UI-03/AI-02.
+- La pièce jointe de référence sous le champ principal, son inclusion dans le rapport, `/validate` avec accusé et transmission au chat : UI-02/AI-02/REV-01.
+- La création/modification générale de projets, plusieurs pages, un export d’application complète et un modèle réel. Le prototype actuel est borné à un projet/page et zéro ou un Hero ; aucun fournisseur n’a été appelé dans cette tranche.
+- Le rendu final dans ChatGPT Desktop et la matrice de capacités réelles restent à vérifier. Le badge « WebMCP unavailable » observé précédemment n’est pas remplacé par une preuve de réussite.
 
-## Revue du code de nommage
+Les tâches M1 sont encore `todo` en raison de leurs dépendances. L’absence de recherche catalogue n’est pas maquillée par un champ local factice ; ses critères sont dans UI-02/CAT-02 et l’architecture approuvée.
 
-- L'adaptateur d'hôte publie le nom `Manifest` au client MCP. Vérification rapportée par l'agent frontend : typecheck, 16 tests d'adaptateur et `git diff --check` réussis.
-- Le serveur MCP annonce `manifest-m0`, les logs annoncent Manifest et le realm HTTP est `manifest-m0`. Vérification rapportée par l'agent backend : `npm run test:m0` **52/52**, typecheck et `git diff --check` réussis.
-- Le garde-fou exigeant un store partagé par le serveur MCP et les suggestions reste en place ; les changements concurrents ont été préservés.
-- Ces résultats couvrent le code local et ses tests. Ils ne prouvent pas l'intégration dans l'application ChatGPT ni l'identité OAuth.
+## Vérifications exécutées
 
-## Produit et livraison
+| Vérification | Résultat |
+|---|---|
+| E2E navigateur | **17/17 réussis**, dont canevas vide, ajout manuel, prévisualisation, viewport 375 px et contraste |
+| M0 backend/MCP/adaptateurs/jobs | **64/64 réussis** avec l’autorisation de serveur HTTP local |
+| Fournisseurs et simulateur | **28/28 réussis**, aucun appel à une API de modèle |
+| Tests UI du propriétaire frontend | **14 réussis** |
+| `npm test` | **20 réussis, 1 ignoré** faute de droit de création de lien symbolique sous Windows |
+| Typecheck, build, audit strict, `npm run check`, `git diff --check` | réussis ; avertissements de dépendances Vite/Puck documentés dans le compte rendu |
+| Contrats Python | non exécutés : `jsonschema` est absent de cet environnement |
 
-Manifest vise un éditeur embarqué où l'utilisateur décrit sa page, observe une proposition après une pause, modifie la demande et voit l'aperçu réagir, puis valide une version et transmet un rapport compréhensible au modèle hôte. L'API du fournisseur choisi est appelée côté backend. Les intégrations natives multi-fournisseurs et la 3D sont prévues par étapes.
+Une revue indépendante du code M0 et une revue design sur la capture finale ont été réalisées. Le compte rendu distingue les captures et simulateurs locaux de l’environnement hôte réel.
 
-Le prototype reste un outil de qualification : stockage serveur en mémoire, aucun OAuth de production, aucune persistance multi-utilisateur ni export de code complet. L'appel fournisseur réel et le vrai hôte ChatGPT ne sont pas encore éprouvés. Les commandes de l'équipe n'appellent pas d'API payante par défaut.
+La relecture loop-verify a utilisé ses deux passes : la seconde a validé 4/5 critères, mais le paquet omettait le fichier de dettes contenant DEBT-004. Aucun PASS global n’est revendiqué ; la limite de tentatives est atteinte.
 
-## Vérifications récentes du prototype
+## Dettes et risques suivis
 
-- 52 tests M0, 24 tests fournisseurs et 8 E2E navigateur ont été rapportés réussis sur les incréments précédents ; typecheck et build réussis.
-- `npm test` avait 20 réussites et un cas ignoré faute de droit de création de lien symbolique sous Windows.
-- `npm run check`, `npm run typecheck` et `git diff --check` réussissent après l'ajustement du helper E2E. Les runs Linux `Quality` #33 et #34 sur `36253c5` passent toutes leurs étapes : 8/8 E2E chacun, dont la reprise du brouillon expiré, et validations de contrats ensuite. La répétition ciblée x10 n'a pas été confirmée localement.
-- Les deux passes loop-verify sur ce suivi ont rendu FAIL : la première n'avait pas le compte rendu et les statuts détaillés ; la seconde n'avait pas le code du helper. La limite de deux tentatives est atteinte ; aucun PASS global n'est revendiqué. Le diff du helper a été relu séparément par un agent Test Automation Engineer.
-- Les deux passes loop-verify précédentes sur le code M0 étaient en échec ; les défauts relevés ont reçu des corrections et des tests ciblés, mais aucun PASS global n'est revendiqué.
-- Pour ce renommage, les deux tentatives loop-verify ont aussi rendu FAIL : la seconde a validé 4 critères sur 5 et demandé une preuve explicite des liens dans chaque Issue. L'audit direct des 26 Issues a ensuite confirmé le lien `HotMb/manifest`, le bandeau Manifest et l'absence de l'ancien slug dans chacune ; aucune troisième tentative n'a été effectuée selon la limite du skill.
-- Pour la revue de tentative hôte du 2 novembre, la première passe loop-verify a échoué uniquement sur la provenance durable des contributions d'agents ; le compte rendu a été complété par [leurs retours archivés](evidence/ARC-01/review-2026-11-02.md). La seconde et dernière passe a réussi 5/5 critères ; aucun autre PASS d'hôte ou d'identité n'en découle.
-- Pour l'addendum desktop/WebMCP du 2 novembre, la relecture loop-verify a réussi 5/5 critères. Elle vérifie le compte rendu et les limites déclarées, pas la disponibilité réelle des Site Tools dans le compte du commanditaire.
-- Pour la piste plugin local, le package a été construit et testé depuis son propre bundle. Le fichier privé enregistré est présent dans Plugin Creator; le smoke local a découvert quatre outils, ouvert le projet M0 et lu la ressource HTML de la vue. Ces vérifications ne remplacent pas le contrôle manuel de ChatGPT Desktop. Aucun modèle fournisseur n'a été appelé.
-- La relecture `loop-verify-review` de cette livraison a été scindée en trois parties (package, preuve/statut, compte rendu) ; les trois ont reçu PASS, 3/3 critères chacune. Le vérificateur est de la lignée Codex/OpenAI et ne fournit aucune preuve de rendu dans l'hôte.
-- Pour l'alignement des captures approuvées, la première relecture loop-verify a échoué sur trois précisions documentaires, ensuite ajoutées (références des trois écrans, exclusion des suggestions incompatibles/non licenciées, preuve d'éligibilité et hash canonique). La deuxième réponse ne contenait pas de verdict parseable ; la limite de deux passes est atteinte, aucun PASS de cette revue n'est revendiqué. Les contrôles locaux de documentation et du registre passent ; aucune validation runtime n'a été effectuée.
-- La revue complète de l'hôte ChatGPT, des capacités réelles, de l'identité et d'un appel fournisseur reste à effectuer. Les connexions MCP personnalisées sans plugin local utilisent un endpoint distant ou Secure MCP Tunnel; le package privé Desktop est une voie locale distincte. Aucun droit du compte/workspace ni environnement d'exécution Desktop n'a été qualifié.
+- DEBT-001 à DEBT-004 restent ouvertes dans [TECH-DEBT.md](TECH-DEBT.md), chacune liée à son propriétaire et jalon.
+- Puck émet pendant les parcours un avertissement `setData` coûteux ; il n’a pas causé d’échec mais nécessite une mesure avant d’optimiser. Ce n’est pas encore une dette validée ni une mesure de performance.
+- Le premier déploiement du test M0 sans autorisation locale a échoué `EACCES`; son rerun autorisé a réussi 64/64. Le problème concernait l’accès réseau loopback du banc de test, pas une requête fournisseur.
 
 ## Prochaine action
 
-Le commanditaire doit ouvrir **ChatGPT Desktop**, démarrer une nouvelle conversation exécutée localement, taper `@`, choisir Manifest, puis envoyer « Ouvre l'éditeur Manifest ». La sélection seule n'ouvre pas la vue. Si l'outil ou l'éditeur n'apparaît pas, envoyer une capture de cette tentative pour isoler le prochain blocage. Ne pas modifier l'état du ticket avant la preuve hôte/identité et ne pas démarrer ARC-02. L'alias natif `/manifest`, l'observation du texte non envoyé du compositeur et les suggestions LLM réelles restent à qualifier séparément. Voir [la revue du plugin local](meetings/2026-11-02-ARC-01-desktop-plugin.md).
+Dans ChatGPT Desktop, ouvrir Manifest avec le build poussé, vérifier l’ouverture depuis le chat, le chargement du projet et la lecture authentifiée, puis tenter une modification et relever les capacités visibles. Fournir une capture du résultat ou de l’erreur ; ne pas inclure de jeton ou secret. L’ARC-01 pourra être réouvert par l’orchestrateur à partir de cette preuve. Après obtention, terminer la matrice hôte/identité avant de démarrer ARC-02.
 
-## Reprendre le travail
+## Reprendre
 
-Dans ce dépôt, relire `AGENTS.md`, ce fichier, `docs/delivery/ORCHESTRATION.md`, puis lancer `npm run team:status` et `npm run team:next`. `npm run team:start` ouvre une nouvelle session Codex pour l'orchestration ; les agents ne continuent pas après sa fermeture. Voir aussi [le tableau des tickets](delivery/BOARD.md), [leur correspondance GitHub](delivery/GITHUB.md), [la revue de l'incrément local](meetings/2026-11-02-MANIFEST-live-suggestions.md) et [les dettes techniques](TECH-DEBT.md).
+Relire `AGENTS.md`, ce fichier et [ORCHESTRATION.md](delivery/ORCHESTRATION.md), puis lancer `npm run team:status` et `npm run team:next`. Voir [le tableau généré](delivery/BOARD.md), [la correspondance GitHub](delivery/GITHUB.md), [le compte rendu de fin de tâche](meetings/2026-11-03-ARC-01-review.md) et [les dettes](TECH-DEBT.md).

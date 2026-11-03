@@ -1,24 +1,30 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { heroProject } from '../fixtures/m0-project.ts';
 
 const INITIAL_TITLE = 'Des espaces conçus pour durer';
 const STORAGE_KEY = 'design-workbench:m0:project-m0:v1';
 const SCREENSHOTS = fileURLToPath(new URL('../../.team/screenshots/', import.meta.url));
 
 async function openEditor(page: Page) {
+  // Editing regressions exercise a previously saved populated project explicitly.
+  // Fresh-user tests below never use this fixture initializer.
+  await page.addInitScript(({ key, project }) => {
+    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, project }));
+  }, { key: STORAGE_KEY, project: heroProject() });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: INITIAL_TITLE, exact: true })).toBeVisible();
+  if ((page.viewportSize()?.width ?? 1280) <= 1100) await expect(page.getByRole('textbox', { name: 'Description de la page', exact: true })).toBeVisible();
+  else await expect(page.getByRole('heading', { name: INITIAL_TITLE, exact: true })).toBeVisible();
   await expect(page.getByText('Diagnostic navigateur · sauvegarde locale', { exact: true })).toBeVisible();
 }
 
 async function openSettings(page: Page) {
   const desktopSettings = page.locator('.inspector-tabs').getByRole('button', { name: 'Réglages', exact: true });
   const isMobileLayout = (page.viewportSize()?.width ?? 1280) <= 767;
-  const settings = isMobileLayout
-    ? page.getByRole('button', { name: 'Réglages du bloc', exact: true })
-    : desktopSettings;
-  await settings.click();
+  if (isMobileLayout) await page.getByRole('button', { name: 'Réglages du bloc', exact: true }).click();
+  else if (await page.locator('.inspector').isVisible()) await desktopSettings.click();
+  else await page.getByRole('button', { name: 'Modifier le bloc', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toBeVisible();
 }
 
@@ -27,6 +33,55 @@ async function screenshot(page: Page, filename: string) {
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: `${SCREENSHOTS}${filename}`, fullPage: true, animations: 'disabled' });
 }
+
+test('l’atelier suit la hiérarchie Figma sur desktop et replie les rails sous 1100 px', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openEditor(page);
+  await expect(page.getByRole('navigation', { name: 'Étapes de conception' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Décrire' })).toHaveAttribute('aria-current', 'step');
+  await expect(page.getByRole('heading', { name: 'Décrivez votre interface', exact: true })).toBeVisible();
+  await expect(page.getByRole('main', { name: 'Aperçu modifiable de la page' })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Panneau de conception' })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Préparer le rapport', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Préparer le rapport', exact: true })).not.toHaveClass(/button--primary/);
+
+  const layout = await page.locator('.workspace').evaluate((element) => {
+    const columns = getComputedStyle(element).gridTemplateColumns.split(' ').map(Number.parseFloat);
+    return { columns };
+  });
+  expect(layout.columns).toHaveLength(2);
+  expect(layout.columns[0]).toBeGreaterThanOrEqual(264);
+  expect(layout.columns[0]).toBeLessThanOrEqual(280);
+
+  await page.locator('#page-description').fill('Je veux un accent vert et aucune animation.');
+  await page.getByLabel('Analyse automatique locale', { exact: true }).check();
+  await expect(page.locator('.hint-card')).toHaveCount(2, { timeout: 6_000 });
+  await expect(page.getByRole('complementary', { name: 'Panneau de conception' })).toBeVisible();
+  const composedColumns = await page.locator('.workspace').evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').map(Number.parseFloat));
+  expect(composedColumns).toHaveLength(3);
+  expect(composedColumns[0]).toBeGreaterThanOrEqual(264);
+  expect(composedColumns[0]).toBeLessThanOrEqual(280);
+  expect(composedColumns[2]).toBeGreaterThanOrEqual(264);
+  expect(composedColumns[2]).toBeLessThanOrEqual(280);
+
+  await page.setViewportSize({ width: 1000, height: 1000 });
+  await expect(page.locator('.mobile-tabs')).toBeVisible();
+  await expect(page.getByRole('main', { name: 'Aperçu modifiable de la page' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Décrivez votre interface', exact: true })).toBeHidden();
+  await expect(page.getByRole('complementary', { name: 'Panneau de conception' })).toBeHidden();
+  await page.locator('.mobile-tabs').getByRole('button', { name: 'Description' }).click();
+  await expect(page.getByRole('heading', { name: 'Décrivez votre interface', exact: true })).toBeVisible();
+});
+
+test('les étapes transfèrent le focus après le changement de panneau sur mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 844 });
+  await openEditor(page);
+  await page.getByRole('button', { name: 'Décrire' }).click();
+  await expect(page.locator('#page-description')).toBeFocused();
+  await page.getByRole('button', { name: 'Composer' }).click();
+  await expect(page.locator('#page-preview')).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Composer' })).toHaveAttribute('aria-current', 'step');
+});
 
 test('les réglages modifient la page et une sauvegarde locale survit au rechargement', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -100,7 +155,8 @@ test('deux vues ne peuvent écraser silencieusement la même version locale', as
 
 test('la largeur 375 px garde les actions accessibles au clavier et un seul panneau visible', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('/');
+  await openEditor(page);
+  await page.getByRole('button', { name: 'Aperçu de la page', exact: true }).click();
   await expect(page.getByRole('heading', { name: INITIAL_TITLE, exact: true })).toBeVisible();
   await expect(page.getByRole('complementary', { name: 'Panneau de conception', exact: true })).not.toBeVisible();
   await screenshot(page, 'arc01-mobile-preview.png');
@@ -175,6 +231,7 @@ test('un brouillon expiré reste intact et se récupère seulement après une ac
 test('une sauvegarde incertaine conserve sa capture puis les nouveaux réglages après vérification', async ({ page }) => {
   await openEditor(page);
   await openSettings(page);
+  const originalRecord = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
   await page.evaluate((key) => {
     const original = Storage.prototype.setItem;
     let failNext = true;
@@ -192,7 +249,7 @@ test('une sauvegarde incertaine conserve sa capture puis les nouveaux réglages 
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill(capturedTitle);
   await page.getByRole('button', { name: 'Enregistrer le brouillon', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('n’a pas été enregistré');
-  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBeNull();
+  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(originalRecord);
 
   await page.getByRole('textbox', { name: 'Titre', exact: true }).fill(newerTitle);
   await page.getByRole('button', { name: 'Vérifier la version enregistrée', exact: true }).click();

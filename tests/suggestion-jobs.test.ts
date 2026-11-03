@@ -6,17 +6,19 @@ import {
   DETERMINISTIC_SIMULATOR_DESCRIPTOR,
   ModelSuggestionOrchestrator,
   createDeterministicModelAdapter,
+  applyOperations,
   initialProject,
   makeEditCommand,
   stableStringify,
 } from '@design-workbench/m0-contract';
+import { heroProject } from './fixtures/m0-project.ts';
 import { MemoryProjectStore } from '../services/api/src/domain.ts';
 import { SuggestionJobException, SuggestionJobManager } from '../services/api/src/suggestion-jobs.ts';
 import { createDesignerMcpServer } from '../services/api/src/mcp.ts';
 import { createDesignerHttpServer } from '../services/api/src/http.ts';
 
-function setup(delayMs = 0) {
-  const store = new MemoryProjectStore();
+function setup(delayMs = 0, empty = false) {
+  const store = new MemoryProjectStore(empty ? initialProject() : heroProject());
   const descriptor = { ...DETERMINISTIC_SIMULATOR_DESCRIPTOR, status: 'configured' as const };
   const adapter = createDeterministicModelAdapter(delayMs);
   const orchestrator = new ModelSuggestionOrchestrator({ registry: { schemaVersion: 1, providers: [descriptor] }, adapters: [adapter] });
@@ -38,6 +40,63 @@ function input(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+test('un candidat insère le premier Hero dans la projection puis seulement sur conservation', async () => {
+  const { store, jobs } = setup(0, true);
+  const before = store.read('project-m0');
+  const started = jobs.start('project-m0', input({ intent: 'Titre : Ma première page\nFondu' }));
+  const done = await jobs.waitForCompletion(started.jobId);
+  assert.equal(done.state, 'succeeded');
+  const proposal = jobs.readProposal(done.proposalIds[0]!);
+  assert.equal(proposal.operations[0]?.op, 'insert_block');
+  const projection = applyOperations(before.snapshot, proposal.operations);
+  assert.equal(projection.pages[0]!.composition.content[0]!.props.title, 'Ma première page');
+  assert.deepEqual(store.read('project-m0'), before);
+  const decision = jobs.keepProposal(proposal.id);
+  assert.deepEqual(decision.project.snapshot, projection);
+  assert.equal(decision.project.draftVersion, 1);
+  assert.deepEqual(jobs.keepProposal(proposal.id), decision);
+});
+
+test('ignorer un candidat initial laisse le document et son hash vides', async () => {
+  const { store, jobs } = setup(0, true);
+  const before = store.read('project-m0');
+  const started = jobs.start('project-m0', input({ intent: 'Titre : Un candidat temporaire' }));
+  const done = await jobs.waitForCompletion(started.jobId);
+  assert.equal(jobs.rejectProposal(done.proposalIds[0]!).status, 'rejected');
+  assert.deepEqual(store.read('project-m0'), before);
+});
+
+test('une insertion manuelle rend le candidat initial obsolète sans écraser le bloc', async () => {
+  const { store, jobs } = setup(0, true);
+  const started = jobs.start('project-m0', input({ intent: 'Titre : Candidat modèle' }));
+  const done = await jobs.waitForCompletion(started.jobId);
+  const proposal = jobs.readProposal(done.proposalIds[0]!);
+  const before = store.read('project-m0');
+  const manual = applyOperations(before.snapshot, proposal.operations);
+  manual.pages[0]!.composition.content[0]!.props.title = 'Ajout manuel conservé';
+  store.commit(makeEditCommand(before, manual, 'manual-first-block'));
+  assert.throws(() => jobs.keepProposal(proposal.id), (error: unknown) => error instanceof SuggestionJobException && error.code === 'VERSION_CONFLICT');
+  assert.deepEqual(store.read('project-m0').snapshot, manual);
+  assert.equal(jobs.readProposal(proposal.id).status, 'stale');
+});
+
+test('la frontière job refuse aussi un adaptateur injecté ciblant un bloc absent', async () => {
+  const store = new MemoryProjectStore();
+  const adapter = createDeterministicModelAdapter();
+  const invalidAdapter = { ...adapter, async suggest(request: Parameters<typeof adapter.suggest>[0]) {
+    const result = await adapter.suggest(request);
+    return { ...result, operations: [{ op: 'update_props' as const, pageId: 'page-home', blockId: 'absent', props: { title: 'Impossible' } }] };
+  } };
+  const orchestrator = new ModelSuggestionOrchestrator({ registry: { schemaVersion: 1, providers: [DETERMINISTIC_SIMULATOR_DESCRIPTOR] }, adapters: [invalidAdapter] });
+  const jobs = new SuggestionJobManager(store, orchestrator);
+  const job = jobs.start('project-m0', input());
+  const done = await jobs.waitForCompletion(job.jobId);
+  assert.equal(done.state, 'failed');
+  assert.equal(done.error?.code, 'PROVIDER_REFUSAL');
+  assert.deepEqual(done.proposalIds, []);
+  assert.deepEqual(store.read('project-m0').snapshot.pages[0]!.composition.content, []);
+});
 
 test('le job produit une proposition ordonnée sans enregistrer le brouillon', async () => {
   const { store, jobs } = setup();
@@ -135,7 +194,7 @@ test('un retry exact renvoie son reçu sans relire le projet', async () => {
 });
 
 test('les clés restent distinctes lorsque projet et clé contiennent des deux-points', async () => {
-  const base = initialProject();
+  const base = heroProject();
   const projects = new Map([
     ['alpha', { ...structuredClone(base), projectId: 'alpha' }],
     ['alpha:beta', { ...structuredClone(base), projectId: 'alpha:beta' }],

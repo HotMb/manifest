@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { heroProject } from './fixtures/m0-project.ts';
 import { MemoryProjectStore } from '../services/api/src/domain.ts';
 import { ProviderRuntimeConfigError, createSuggestionRuntime } from '../services/api/src/provider-runtime.ts';
 import { createDesignerMcpServer } from '../services/api/src/mcp.ts';
@@ -10,16 +11,16 @@ import type { ProviderFetchResponse } from '@design-workbench/m0-contract';
 const ok = (payload: unknown): ProviderFetchResponse => ({ ok: true, status: 200, json: async () => payload });
 
 test('aucune configuration ne crée pas de job IA ou d’outil fournisseur', () => {
-  assert.equal(createSuggestionRuntime(new MemoryProjectStore(), {}), undefined);
+  assert.equal(createSuggestionRuntime(new MemoryProjectStore(heroProject()), {}), undefined);
 });
 
 test('la configuration incomplète est refusée au démarrage', () => {
-  assert.throws(() => createSuggestionRuntime(new MemoryProjectStore(), { MANIFEST_PROVIDER: 'openai' }), ProviderRuntimeConfigError);
+  assert.throws(() => createSuggestionRuntime(new MemoryProjectStore(heroProject()), { MANIFEST_PROVIDER: 'openai' }), ProviderRuntimeConfigError);
 });
 
 test('la configuration hôte injecte la clé seulement dans l’adaptateur', async () => {
   let authorization = '';
-  const projectStore = new MemoryProjectStore();
+  const projectStore = new MemoryProjectStore(heroProject());
   const runtime = createSuggestionRuntime(projectStore, {
     MANIFEST_PROVIDER: 'openai', MANIFEST_MODEL: 'test-model', MANIFEST_API_BASE_URL: 'https://api.example.test/v1', MANIFEST_API_KEY: 'temporary-test-key',
   }, async (_url, init) => {
@@ -42,12 +43,12 @@ test('la configuration hôte injecte la clé seulement dans l’adaptateur', asy
 
 test('le runtime n’accepte que les fournisseurs au protocole compatible actuel', () => {
   const config = { MANIFEST_PROVIDER: 'anthropic', MANIFEST_MODEL: 'model', MANIFEST_API_BASE_URL: 'https://api.example.test', MANIFEST_API_KEY: 'dummy' };
-  assert.throws(() => createSuggestionRuntime(new MemoryProjectStore(), config), ProviderRuntimeConfigError);
+  assert.throws(() => createSuggestionRuntime(new MemoryProjectStore(heroProject()), config), ProviderRuntimeConfigError);
 });
 
 test('aucune métadonnée MCP ne révèle la clé pendant le cycle suggestion', async (t) => {
   const apiKey = 'mcp-only-test-secret';
-  const store = new MemoryProjectStore();
+  const store = new MemoryProjectStore(heroProject());
   const runtime = createSuggestionRuntime(store, {
     MANIFEST_PROVIDER: 'openai', MANIFEST_MODEL: 'test-model', MANIFEST_API_BASE_URL: 'https://api.example.test/v1', MANIFEST_API_KEY: apiKey,
   }, async () => ok({ choices: [{ message: { content: '{"operations":[{"op":"update_props","pageId":"page-home","blockId":"block-hero","props":{"animation":"none"}}]}' } }] }));

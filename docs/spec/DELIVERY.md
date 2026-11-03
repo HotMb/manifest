@@ -14,7 +14,30 @@ Le commanditaire a validé le parcours des captures : invocation depuis le chat 
 | Réactivité et provenance | UI-03, UI-04, AI-01/02 | 1 500 ms hors IME, dernière prévisualisation stable pendant la génération, obsolescence correcte et origine capturée par le job/proposal |
 | Version et transmission du rapport | REV-01, UI-02/04, API/MCP et TEST-01 à détailler | rapport lié à une révision/hash, avec preuve d'éligibilité capturée et hash JCS déterministe ; relu avant envoi, provenance fidèle, reçu d'envoi confirmé ou fallback explicite |
 
-Les statuts/dépendances du registre machine ne changent pas dans cet addendum : ARC-01 attend toujours la qualification réelle de ChatGPT Desktop et aucune nouvelle tâche ne devient éligible. Lorsque la porte M0 s'ouvre, l'orchestrateur traduira RQ-17/RQ-18 et le rapport de transmission en critères de tickets via le processus de backlog, avant de déclarer ces capacités planifiées.
+Les critères du registre machine ont été précisés en révision 6 sans modifier les statuts ni les dépendances. ARC-01 reste le seul ticket actif. Le nouveau parcours local vide -> ajout explicite -> édition/enregistrement est qualifié séparément de l'ouverture/authentification réelle dans ChatGPT Desktop. UI-02 précise la recherche catalogue, le rendu/animation, les licences, l'insertion accessible et les références de rapport ; il demeure non éligible jusqu'à UI-01 et CAT-02.
+
+### Correction de fidélité au démarrage — audit du 3 novembre 2026
+
+La comparaison du prototype ouvert avec la maquette a révélé un écart de contrat, pas seulement de CSS : l'écran Figma commence avec une composition vide, tandis que le validateur M0 et sa fixture démarrent toujours avec un Hero rempli. Le JSON Schema canonique accepte déjà `composition.content: []`; le sous-ensemble sémantique M0 et plusieurs helpers l'interdisent.
+
+La correction est bornée à zéro ou un Hero M0 dans le même Snapshot : un projet réellement neuf ouvre un canevas blanc; `insert_block`/`remove_block` sont atomiques, la destination racine est explicite (`slot: "content"`, `parentBlockId: null`, `beforeBlockId: null`), une proposition reste une projection jusqu'à « Conserver », et l'undo/redo préserve l'identité du bloc. La fixture Hero et les projets déjà enregistrés restent compatibles. Une fixture vide distincte couvre le nouveau démarrage. Il est interdit de cacher le Hero dans le rendu tout en le conservant dans le document ou le rapport.
+
+Ce changement ne livre pas l'annuaire multi-cartes de l'exemple Figma. Les membres, la fiche au survol, les propositions de bibliothèque avec versions/licences et l'animation stagger restent sous les tickets catalogue/UI M1. Les règles locales ne sont pas une réponse LLM ; la capture de suggestions utilisée pour le contrôle visuel ne fait aucun appel fournisseur.
+
+Le critère local ARC-01 est désormais vide -> ajout du Hero M0 -> modification/enregistrement dans le navigateur ; la reprise d'un ancien brouillon Hero doit aussi rester intacte. La preuve ChatGPT Desktop, l'authentification, les capacités du bridge et le poll hôte restent des critères séparés et bloquants pour la clôture. Le travail shell seul ne ferme pas ARC-01.
+
+### Clarification du flux à deux entrées — 3 novembre 2026
+
+La maquette détaillée par le commanditaire établit deux tâches parallèles dans le même éditeur, avec une source de vérité documentaire unique :
+
+| Zone | Rôle | Comportement et données |
+|---|---|---|
+| Entrée principale à gauche | Décrire/créer/modifier la page, sa logique, son mouvement et ses contraintes | À l'ouverture, le contexte d'hôte explicitement transmis (projet/page ciblé et dernier message déjà envoyé) peut préremplir une suggestion éditable. L'utilisateur choisit nouveau projet/page ou modification si la cible n'est pas univoque. Le debounce de 1 500 ms s'applique uniquement à cette intention ; la réponse modèle reste une proposition vérifiée et réversible. |
+| Recherche à droite | Trouver un élément oublié ou une piste visuelle (ex. « menu ») | Recherche locale dans le catalogue versionné, sans appel IA. Les cartes montrent l'aperçu et l'animation, la raison, le slot/position, bibliothèque, version, licence et compatibilité. Prévisualiser n'écrit pas ; ajouter par drag/drop ou action accessible met à jour le Snapshot et affiche sous l'entrée principale un jeton de référence lisible/stable, inclus dans le contexte IA et le rapport sans modifier le texte libre. |
+| Aperçu au centre | Montrer exactement la page issue du Snapshot et la projection en cours | Le canevas neuf est blanc. Une proposition IA se prévisualise selon la causalité ; les composants du catalogue sont ajoutés à la bonne position. Aucun Hero, menu ou annuaire n'est maquetté comme résultat si son contenu n'existe pas dans le Snapshot/catalogue. |
+| `/validate` dans l'entrée principale | Finaliser et remettre le contexte au modèle hôte | Fige la composition/brief, calcule le rapport lié à une révision/hash, le transmet via la capacité déclarée de l'hôte puis cède la main après accusé. En cas d'absence/échec, garde l'éditeur et le rapport accessibles en copie/téléchargement. Ne présume pas que `/validate` est une commande native ChatGPT. |
+
+Portes de livraison correspondantes : contexte d'ouverture/retour dans ARC-01 et API-01, choix nouveau/existant et intention dans UI-03/AI-02, recherche/prévisualisation/insertion et jetons de référence visibles dans UI-02/CAT-01/02/03, DOM-02/UI-04, AI-02, REV-01 et TEST-01. La révision 7 du registre précise les critères ARC-01, UI-02, UI-03, CAT-02, AI-02, REV-01 et TEST-01 ; leurs Issues GitHub restent des miroirs ouverts. Le sous-ensemble M0 zéro/un Hero n'est qu'une qualification ; il n'est pas le catalogue final ni une promesse que le modèle prendra toujours le même type de composant.
 
 ## Rôles et responsabilité
 

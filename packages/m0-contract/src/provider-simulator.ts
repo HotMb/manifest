@@ -1,4 +1,4 @@
-import { applyOperations, stableStringify, validateSnapshot, type M0Operation, type Snapshot } from './index.ts';
+import { applyOperations, createHeroBlock, stableStringify, validateSnapshot, type M0Operation, type Snapshot } from './index.ts';
 import type { ManifestModelRequest, ManifestModelResult, ModelProviderAdapter, ModelProviderDescriptor } from './providers.ts';
 
 /** A deterministic local adapter used to exercise the provider boundary without network access. */
@@ -24,7 +24,7 @@ const wait = (milliseconds: number, signal?: AbortSignal) => new Promise<void>((
 function colorOperations(description: string, snapshot: Snapshot): M0Operation[] {
   const normalized = description.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
   const page = snapshot.pages[0]!;
-  const hero = page.composition.content[0]!;
+  const hero = page.composition.content[0];
   const tokens = snapshot.theme.tokens;
   const next: Partial<typeof tokens> = {};
   if (/\b(fond sombre|fond noir|theme sombre|page sombre)\b/.test(normalized)) {
@@ -42,11 +42,17 @@ function colorOperations(description: string, snapshot: Snapshot): M0Operation[]
   const props: { title?: string; body?: string; animation?: 'none' | 'fade' } = {};
   const title = description.match(/^titre\s*[:=]\s*(.+)$/im)?.[1]?.trim();
   const body = description.match(/^(?:texte|presentation)\s*[:=]\s*(.+)$/im)?.[1]?.trim();
-  if (title && title !== hero.props.title && title.length <= 200) props.title = title;
-  if (body && body !== hero.props.body && body.length <= 1200) props.body = body;
-  if (/\b(sans animation|aucune animation|sans mouvement)\b/.test(normalized) && hero.props.animation !== 'none') props.animation = 'none';
-  if (/\b(fondu|animation douce|entree douce)\b/.test(normalized) && hero.props.animation !== 'fade') props.animation = 'fade';
-  if (Object.keys(props).length) operations.push({ op: 'update_props', pageId: page.id, blockId: hero.props.id, props });
+  if (title && title !== hero?.props.title && title.length <= 200) props.title = title;
+  if (body && body !== hero?.props.body && body.length <= 1200) props.body = body;
+  const withoutMotion = /\b(sans animation|aucune animation|sans mouvement)\b/.test(normalized);
+  if (withoutMotion && hero?.props.animation !== 'none') props.animation = 'none';
+  if (!withoutMotion && /\b(fondu|animation douce|entree douce)\b/.test(normalized) && hero?.props.animation !== 'fade') props.animation = 'fade';
+  if (hero && Object.keys(props).length) operations.push({ op: 'update_props', pageId: page.id, blockId: hero.props.id, props });
+  else if (!hero && (Object.keys(props).length || /\bhero\b|section d['’]accueil/.test(normalized))) {
+    const block = createHeroBlock();
+    Object.assign(block.props, props);
+    operations.push({ op: 'insert_block', pageId: page.id, parentBlockId: null, slot: 'content', beforeBlockId: null, block });
+  }
   return operations;
 }
 

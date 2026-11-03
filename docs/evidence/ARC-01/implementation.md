@@ -2,6 +2,8 @@
 
 Date : 1er novembre 2026. Branche : `work/arc-01-qualification`. Cette preuve décrit le lot local ; elle ne clôture pas les critères exigeant le vrai hôte.
 
+> Historique : le bilan ci-dessous porte sur l'incrément du 1er novembre et son état d'interface initial. Pour le lot du 3 novembre (canevas réellement vide et alignement Figma), lire [implementation-2026-11-03.md](implementation-2026-11-03.md). Les comptes de tests ci-dessous ne sont pas les comptes actuels.
+
 ## Livré
 
 - Un éditeur React/Puck, une page et un Hero ; contenu, trois couleurs, mouvement léger, viewport mobile, annuler/rétablir.

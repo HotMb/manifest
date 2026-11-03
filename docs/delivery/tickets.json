@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productName": "Manifest",
-  "revision": 3,
+  "revision": 9,
   "tickets": [
     {
       "id": "ARC-01",
@@ -16,13 +16,14 @@
         "docs/evidence/ARC-01"
       ],
       "acceptance": [
-        "Un éditeur minimal avec un bloc s'ouvre dans le vrai ChatGPT, se rafraîchit et permet une modification.",
-        "Le bridge officiel initialise Vue vers Hôte, réalise une lecture authentifiée et refuse un jeton invalide.",
-        "Clavier, dimensions étroites et poll court sont éprouvés ; les capacités fichier, stockage et iframe sont consignées avec fallback navigateur.",
-        "Un enregistrement et une matrice de capacités datée sans secrets sont livrés ; aucun plugin public ni catalogue complet n'est publié."
+        "En navigateur, un nouveau Snapshot M0 est réellement vide ; l'intention principale décrit une page et ses animations, puis l'ajout ou une proposition éligible produit l'aperçu. Les brouillons Hero existants restent préservés.",
+        "Dans ChatGPT Desktop, le bridge officiel initialise Vue vers Hôte, réalise une lecture authentifiée et refuse un jeton invalide ; le parcours réel d'ouverture, de rafraîchissement et de modification est enregistré.",
+        "Clavier, dimensions étroites et poll court sont éprouvés ; les capacités fichier, stockage et iframe sont consignées avec fallback navigateur. Aucun texte non envoyé du compositeur natif n'est lu ; seul un contexte explicitement livré par l'hôte peut préremplir une suggestion modifiable.",
+        "Un enregistrement et une matrice de capacités datée sans secrets sont livrés. Le M0 reste borné à un projet/page et zéro ou un Hero ; le catalogue de composants/menus/animations et le glisser-déposer sont livrés par UI-02, après ses dépendances."
       ],
       "evidence": [
-        "docs/evidence/ARC-01/implementation.md"
+        "docs/evidence/ARC-01/implementation.md",
+        "docs/evidence/ARC-01/implementation-2026-11-03.md"
       ],
       "blockers": [
         "Preuve réelle ChatGPT et compte de test autorisé non encore obtenus.",
@@ -30,7 +31,7 @@
       ],
       "status": "blocked",
       "branch": "work/arc-01",
-      "reason": "Prototype local relu et testé ; connexion dans le vrai hôte et identité réelle à qualifier avant ARC-02."
+      "reason": "Le sous-ensemble local est relu et testé, mais ARC-01 exige encore une exécution dans ChatGPT Desktop avec preuve du bridge, identité OAuth, rafraîchissement, capacités d’hôte et parcours réel. Sans cette preuve, ARC-02 ne peut pas démarrer."
     },
     {
       "id": "ARC-02",
@@ -200,7 +201,7 @@
         "docs/evidence/CAT-02"
       ],
       "acceptance": [
-        "Les dix blocs et préréglages d'animation admis de CATALOGUE.md sont implémentés.",
+        "Les dix blocs et préréglages d'animation admis de CATALOGUE.md sont implémentés ; Navigation comprend un menu accessible au clavier et à toucher, avec animation et variante mouvement réduit.",
         "Chaque bloc couvre mobile, clavier, contenu long, états, mouvement réduit et preuve de licence.",
         "Les briefs restaurant, portfolio et produit ne dépendent pas d'un layout unique ; AT-14/15/20 sont prouvés."
       ],
@@ -297,9 +298,9 @@
         "docs/evidence/UI-02"
       ],
       "acceptance": [
-        "Recherche et filtres du catalogue ne déclenchent pas d'IA ; navigation des pages et comparaison des candidats fonctionnent.",
-        "Vide, sans résultat, erreur et alternative tactile au survol sont testés.",
-        "L'ajout vise le bon slot et la bonne position ; une cible incompatible est expliquée sans insertion silencieuse."
+        "Un champ de recherche distinct de l'intention de page filtre localement les releases admises par composant, animation et usage (ex. « menu ») ; recherche et filtres ne déclenchent aucun appel modèle.",
+        "Chaque candidat montre un rendu réel, son animation, son emplacement, sa bibliothèque/source, sa version, sa licence et sa compatibilité. Les états chargement, vide, sans résultat et erreur sont testés ; aucune carte ou provenance fictive n'est admise.",
+        "Prévisualiser ne modifie pas le document. Ajouter par glisser-déposer ou action clavier/tactile équivalente applique au bon slot et à la bonne position, puis affiche un jeton lisible/identifiant sous l'intention et inscrit l'ID, la release et la configuration dans le brief et le rapport. Le texte libre n'est pas réécrit. Une cible incompatible est expliquée sans insertion silencieuse."
       ],
       "evidence": [],
       "blockers": [],
@@ -323,9 +324,9 @@
         "docs/evidence/UI-03"
       ],
       "acceptance": [
-        "Temporisation, IME, arrêt, reprise et causalité fonctionnent sans requête par frappe et avec input utilisable.",
-        "Les événements dupliqués/hors ordre et les anciens résultats n'altèrent pas l'état courant.",
-        "Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
+        "Le champ principal accepte une nouvelle page ou la modification d'une page sélectionnée ; tout contexte de lancement fourni par l'hôte est montré comme suggestion éditable, jamais lu depuis le texte non envoyé.",
+        "Après activation explicite, pause de 1,5 s, composition IME, arrêt, reprise et causalité fonctionnent sans requête par frappe ; la recherche de catalogue reste indépendante et ne déclenche pas d'inférence.",
+        "Les événements dupliqués/hors ordre et les anciens résultats n'altèrent pas l'état courant. Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
       ],
       "evidence": [],
       "blockers": [],
@@ -464,9 +465,9 @@
         "docs/evidence/AI-02"
       ],
       "acceptance": [
-        "Le contexte réduit comprend page, sélection, locks, opérations autorisées et profil versionné.",
+        "Le contexte réduit comprend mode nouveau/existant, cible page/projet et dernier message déjà envoyé seulement s'ils sont explicitement fournis par l'hôte, sélection, locks, opérations autorisées, profil versionné et références catalogue choisies.",
         "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global.",
-        "Une intention ambiguë propose des variantes ; plusieurs briefs de référence sont vérifiés."
+        "Une intention ambiguë propose des variantes ; les références du panneau catalogue enrichissent la demande sans altérer le texte saisi ; plusieurs briefs de référence sont vérifiés."
       ],
       "evidence": [],
       "blockers": [],
@@ -539,7 +540,7 @@
       "acceptance": [
         "Révisions hors snapshots, parent immuable et comparaison sont implémentés.",
         "Restaurer crée une nouvelle révision et conserve le head précédent ; éditer ne modifie pas les snapshots historiques.",
-        "L'export vise l'état exact approuvé ; AT-10/13 passent."
+        "Le rapport immuable de chaque révision préserve les références exactes de catalogue, releases, bibliothèques/sources et licences ; l'export vise l'état approuvé exact ; AT-10/13 passent."
       ],
       "evidence": [],
       "blockers": [],
@@ -659,7 +660,7 @@
       "acceptance": [
         "Les fixtures et tests préparatoires sont construits par les tickets dès ARC-03 ; TEST-01 en rassemble les preuves et clôt la recette après toutes ses dépendances.",
         "Tous les tickets M1 sont clos avec preuves avant de terminer cette recette.",
-        "Le parcours complet dans ChatGPT et l'archive reconstruite sont exécutés ; chaque scénario AT-01 à AT-25 passe ou présente un écart explicitement accepté.",
+        "Le parcours couvre création vs modification, contexte hôte explicite, intention indépendante de la recherche catalogue, menu animé, aperçu, insertion par drag/drop et action accessible, référence visible/rapport, puis /validate avec reçu ou fallback ; le parcours complet ChatGPT et l'archive reconstruite sont exécutés, AT-01 à AT-25 passent ou chaque écart est accepté explicitement.",
         "Le registre des limites, versions, résultats et décision produit est livré ; un PASS de modèle ou build seul ne vaut pas cette preuve."
       ],
       "evidence": [],
@@ -692,6 +693,67 @@
       "actor": "orchestrator",
       "at": "2026-11-01T21:30:40.041Z",
       "reason": "Prototype local relu et testé ; connexion dans le vrai hôte et identité réelle à qualifier avant ARC-02."
+    },
+    {
+      "revision": 4,
+      "ticketId": "ARC-01",
+      "from": "blocked",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T00:20:37.049Z",
+      "reason": "Le commanditaire confirme que Manifest s’ouvre dans ChatGPT Desktop, mais que le rendu ne correspond pas à la maquette Figma validée. Reprendre l’alignement de l’écran M0 et réévaluer le rendu ; la preuve d’identité et le reste de la qualification hôte demeurent à établir."
+    },
+    {
+      "revision": 5,
+      "ticketId": "ARC-01",
+      "from": "todo",
+      "to": "in_progress",
+      "actor": "frontend",
+      "at": "2026-11-03T00:20:50.001Z"
+    },
+    {
+      "revision": 6,
+      "ticketId": "ARC-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-03T01:09:15Z",
+      "action": "criteria_updated",
+      "reason": "Précise le canevas M0 réellement vide, l'intention principale et le contexte hôte explicite ; détaille le champ de recherche catalogue indépendant et ses références en UI-02. Aucun changement de statut ni de dépendance."
+    },
+    {
+      "revision": 7,
+      "ticketId": "UI-02",
+      "relatedTicketIds": [
+        "UI-03",
+        "CAT-02",
+        "AI-02",
+        "REV-01",
+        "TEST-01"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T01:09:15Z",
+      "action": "criteria_updated",
+      "reason": "Ajoute le jeton de référence visible sous l'intention, la portée des références dans l'IA et le rapport, le contexte nouveau/existant explicite, le menu accessible et la recette /validate aux tickets UI-02, UI-03, CAT-02, AI-02, REV-01 et TEST-01. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 8,
+      "ticketId": "ARC-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "frontend",
+      "at": "2026-11-03T05:31:10.512Z"
+    },
+    {
+      "revision": 9,
+      "ticketId": "ARC-01",
+      "from": "review",
+      "to": "blocked",
+      "actor": "orchestrator",
+      "at": "2026-11-03T05:31:18.677Z",
+      "reason": "Le sous-ensemble local est relu et testé, mais ARC-01 exige encore une exécution dans ChatGPT Desktop avec preuve du bridge, identité OAuth, rafraîchissement, capacités d’hôte et parcours réel. Sans cette preuve, ARC-02 ne peut pas démarrer."
     }
   ]
 }

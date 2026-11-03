@@ -28,6 +28,8 @@ flowchart LR
 
 Le poste et les hôtes n'accèdent jamais aux clés des fournisseurs. Le modèle ne dispose pas d'un accès direct à la base, au réseau interne ou au système de fichiers : il produit des propositions structurées que le domaine valide.
 
+Deux entrées de l'éditeur ont des chemins différents. `IntentComposer` envoie une intention de page au fournisseur sélectionné après debounce ; `CatalogSearch` interroge des releases locales/admises et ne déclenche pas l'IA. Une carte catalogue connaît son `catalogItemId`, son `releaseId/hash`, son origine/licence, ses slots et capacités. Son ajout produit une opération canonique sur le Snapshot et une référence structurée visible sous le champ principal ; cette pièce jointe rejoint le contexte des prochaines propositions et le rapport sans muter le texte libre. Aucun code de référence ou composant ne peut être ajouté sans provenance.
+
 ## Modules et propriétaires
 
 | Module proposé | Propriétaire fonctionnel | Entrées/sorties | Interdit |
@@ -70,7 +72,9 @@ Ordre correct : **Vue -> Hôte `ui/initialize`**, réponse de capacités/context
 
 Le bridge `tools/call` appelle les opérations de lecture, sauvegarde, génération et export. Les outils de poll et de mutation réservés à la vue utilisent la visibilité app lorsque prise en charge. Le résumé envoyé au modèle hôte reste compact ; le document complet et les événements techniques restent dans les données réservées à la vue. Les attributs de visibilité et annotations ne remplacent jamais l'autorisation serveur.
 
-`ui/update-model-context` sert à communiquer page/révision/sélection lors d'un changement utile ou d'une validation, pas à lancer l'inférence. `ui/message` reste une action explicite « Transmettre au chat », jamais un événement pour chaque frappe ou poll.
+Le bootstrap d'hôte consomme uniquement le contexte documenté reçu pendant `ui/initialize` ou les arguments de l'outil : mode nouveau/existant, identifiants de projet/page et dernier message utilisateur déjà envoyé s'ils sont fournis. Il ne scrute pas le compositeur natif et ne lit aucun texte non envoyé. La vue montre le texte reçu comme une suggestion modifiable, pas comme un choix déjà approuvé.
+
+`ui/update-model-context` sert à communiquer page/révision/sélection lors d'un changement utile ou de la validation, pas à lancer l'inférence. `/validate` est interprété par le champ principal Manifest : il fige le contexte, prépare le rapport lié à la révision et demande `ui/message`. Après reçu d'envoi, l'éditeur cède la main au modèle hôte ; si la capacité manque/échoue, il garde le rapport ouvert et propose le fallback. Aucun `ui/message` n'est déclenché par une frappe ou un poll.
 
 ### Rapport et transmission
 
@@ -78,7 +82,7 @@ Le bridge `tools/call` appelle les opérations de lecture, sauvegarde, générat
 
 La provenance d'une proposition (source locale ou API, fournisseur/modèle, job, génération et version source) est copiée du résultat immuable. Elle ne provient jamais du sélecteur courant de la barre. La règle `upToDate` du rapport réutilise le prédicat d'éligibilité de l'aperçu ; une sélection de modèle ne vaut pas preuve d'analyse. La preuve historique enregistre les contrôles de session, intention, version, modèle et synchronisation, ou « non applicable » pour une révision manuelle. `reportHash` est le SHA-256 de la sérialisation JSON canonique JCS/RFC 8785 du rapport, sans le champ hash ni l'état volatil de transmission.
 
-L'utilisateur relit le rapport avant de lancer `ui/message` pour le transmettre au fil courant. Cette action peut accompagner le résumé et le manifeste compact ; l'export complet reste un artefact référencé. Elle ne se déclenche pas lors d'une frappe, d'un poll ou d'une préparation de rapport. Si l'hôte ne fournit pas cette capacité, l'interface offre copie/téléchargement et marque clairement la transmission comme indisponible. Les clés et jetons ne font jamais partie du rapport.
+Le rapport comprend le texte original et la spécification structurée, les références de catalogue retenues (IDs et releases), le Snapshot, la révision et leurs hashes. `/validate` constitue l'action explicite de gel et de remise ; la transmission se termine sur reçu de l'hôte. L'export complet reste un artefact référencé. Si l'hôte ne fournit pas cette capacité, l'interface offre copie/téléchargement et marque clairement la transmission comme indisponible. Les clés et jetons ne font jamais partie du rapport.
 
 À l'ouverture, le plugin expose une carte « Ouvrir Manifest » depuis le chat. L'invocation fiable documentée est la sélection/mention de l'application ; `/manifest` et `/validate` sont des instructions utilisateur possibles, pas des commandes natives promises sans qualification de l'hôte.
 

@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { heroProject } from './fixtures/m0-project.ts';
 import {
   DETERMINISTIC_SIMULATOR_DESCRIPTOR,
   ProviderHttpAdapterError,
   createOpenAICompatibleModelAdapter,
   initialProject,
+  createHeroBlock,
+  applyOperations,
   stableStringify,
   type ManifestModelRequest,
   type ProviderFetchResponse,
@@ -12,7 +15,7 @@ import {
 
 const descriptor = { ...DETERMINISTIC_SIMULATOR_DESCRIPTOR, status: 'configured' as const, secretConfigured: true };
 function request(signal?: AbortSignal): ManifestModelRequest {
-  const project = initialProject();
+  const project = heroProject();
   return { requestId: 'req-http-1', providerId: 'custom', modelId: 'manifest-simulator-v1', description: 'Sans animation', snapshot: project.snapshot, baseSignature: stableStringify(project.snapshot), signal };
 }
 function response(payload: unknown, status = 200): ProviderFetchResponse { return { ok: status >= 200 && status < 300, status, json: async () => payload }; }
@@ -25,7 +28,7 @@ test('l’adaptateur envoie le modèle et la description sans persister la clé'
   assert.equal(seenInit?.headers.authorization, 'Bearer secret-test');
   assert.match(seenInit?.body ?? '', /manifest-simulator-v1/);
   assert.equal(result.operations[0]?.op, 'update_props');
-  assert.equal(stableStringify(request().snapshot), stableStringify(initialProject().snapshot));
+  assert.equal(stableStringify(request().snapshot), stableStringify(heroProject().snapshot));
 });
 
 test('une clé absente est refusée avant l’appel HTTP', async () => {
@@ -33,6 +36,30 @@ test('une clé absente est refusée avant l’appel HTTP', async () => {
   const adapter = createOpenAICompatibleModelAdapter({ descriptor, baseUrl: 'https://api.example.test', getApiKey: () => undefined, fetchImpl: async () => { called = true; return response({}); } });
   await assert.rejects(adapter.suggest(request()), (error: unknown) => error instanceof ProviderHttpAdapterError && error.code === 'MISSING_CREDENTIAL');
   assert.equal(called, false);
+});
+
+test('le contrat envoyé permet une insertion racine vérifiée sur un Snapshot vide', async () => {
+  const project = initialProject();
+  const operation = { op: 'insert_block', pageId: 'page-home', parentBlockId: null, slot: 'content', beforeBlockId: null, block: createHeroBlock('from-provider') };
+  let sentBody = '';
+  const adapter = createOpenAICompatibleModelAdapter({ descriptor, baseUrl: 'https://api.example.test/v1', getApiKey: () => 'test-only', fetchImpl: async (_url, init) => {
+    sentBody = init.body;
+    return response({ choices: [{ message: { content: JSON.stringify({ operations: [operation], rationale: 'Premier bloc' }) } }] });
+  } });
+  const result = await adapter.suggest({ ...request(), snapshot: project.snapshot, baseSignature: stableStringify(project.snapshot) });
+  const instruction = JSON.parse(sentBody).messages[0].content;
+  for (const name of ['insert_block', 'update_props', 'remove_block', 'update_theme']) assert.ok(instruction.includes(name));
+  assert.ok(instruction.includes('"parentBlockId":null,"slot":"content","beforeBlockId":null'));
+  assert.deepEqual(result.operations, [operation]);
+  assert.equal(applyOperations(project.snapshot, result.operations).pages[0]!.composition.content[0]!.props.id, 'from-provider');
+  assert.deepEqual(project.snapshot.pages[0]!.composition.content, []);
+});
+
+test('le fournisseur ne peut pas utiliser update_props pour créer un bloc absent', async () => {
+  const project = initialProject();
+  const adapter = createOpenAICompatibleModelAdapter({ descriptor, baseUrl: 'https://api.example.test', getApiKey: () => 'test-only', fetchImpl: async () => response({ choices: [{ message: { content: JSON.stringify({ operations: [{ op: 'update_props', pageId: 'page-home', blockId: 'absent', props: { title: 'Interdit' } }] }) } }] }) });
+  await assert.rejects(adapter.suggest({ ...request(), snapshot: project.snapshot, baseSignature: stableStringify(project.snapshot) }), (error: unknown) => error instanceof ProviderHttpAdapterError && error.code === 'INVALID_OUTPUT');
+  assert.deepEqual(project.snapshot.pages[0]!.composition.content, []);
 });
 
 test('une réponse hors contrat est rejetée sans muter le Snapshot', async () => {

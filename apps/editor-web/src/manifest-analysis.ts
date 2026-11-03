@@ -1,4 +1,4 @@
-import { applyOperations, stableStringify, type M0Operation, type Snapshot } from '@design-workbench/m0-contract';
+import { applyOperations, createHeroBlock, stableStringify, type M0Operation, type Snapshot } from '@design-workbench/m0-contract';
 
 export const DESCRIPTION_PAUSE_MS = 1500;
 
@@ -6,7 +6,7 @@ export type DesignHint = {
   id: string;
   title: string;
   description: string;
-  category: 'palette' | 'content' | 'motion';
+  category: 'palette' | 'content' | 'motion' | 'component';
   operations: M0Operation[];
   swatches?: string[];
 };
@@ -28,7 +28,7 @@ export function analyzeDescription(description: string, snapshot: Snapshot): Loc
   const input = description.trim();
   const normalized = input.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
   const hints: DesignHint[] = [], recognized: string[] = [];
-  const page = snapshot.pages[0]!, hero = page.composition.content[0]!;
+  const page = snapshot.pages[0]!, hero = page.composition.content[0];
   let background = snapshot.theme.tokens['color.background'].value;
   let text = snapshot.theme.tokens['color.text'].value;
   let accent = snapshot.theme.tokens['color.accent'].value;
@@ -59,7 +59,7 @@ export function analyzeDescription(description: string, snapshot: Snapshot): Loc
   if (withoutMotion || fade) {
     recognized.push(withoutMotion ? 'sans animation' : 'fondu');
     const animation = withoutMotion ? 'none' : 'fade';
-    if (hero.props.animation !== animation) hints.push({
+    if (hero && hero.props.animation !== animation) hints.push({
       id: 'motion', title: withoutMotion ? 'Laisser parler la composition' : 'Une entrée en fondu',
       description: withoutMotion ? 'Retirer l’animation d’entrée pour un contenu immédiatement stable.' : 'Utiliser le fondu disponible pour la section, avec respect du mouvement réduit.',
       category: 'motion', operations: [{ op: 'update_props', pageId: page.id, blockId: hero.props.id, props: { animation } }],
@@ -68,9 +68,21 @@ export function analyzeDescription(description: string, snapshot: Snapshot): Loc
   const requestedTitle = input.match(/^titre\s*[:=]\s*(.+)$/im)?.[1]?.trim();
   const requestedBody = input.match(/^(?:texte|presentation)\s*[:=]\s*(.+)$/im)?.[1]?.trim();
   const props: { title?: string; body?: string } = {};
-  if (requestedTitle && requestedTitle.length <= 200) { recognized.push('titre explicite'); if (requestedTitle !== hero.props.title) props.title = requestedTitle; }
-  if (requestedBody && requestedBody.length <= 1200) { recognized.push('texte explicite'); if (requestedBody !== hero.props.body) props.body = requestedBody; }
-  if (Object.keys(props).length) hints.push({
+  if (requestedTitle && requestedTitle.length <= 200) { recognized.push('titre explicite'); if (requestedTitle !== hero?.props.title) props.title = requestedTitle; }
+  if (requestedBody && requestedBody.length <= 1200) { recognized.push('texte explicite'); if (requestedBody !== hero?.props.body) props.body = requestedBody; }
+  const requestsHero = /\bhero\b|(?:section|bandeau) d[’']accueil/.test(normalized);
+  if (!hero && (requestsHero || Object.keys(props).length)) {
+    const block = createHeroBlock();
+    Object.assign(block.props, props);
+    block.props.animation = fade ? 'fade' : 'none';
+    recognized.push('section d’accueil');
+    const palette = hints.find((hint) => hint.id === 'palette');
+    hints.push({
+      id: 'insert-hero', title: 'Une première section d’accueil', category: 'component',
+      description: 'Prévisualiser le Hero M0 avec tes indications explicites. Cette piste vient des règles locales, sans appel de modèle.',
+      operations: [...(palette?.operations ?? []), { op: 'insert_block', pageId: page.id, parentBlockId: null, slot: 'content', beforeBlockId: null, block }],
+    });
+  } else if (hero && Object.keys(props).length) hints.push({
     id: 'content', title: 'Tes mots, dans la page', description: 'Reprendre le titre ou le texte que tu as indiqué explicitement dans ta description.',
     category: 'content', operations: [{ op: 'update_props', pageId: page.id, blockId: hero.props.id, props }],
   });

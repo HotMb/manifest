@@ -2,14 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { initialProject, makeEditCommand, hashSnapshot, type M0Project, type ApplyOpsCommand } from '@design-workbench/m0-contract';
 import { createBrowserTransport, projectFromToolResult, readProjectValue, verifiedProject } from '../src/index.ts';
+import { heroProject } from '../../../tests/fixtures/m0-project.ts';
 
 function edit(project: M0Project, title: string, key: string) {
   const snapshot = structuredClone(project.snapshot);
   snapshot.pages[0]!.composition.content[0]!.props.title = title;
   return makeEditCommand(project, snapshot, key);
 }
-function localFixture() {
+function localFixture(project: M0Project | null = heroProject()) {
   const values = new Map<string, string>();
+  // These scenarios exercise an existing populated draft, not the new-project template.
+  if (project) values.set('design-workbench:m0:project-m0:v1', JSON.stringify({ expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, project }));
   const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
   let queue: Promise<unknown> = Promise.resolve();
   const runExclusive = <T>(task: () => Promise<T>): Promise<T> => {
@@ -18,8 +21,24 @@ function localFixture() {
   return { values, storage, runExclusive };
 }
 
+async function populatedMemoryTransport() {
+  const transport = createBrowserTransport({ storage: null });
+  const empty = await transport.read();
+  await transport.commit(makeEditCommand(empty, heroProject().snapshot, 'fixture-hero-insertion'));
+  return transport;
+}
+
+test('un nouveau brouillon mémoire ou local sans record démarre réellement vide', async () => {
+  for (const transport of [createBrowserTransport({ storage: null }), createBrowserTransport(localFixture(null))]) {
+    const project = await transport.read();
+    assert.deepEqual(project.snapshot.pages[0]!.composition.content, []);
+    assert.equal(project.draftVersion, 0);
+    assert.equal(project.contentHash, await hashSnapshot(project.snapshot));
+  }
+});
+
 test('mémoire : deux sauvegardes concurrentes sur une base ne gagnent pas toutes les deux', async () => {
-  const transport = createBrowserTransport({ storage: null }), project = await transport.read();
+  const transport = await populatedMemoryTransport(), project = await transport.read();
   const results = await Promise.allSettled([
     transport.commit(edit(project, 'Premier choix', 'first-command')),
     transport.commit(edit(project, 'Deuxième choix', 'second-command')),
@@ -27,26 +46,26 @@ test('mémoire : deux sauvegardes concurrentes sur une base ne gagnent pas toute
   assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
   const failure = results.find((r) => r.status === 'rejected');
   assert.equal(failure?.status === 'rejected' ? failure.reason.code : undefined, 'VERSION_CONFLICT');
-  assert.equal((await transport.read()).draftVersion, 1);
+  assert.equal((await transport.read()).draftVersion, project.draftVersion + 1);
 });
 
 test('rejouer la même clé retourne le résultat initial sans nouvelle version', async () => {
-  const transport = createBrowserTransport({ storage: null }), project = await transport.read();
+  const transport = await populatedMemoryTransport(), project = await transport.read();
   const command = edit(project, 'Une seule version', 'same-key');
   const first = await transport.commit(command), second = await transport.commit(command);
   assert.deepEqual(first, second);
-  assert.equal(second.draftVersion, 1);
+  assert.equal(second.draftVersion, project.draftVersion + 1);
   await assert.rejects(transport.commit(edit(project, 'Autre contenu', 'same-key')), { code: 'IDEMPOTENCY_CONFLICT' });
 });
 
 test('le replay considère le contenu sémantique malgré un ordre différent des clés JSON', async () => {
-  const transport = createBrowserTransport({ storage: null }), project = await transport.read();
+  const transport = await populatedMemoryTransport(), project = await transport.read();
   const command = edit(project, 'Même intention', 'reordered-key');
   const result = await transport.commit(command);
   const reordered: ApplyOpsCommand = { payload: command.payload, action: command.action, idempotencyKey: command.idempotencyKey, expectedDraftVersion: command.expectedDraftVersion, projectId: command.projectId };
   assert.notEqual(JSON.stringify(command), JSON.stringify(reordered));
   assert.deepEqual(await transport.commit(reordered), result);
-  assert.equal((await transport.read()).draftVersion, 1);
+  assert.equal((await transport.read()).draftVersion, project.draftVersion + 1);
 });
 
 test('la limite de reçus refuse de nouveaux effets sans évincer un ancien replay', async () => {

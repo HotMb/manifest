@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { initialProject } from '@design-workbench/m0-contract';
+import { heroProject } from '../../../tests/fixtures/m0-project.ts';
 import { analyzeDescription, applyDesignHint, isAnalysisCurrent } from '../src/manifest-analysis.ts';
 
 test('une description non reconnue ne prétend pas produire une proposition de modèle', () => {
@@ -9,7 +10,7 @@ test('une description non reconnue ne prétend pas produire une proposition de m
   assert.deepEqual(result.hints, []);
 });
 test('la piste de palette ne change que les tokens du document', () => {
-  const before = initialProject().snapshot;
+  const before = heroProject().snapshot;
   const analysis = analyzeDescription('Un fond sombre avec un accent vert', before);
   const next = applyDesignHint(before, analysis, 'palette');
   assert.equal(next.theme.tokens['color.background'].value, '#172026');
@@ -18,14 +19,14 @@ test('la piste de palette ne change que les tokens du document', () => {
   assert.notEqual(next, before);
 });
 test('une indication explicite de titre est transmise comme texte sans interprétation', () => {
-  const before = initialProject().snapshot;
+  const before = heroProject().snapshot;
   const analysis = analyzeDescription('Titre: Des lieux pour vivre ensemble', before);
   const next = applyDesignHint(before, analysis, 'content');
   assert.equal(next.pages[0]!.composition.content[0]!.props.title, 'Des lieux pour vivre ensemble');
   assert.deepEqual(next.theme, before.theme);
 });
 test('une piste périmée ne remplace pas une modification manuelle', () => {
-  const before = initialProject().snapshot;
+  const before = heroProject().snapshot;
   const analysis = analyzeDescription('Un fond sombre', before);
   const changed = structuredClone(before);
   changed.pages[0]!.composition.content[0]!.props.title = 'Une nouvelle intention';
@@ -48,4 +49,36 @@ test('les locks du domaine sont respectés par les pistes locales', () => {
 test('des intentions de fond contradictoires ne choisissent pas arbitrairement une palette', () => {
   const analysis = analyzeDescription('Je veux un fond sombre, ou un fond clair', initialProject().snapshot);
   assert.equal(analysis.hints.some((hint) => hint.id === 'palette'), false);
+});
+
+test('une page vide accepte une piste de palette ou de mouvement sans inventer de bloc', () => {
+  const before = initialProject().snapshot;
+  const analysis = analyzeDescription('Un fond sombre avec un fondu', before);
+  assert.equal(analysis.hints.some((hint) => hint.id === 'motion' || hint.id === 'insert-hero'), false);
+  assert.equal(applyDesignHint(before, analysis, 'palette').pages[0]!.composition.content.length, 0);
+});
+
+test('une demande explicite de Hero préfigure une insertion canonique et laisse sa base vide intacte', () => {
+  const before = initialProject().snapshot;
+  const analysis = analyzeDescription('Une section d’accueil avec un fond sombre et un fondu.\nTitre : Mon premier espace', before);
+  const hint = analysis.hints.find((entry) => entry.id === 'insert-hero')!;
+  assert.equal(hint.category, 'component');
+  const insertion = hint.operations.find((operation) => operation.op === 'insert_block')!;
+  assert.equal(insertion.parentBlockId, null);
+  assert.equal(insertion.slot, 'content');
+  assert.equal(insertion.beforeBlockId, null);
+  const preview = applyDesignHint(before, analysis, hint.id);
+  assert.equal(before.pages[0]!.composition.content.length, 0);
+  assert.equal(preview.pages[0]!.composition.content[0]!.props.title, 'Mon premier espace');
+  assert.equal(preview.pages[0]!.composition.content[0]!.props.animation, 'fade');
+  assert.equal(preview.theme.tokens['color.background'].value, '#172026');
+});
+
+test('la piste d’insertion périmée ne remplace pas un Hero ajouté manuellement entretemps', () => {
+  const before = initialProject().snapshot;
+  const analysis = analyzeDescription('Un Hero\nTitre : Premier candidat', before);
+  const inserted = applyDesignHint(before, analysis, 'insert-hero');
+  inserted.pages[0]!.composition.content[0]!.props.title = 'Ma section ajoutée';
+  assert.throws(() => applyDesignHint(inserted, analysis, 'insert-hero'), /page a changé/);
+  assert.equal(inserted.pages[0]!.composition.content[0]!.props.title, 'Ma section ajoutée');
 });
