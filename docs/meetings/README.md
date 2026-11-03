@@ -42,3 +42,6 @@ Le commanditaire reçoit la synthèse dans le chat. Son absence de réponse n'es
 Après chaque revue, l'orchestrateur donne dans le chat : ce qui est livré, les preuves principales, les dettes ou risques retenus, le verdict et la prochaine action. Le lien du compte rendu permet de suivre le détail sans relire les échanges internes des agents. Aucun PASS de modèle ne remplace une preuve d'exécution.
 
 Une tâche ne passe pas `done` au seul motif qu'une réunion s'est tenue. Les règles de [CONTRIBUTING.md](../../CONTRIBUTING.md), les dépendances et les critères du ticket continuent de s'appliquer. Les fonctionnalités suivantes ne démarrent que si elles sont éligibles.
+
+
+Correctif local et paquet privé : [ARC-01 — espace unique, contexte du chat et fond noir — 3 novembre 2026](2026-11-03-ARC-01-single-workspace-review.md).
