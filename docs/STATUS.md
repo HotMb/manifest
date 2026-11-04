@@ -1,8 +1,19 @@
 # Manifest — suivi du projet
 
-Mise à jour : **4 novembre 2026**. Référence : [HotMb/manifest](https://github.com/HotMb/manifest), branche PR distante `work/arc-01-qualification`, incrément poussé `4d3c222` ; GitHub Actions **Quality #86 réussie** sur cet incrément ; registre tickets **révision 47**. Le fichier `docs/delivery/tickets.json` fait foi ; `BOARD.md` est sa vue générée.
+Mise à jour : **4 novembre 2026**. Référence GitHub : [HotMb/manifest](https://github.com/HotMb/manifest), commit HOTFIX-01 `ea5dc7b` poussé sur la branche `work/arc-01-qualification` de la PR #27. La PR reste ouverte en brouillon, non fusionnée. GitHub Actions n’avait pas encore retourné de run pour `ea5dc7b` au contrôle; Quality #86 réussie porte sur l’ancien commit `4d3c222`. Le registre local `docs/delivery/tickets.json` est à la **révision 55**; `BOARD.md` en est la vue générée. Les anciens comptes rendus ci-dessous reflètent leur date/révision d’origine.
 
-## État de la reprise — 4 novembre
+## État courant — HOTFIX-01 — 4 novembre
+
+- **HOTFIX-01 — terminé, révision 55 :** le champ de description utilise la demande explicite du chat; la proposition déjà formulée par l’assistant est un repli si aucune demande utilisateur n’est transmise. Sans contenu transmis, l’ouverture garde le canevas blanc et le brief vide. Un projet enregistré ne se transforme pas en modèle de démonstration.
+- **Hauteur et responsive :** l’atelier est limité à un viewport, sans défilement global. À partir de 560 px, trois zones restent visibles et leurs contenus défilent dans les panneaux; en dessous, l’utilisateur passe entre Décrire, Aperçu et Suggestions sur la même page. Voir [les captures](evidence/HOTFIX-01/implementation.md).
+- **Vérifications locales :** E2E ciblés 27/27, M0 75/75, typecheck, build, backlog et contrôle du diff réussis. Un avertissement Puck `setData` et des avertissements de build Vite sur des dépendances tierces restent visibles sans échec associé.
+- **Revue :** code reviewer et QA n’ont relevé aucun P0–P2 dans les contextes valides. Le contrôle `loop-verify` n’a pas rendu de PASS global dans sa limite d’appels; il a traité un cas `userRequest` vide/`undefined` injecté directement, impossible avec le contrat MCP, et ce test artificiel a été retiré. Voir [la revue indépendante](evidence/HOTFIX-01/review.md) et [la réunion](meetings/2026-11-04-HOTFIX-01-review.md).
+- **GitHub :** `ea5dc7b` est poussé dans la PR #27; elle reste ouverte en brouillon et aucun merge n’a eu lieu. Aucun workflow n’était encore associé à `ea5dc7b`; Quality #86 couvre `4d3c222` seulement.
+- **ARC-01 reste bloqué pour l’hôte réel :** captures locales et transport simulé ne prouvent ni l’identité ni l’ouverture/la modification dans ChatGPT Desktop. Cette qualification demeure à faire séparément.
+
+## État antérieur — reprise du 4 novembre
+
+Les points ci-dessous documentent les incréments précédents et leurs références historiques.
 
 - **GEN-01 — terminé :** l’analyse automatique démarre après 1,5 s et le candidat dashboard avec nuages/graphiques se met à jour sans sauvegarde implicite. Les tests couvrent les directions, la vitesse, l’IME, l’invalidation, reduced-motion et le seuil exact. Le ticket est clos en révision 34 après approbation QA. Voir la [preuve d’implémentation](evidence/GEN-01/implementation.md), la [revue QA](evidence/GEN-01/review.md) et le [compte rendu](meetings/2026-11-04-GEN-01-reactive-preview-review.md).
 - **GEN-02 — en cours :** le renderer accepte maintenant `composed@2.0.0` avec opacité, translations X/Y, échelle, rotation et flou en pistes numériques bornées. Le navigateur local avait aussi révélé un import catalogue non déclaré dans editor-web et un favicon 404 ; les deux sont corrigés. Le smoke UI vérifie le rendu, l’absence d’overlay Vite, d’erreurs console et de réponses HTTP en échec. Le typecheck, le build, les 15 tests catalogue et les 38 tests E2E passent. QA confirme le correctif sans finding P0/P1. GEN-02 reste **REVISE** pour provenance/licence, hash source, mesure de coût et audit des bibliothèques. Les chemins et critères ont été versionnés jusqu’à la révision 39 ; ticket non soumis ni clôturé. Voir la [preuve partielle](evidence/GEN-02/implementation.md), la [revue QA](evidence/GEN-02/review.md) et le [compte rendu](meetings/2026-11-04-GEN-02-composed-motion-review.md).
