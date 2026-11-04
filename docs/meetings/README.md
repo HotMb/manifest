@@ -14,6 +14,8 @@ Dernière mise à jour de paquet : [ARC-01 — rafraîchissement du plugin priv�
 
 Revue de la boucle réactive : [GEN-01 — aperçu automatique après debounce — 4 novembre 2026](2026-11-04-GEN-01-reactive-preview-review.md).
 
+Revue du catalogue composable : [GEN-02 — mouvement déclaré et limites restantes — 4 novembre 2026](2026-11-04-GEN-02-composed-motion-review.md).
+
 Vérification du flux de saisie réactive : [Manifest — debounce et aperçu — 3 novembre 2026](2026-11-03-MANIFEST-reactive-input-review.md).
 
 Dernier cadrage : [lancement contextuel, versionnement des données et rapport `/validate` — 3 novembre 2026](2026-11-03-MANIFEST-context-and-data-handoff-review.md).

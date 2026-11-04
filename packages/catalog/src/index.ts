@@ -47,6 +47,22 @@ export const CATALOG_MOTION_SCHEMAS = deepFreeze({
   'slide-down': { durationMs: { type: 'integer', required: true, minimum: 0, maximum: 3000 }, delayMs: { type: 'integer', required: true, minimum: 0, maximum: 2000 }, distancePx: { type: 'number', minimum: 0, maximum: 40 } },
   'fade-slide-down': { durationMs: { type: 'integer', required: true, minimum: 0, maximum: 3000 }, delayMs: { type: 'integer', required: true, minimum: 0, maximum: 2000 }, distancePx: { type: 'number', required: true, minimum: 0, maximum: 40 }, opacityFrom: { type: 'number', required: true, minimum: 0, maximum: 1 } },
   'fade-slide-up': { durationMs: { type: 'integer', required: true, minimum: 0, maximum: 3000 }, delayMs: { type: 'integer', required: true, minimum: 0, maximum: 2000 }, distancePx: { type: 'number', required: true, minimum: 0, maximum: 40 }, opacityFrom: { type: 'number', required: true, minimum: 0, maximum: 1 } },
+  composed: {
+    durationMs: { type: 'integer', required: true, minimum: 0, maximum: 3000 },
+    delayMs: { type: 'integer', required: true, minimum: 0, maximum: 2000 },
+    easing: { type: 'string', required: true, enum: ['linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out'] },
+    repeatCount: { type: 'integer', required: true, minimum: 1, maximum: 4 },
+    primitives: {
+      type: 'array', required: true, minItems: 1, maxItems: 6,
+      items: {
+        type: 'object', additionalProperties: false,
+        properties: {
+          property: { type: 'string', required: true, enum: ['opacity', 'translateX', 'translateY', 'scale', 'rotate', 'blur'] },
+          amplitude: { type: 'number', required: true },
+        },
+      },
+    },
+  },
 });
 
 const localSource = { type: 'authored-in-repository', reference: 'packages/catalog/src', status: 'license-pending' } as const;
@@ -106,16 +122,27 @@ export const CATALOG_RELEASE = deepFreeze({
     { id: 'slide-down', version: '1.0.0', category: 'entrance', target: 'react', configSchema: CATALOG_MOTION_SCHEMAS['slide-down'], source: localSource, license: 'NOASSERTION', dependencies: localDependencies, costProfile, reducedMotion: 'disabled' },
     { id: 'fade-slide-down', version: '1.0.0', category: 'entrance', target: 'react', configSchema: CATALOG_MOTION_SCHEMAS['fade-slide-down'], source: localSource, license: 'NOASSERTION', dependencies: localDependencies, costProfile, reducedMotion: 'disabled' },
     { id: 'fade-slide-up', version: '1.0.0', category: 'entrance', target: 'react', configSchema: CATALOG_MOTION_SCHEMAS['fade-slide-up'], source: localSource, license: 'NOASSERTION', dependencies: localDependencies, costProfile, reducedMotion: 'disabled' },
+    { id: 'composed', version: '2.0.0', category: 'composed', target: 'react', configSchema: CATALOG_MOTION_SCHEMAS.composed, source: localSource, license: 'NOASSERTION', dependencies: localDependencies, costProfile, reducedMotion: 'disabled' },
   ],
   designProfile: UNSLOP_PROFILE,
 } as const);
 
 export type CatalogComponentId = typeof CATALOG_RELEASE.components[number]['id'];
 export type MotionId = typeof CATALOG_RELEASE.motions[number]['id'];
+export type MotionPrimitiveProperty = 'opacity' | 'translateX' | 'translateY' | 'scale' | 'rotate' | 'blur';
+export type MotionPrimitive = { property: MotionPrimitiveProperty; amplitude: number };
 export type CatalogMotion = {
   id: MotionId;
   version: string;
-  config: { durationMs: number; delayMs: number; distancePx?: number; opacityFrom?: number };
+  config: {
+    durationMs: number;
+    delayMs: number;
+    distancePx?: number;
+    opacityFrom?: number;
+    easing?: 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out';
+    repeatCount?: number;
+    primitives?: MotionPrimitive[];
+  };
 };
 export type CatalogNode = {
   id: string;
@@ -125,7 +152,7 @@ export type CatalogNode = {
   motion?: CatalogMotion;
 };
 export type CatalogPage = { schemaVersion: 1; release: { id: string; version: string }; nodes: CatalogNode[] };
-export type ResolvedMotion = { name: 'manifest-fade-in' | 'manifest-slide-up' | 'manifest-slide-down' | 'manifest-fade-slide-up' | 'manifest-fade-slide-down' | 'none'; durationMs: number; delayMs: number; distancePx: number; opacityFrom: number };
+export type ResolvedMotion = { name: 'manifest-fade-in' | 'manifest-slide-up' | 'manifest-slide-down' | 'manifest-fade-slide-up' | 'manifest-fade-slide-down' | 'manifest-composed' | 'none'; durationMs: number; delayMs: number; distancePx: number; opacityFrom: number; easing?: 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out'; repeatCount?: number; primitives?: MotionPrimitive[] };
 
 const componentIds = new Set<string>(CATALOG_RELEASE.components.map((item) => item.id));
 const motionIds = new Set<string>(CATALOG_RELEASE.motions.map((item) => item.id));
@@ -139,6 +166,25 @@ const text = (value: unknown, min = 1, max = 160): value is string => typeof val
 const numeric = (value: unknown, min: number, max: number): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 
 function validateMotionConfig(motionId: string, value: unknown): asserts value is Record<string, unknown> {
+  if (motionId === 'composed') {
+    if (!isRecord(value) || !hasOnly(value, ['durationMs', 'delayMs', 'easing', 'repeatCount', 'primitives']) ||
+      !numeric(value.durationMs, 0, 3000) || !Number.isInteger(value.durationMs) ||
+      !numeric(value.delayMs, 0, 2000) || !Number.isInteger(value.delayMs) ||
+      !['linear', 'ease', 'ease-in', 'ease-out', 'ease-in-out'].includes(String(value.easing)) ||
+      !numeric(value.repeatCount, 1, 4) || !Number.isInteger(value.repeatCount) ||
+      !Array.isArray(value.primitives) || value.primitives.length < 1 || value.primitives.length > 6) fail('Configuration de mouvement composé hors limites.');
+    const seenProperties = new Set<string>();
+    const bounds: Record<MotionPrimitiveProperty, readonly [number, number]> = {
+      opacity: [0, 1], translateX: [-40, 40], translateY: [-40, 40], scale: [0.5, 1.5], rotate: [-180, 180], blur: [0, 12],
+    };
+    for (const primitive of value.primitives) {
+      if (!isRecord(primitive) || !hasOnly(primitive, ['property', 'amplitude']) || typeof primitive.property !== 'string' || !Object.hasOwn(bounds, primitive.property) || seenProperties.has(primitive.property)) fail('Primitive de mouvement inconnue ou dupliquée.');
+      const [minimum, maximum] = bounds[primitive.property as MotionPrimitiveProperty];
+      if (!numeric(primitive.amplitude, minimum, maximum)) fail(`Amplitude hors limites pour ${primitive.property}.`);
+      seenProperties.add(primitive.property);
+    }
+    return;
+  }
   if (!isRecord(value) || !hasOnly(value, ['durationMs', 'delayMs', 'distancePx', 'opacityFrom']) || !numeric(value.durationMs, 0, 3000) || !Number.isInteger(value.durationMs) || !numeric(value.delayMs, 0, 2000) || !Number.isInteger(value.delayMs)) fail('Paramètres de mouvement hors limites.');
   const composite = motionId === 'fade-slide-down' || motionId === 'fade-slide-up';
   if (opacityMotionIds.has(motionId)) {
@@ -239,9 +285,16 @@ export function resolveMotion(motion: CatalogMotion | undefined, prefersReducedM
   if (!definition || definition.version !== motion.version) fail('Version de mouvement inconnue.');
   const config = motion.config;
   validateMotionConfig(motion.id, config);
+  if (motion.id === 'composed') {
+    return {
+      name: 'manifest-composed', durationMs: config.durationMs, delayMs: config.delayMs, distancePx: 0, opacityFrom: 1,
+      easing: config.easing as ResolvedMotion['easing'], repeatCount: config.repeatCount as number,
+      primitives: config.primitives as MotionPrimitive[],
+    };
+  }
   const names: Record<MotionId, ResolvedMotion['name']> = {
     'fade-in': 'manifest-fade-in', 'slide-up': 'manifest-slide-up', 'slide-down': 'manifest-slide-down',
-    'fade-slide-down': 'manifest-fade-slide-down', 'fade-slide-up': 'manifest-fade-slide-up',
+    'fade-slide-down': 'manifest-fade-slide-down', 'fade-slide-up': 'manifest-fade-slide-up', composed: 'manifest-composed',
   };
   const name = names[motion.id];
   return {
@@ -259,6 +312,24 @@ export type CatalogRenderOptions = { prefersReducedMotion?: boolean };
 function animationStyle(motion: CatalogMotion | undefined, reduced: boolean): { className: string; style?: CSSProperties } {
   const resolved = resolveMotion(motion, reduced);
   if (resolved.name === 'none') return { className: '' };
+  if (resolved.name === 'manifest-composed') {
+    const amplitudes = Object.fromEntries((resolved.primitives ?? []).map(({ property, amplitude }) => [property, amplitude]));
+    return {
+      className: 'manifest-motion manifest-motion--composed',
+      style: {
+        '--manifest-motion-duration': `${resolved.durationMs}ms`,
+        '--manifest-motion-delay': `${resolved.delayMs}ms`,
+        '--manifest-motion-easing': resolved.easing,
+        '--manifest-motion-repeat': resolved.repeatCount,
+        '--manifest-motion-opacity-from': amplitudes.opacity ?? 1,
+        '--manifest-motion-x-from': `${amplitudes.translateX ?? 0}px`,
+        '--manifest-motion-y-from': `${amplitudes.translateY ?? 0}px`,
+        '--manifest-motion-scale-from': amplitudes.scale ?? 1,
+        '--manifest-motion-rotate-from': `${amplitudes.rotate ?? 0}deg`,
+        '--manifest-motion-blur-from': `${amplitudes.blur ?? 0}px`,
+      } as CSSProperties,
+    };
+  }
   return {
     className: `manifest-motion manifest-motion--${resolved.name.slice('manifest-'.length)}`,
     style: { '--manifest-motion-duration': `${resolved.durationMs}ms`, '--manifest-motion-delay': `${resolved.delayMs}ms`, '--manifest-motion-distance': `${resolved.distancePx}px`, '--manifest-motion-opacity': resolved.opacityFrom } as CSSProperties,

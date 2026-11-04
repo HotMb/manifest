@@ -23,7 +23,7 @@ test('valide et rend le dashboard synthétique, le menu et le fond nuageux', () 
 
 test('rejette une référence de composant ou une release inconnue', () => {
   const unknownComponent = clone();
-  unknownComponent.nodes[0]!.component.id = 'foreign-code';
+  (unknownComponent.nodes[0]!.component as { id: string }).id = 'foreign-code';
   assert.throws(() => validateCatalogPage(unknownComponent), /absent du catalogue/);
   const unknownVersion = clone();
   unknownVersion.nodes[0]!.component.version = '99.0.0';
@@ -96,6 +96,71 @@ test('le preset composé anime les charts dans les deux directions, borne ses pa
   const missingOpacity = clone();
   missingOpacity.nodes[2]!.motion = { ...missingOpacity.nodes[2]!.motion!, id: 'fade-slide-up', config: { durationMs: 560, delayMs: 90, distancePx: 14 } };
   assert.throws(() => validateCatalogPage(missingOpacity), /fondu invalide/);
+});
+
+test('le mouvement déclaratif compose des primitives bornées sans CSS ni JavaScript libre', () => {
+  const page = clone();
+  page.nodes[2]!.motion = {
+    id: 'composed', version: '2.0.0',
+    config: {
+      durationMs: 720, delayMs: 80, easing: 'ease-out', repeatCount: 2,
+      primitives: [
+        { property: 'opacity', amplitude: 0 },
+        { property: 'translateX', amplitude: -40 },
+        { property: 'translateY', amplitude: 18 },
+        { property: 'scale', amplitude: 0.96 },
+        { property: 'rotate', amplitude: -4 },
+        { property: 'blur', amplitude: 3 },
+      ],
+    },
+  };
+  assert.doesNotThrow(() => validateCatalogPage(page));
+  const resolved = resolveMotion(page.nodes[2]!.motion, false);
+  assert.equal(resolved.name, 'manifest-composed');
+  assert.equal(resolved.repeatCount, 2);
+  assert.deepEqual(resolved.primitives, page.nodes[2]!.motion.config.primitives);
+  const html = renderToStaticMarkup(renderCatalogPage(page));
+  assert.match(html, /manifest-motion--composed/);
+  assert.match(html, /--manifest-motion-easing:ease-out/);
+  assert.match(html, /--manifest-motion-repeat:2/);
+  assert.match(html, /--manifest-motion-y-from:18px/);
+  assert.match(html, /--manifest-motion-blur-from:3px/);
+  assert.deepEqual(resolveMotion(page.nodes[2]!.motion, true), { name: 'none', durationMs: 0, delayMs: 0, distancePx: 0, opacityFrom: 1 });
+});
+
+test('le mouvement déclaratif rejette les propriétés inconnues, répétitions et amplitudes hors limites', () => {
+  const pageWith = (config: Record<string, unknown>) => {
+    const page = clone();
+    page.nodes[2]!.motion = { id: 'composed', version: '2.0.0', config } as CatalogPage['nodes'][number]['motion'];
+    return page;
+  };
+  const base = { durationMs: 500, delayMs: 0, easing: 'linear', repeatCount: 1, primitives: [{ property: 'translateX', amplitude: 12 }] };
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, repeatCount: 5 })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, repeatCount: 0 })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, durationMs: 3001 })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, delayMs: 2001 })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, easing: 'cubic-bezier(0,0,1,1)' })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, cssText: 'animation: none' })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, primitives: [{ property: 'transform', amplitude: 1 }] })), /Primitive de mouvement inconnue/);
+  for (const primitive of [
+    { property: 'opacity', amplitude: 1.01 },
+    { property: 'translateX', amplitude: 41 },
+    { property: 'translateY', amplitude: -41 },
+    { property: 'scale', amplitude: 0.49 },
+    { property: 'rotate', amplitude: 181 },
+    { property: 'blur', amplitude: 12.01 },
+  ]) assert.throws(() => validateCatalogPage(pageWith({ ...base, primitives: [primitive] })), /Amplitude hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, primitives: [] })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, primitives: Array.from({ length: 7 }, (_, index) => ({ property: ['opacity', 'translateX', 'translateY', 'scale', 'rotate', 'blur', 'opacity'][index], amplitude: 0 })) })), /composé hors limites/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, primitives: [{ property: 'opacity', amplitude: 0 }, { property: 'opacity', amplitude: 0.5 }] })), /inconnue ou dupliquée/);
+  assert.throws(() => validateCatalogPage(pageWith({ ...base, primitives: [{ property: 'constructor', amplitude: 0 }] })), /Primitive de mouvement inconnue/);
+});
+
+test('le rendu réduit les animations par défaut via media query et garde le contrôle uniquement dans l’aperçu', () => {
+  const styles = readFileSync(fileURLToPath(new URL('../../../packages/catalog/src/styles.css', import.meta.url)), 'utf8');
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /\.manifest-motion:not\(\.catalog-canvas\[data-motion-preview="enabled"\] \.manifest-motion\)/);
+  assert.match(styles, /\.manifest-navigation__menu\[open\]:not\(\.catalog-canvas\[data-motion-preview="enabled"\] \.manifest-navigation__menu\[open\]\)/);
 });
 
 test('les presets de translation seuls ne font pas varier l’opacité', () => {
@@ -172,5 +237,6 @@ test('l’empreinte du manifeste est stable et distincte du hash complet de sour
   assert.equal(CATALOG_RELEASE.integrity.digest, null);
   assert.equal(CATALOG_RELEASE.integrity.status, 'source-hash-pending');
   assert.equal(CATALOG_RELEASE.version, '0.3.0');
-  assert.deepEqual(CATALOG_RELEASE.motions.map((motion) => motion.id), ['fade-in', 'slide-up', 'slide-down', 'fade-slide-down', 'fade-slide-up']);
+  assert.deepEqual(CATALOG_RELEASE.motions.map((motion) => motion.id), ['fade-in', 'slide-up', 'slide-down', 'fade-slide-down', 'fade-slide-up', 'composed']);
+  assert.equal(CATALOG_RELEASE.motions.find((motion) => motion.id === 'composed')?.version, '2.0.0');
 });

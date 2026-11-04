@@ -41,6 +41,7 @@
 .manifest-chart__legend li { display: inline-flex; align-items: center; gap: 6px; }
 .manifest-chart__legend-marker { width: 8px; height: 8px; border-radius: 50%; }
 .manifest-motion { animation-duration: var(--manifest-motion-duration, 500ms); animation-delay: var(--manifest-motion-delay, 0ms); animation-fill-mode: both; animation-timing-function: cubic-bezier(.2,.75,.25,1); }
+.manifest-motion--composed { animation-name: manifest-composed; animation-timing-function: var(--manifest-motion-easing, ease-out); animation-iteration-count: var(--manifest-motion-repeat, 1); }
 .manifest-motion--fade-in { animation-name: manifest-fade-in; }
 .manifest-motion--slide-up { animation-name: manifest-slide-up; }
 .manifest-motion--slide-down { animation-name: manifest-slide-down; }
@@ -51,6 +52,10 @@
 @keyframes manifest-slide-down { from { transform: translateY(calc(-1 * var(--manifest-motion-distance, 12px))); } to { transform: translateY(0); } }
 @keyframes manifest-fade-slide-up { from { opacity: var(--manifest-motion-opacity, 0); transform: translateY(var(--manifest-motion-distance, 12px)); } to { opacity: 1; transform: translateY(0); } }
 @keyframes manifest-fade-slide-down { from { opacity: var(--manifest-motion-opacity, 0); transform: translateY(calc(-1 * var(--manifest-motion-distance, 12px))); } to { opacity: 1; transform: translateY(0); } }
+@keyframes manifest-composed {
+  from { opacity: var(--manifest-motion-opacity-from, 1); transform: translate(var(--manifest-motion-x-from, 0px), var(--manifest-motion-y-from, 0px)) scale(var(--manifest-motion-scale-from, 1)) rotate(var(--manifest-motion-rotate-from, 0deg)); filter: blur(var(--manifest-motion-blur-from, 0px)); }
+  to { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); filter: blur(0); }
+}
 @keyframes manifest-cloud-drift { from { transform: translateX(-8px); } to { transform: translateX(10px); } }
 @media (max-width: 680px) {
   .manifest-grid { grid-template-columns: 1fr; }
