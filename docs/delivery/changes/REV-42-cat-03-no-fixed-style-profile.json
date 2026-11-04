@@ -1,0 +1,16 @@
+{
+  "title": "Release immuable et revue de qualité du design",
+  "ownedPaths": [
+    "packages/catalog/releases/",
+    "packages/catalog/policy/",
+    "tests/contract/catalog/",
+    "docs/design/UNSLOP-METHOD-ANALYSIS.md",
+    "docs/evidence/CAT-03"
+  ],
+  "acceptance": [
+    "Les manifests comprennent les empreintes des sources, assets et lockfile, les licences, crédits et notices de chaque release admise.",
+    "Une mise à jour du catalogue ne modifie pas une ancienne révision.",
+    "La qualité de design s'appuie sur une revue contextualisée du rendu selon la méthode documentée dans UNSLOP-METHOD-ANALYSIS.md ; le catalogue ne stocke ni profil esthétique universel ni palette imposée. Les préférences utilisateur, les contraintes de marque et les verrous restent prioritaires.",
+    "Les règles applicables aux contenus tiers et bibliothèques sont vérifiées avant admission ; la popularité seule n'est pas un motif d'inclusion."
+  ]
+}

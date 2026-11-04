@@ -38,7 +38,7 @@ test('le hash partagé initial est exact et le document reste canonique', async 
 
 test('la fixture Hero historique reste lisible sans migration ni suppression implicite', async () => {
   const previous = heroProject();
-  assert.equal(previous.contentHash, '2cc78efcbea8b854de4e33b8cb8e441372f102e5c92b3141d57122f9329ab990');
+  assert.equal(previous.contentHash, 'db243058f7eb02baf1956aa2d3f17eb1380d16bdde04f10c5407d81d8a19a44d');
   assert.equal(await hashSnapshot(previous.snapshot), previous.contentHash);
   assert.deepEqual(new MemoryProjectStore(previous).read(previous.projectId), previous);
   const twoBlocks = structuredClone(previous.snapshot);
@@ -267,7 +267,7 @@ test('lot props et thème conserve brief, sources et identité', () => {
   assert.equal(result.snapshot.theme.tokens['color.accent'].value, '#123456');
   assert.deepEqual(result.snapshot.designBrief, before.snapshot.designBrief);
   assert.deepEqual(result.snapshot.catalogLock, before.snapshot.catalogLock);
-  assert.deepEqual(result.snapshot.designPolicy, before.snapshot.designPolicy);
+  assert.equal('designPolicy' in result.snapshot, false);
   assert.equal(result.snapshot.pages[0]!.composition.content[0]!.props.id, 'block-hero');
 });
 test('CAS concurrent : un seul gagnant pour une même version', async () => {

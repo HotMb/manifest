@@ -24,7 +24,8 @@ export type Snapshot = {
   theme: { tokens: Record<ColorTokenName, ColorToken> };
   assetRefs: unknown[];
   catalogLock: { releaseId: string; sha256: string; target: 'react' };
-  designPolicy: { releaseId: string; sha256: string };
+  /** @deprecated Accepted only to read older drafts. Never created or sent to a model. */
+  designPolicy?: { releaseId: string; sha256: string };
   locks: { pageId: string; blockId: string | null; properties: string[] }[];
   designBrief: { product: string; character: string[]; world: string; moments: string[]; signature: string; brandConstraints: string[] };
 };
@@ -102,11 +103,18 @@ export function validateSnapshot(value: unknown): asserts value is Snapshot {
   reject(isRecord(value.theme) && hasOnly(value.theme, ['tokens']) && isRecord(value.theme.tokens) && Object.keys(value.theme.tokens).length === 3 && hasOnly(value.theme.tokens, COLOR_TOKEN_NAMES), 'Thème M0 invalide.');
   for (const key of COLOR_TOKEN_NAMES) validateColor(value.theme.tokens[key]);
   reject(Array.isArray(value.assetRefs) && value.assetRefs.length === 0, 'Aucun asset externe en M0.');
-  for (const key of ['catalogLock', 'designPolicy']) {
+  for (const key of ['catalogLock']) {
     const ref = value[key];
     reject(isRecord(ref) && id(ref.releaseId) && typeof ref.sha256 === 'string' && /^[a-f0-9]{64}$/.test(ref.sha256), 'Référence de release invalide.');
-    reject(hasOnly(ref, key === 'catalogLock' ? ['releaseId', 'sha256', 'target'] : ['releaseId', 'sha256']), 'Métadonnées de release inconnues.');
-    if (key === 'catalogLock') reject(ref.target === 'react', 'Cible M0 invalide.');
+    reject(hasOnly(ref, ['releaseId', 'sha256', 'target']), 'Métadonnées de release inconnues.');
+    reject(ref.target === 'react', 'Cible M0 invalide.');
+  }
+  // Legacy snapshots may still carry a design-policy reference. Accept it for
+  // compatibility, but it is not an active design setting and is never sent
+  // to model providers (see provider-http-adapter.ts).
+  if (value.designPolicy !== undefined) {
+    const ref = value.designPolicy;
+    reject(isRecord(ref) && hasOnly(ref, ['releaseId', 'sha256']) && id(ref.releaseId) && typeof ref.sha256 === 'string' && /^[a-f0-9]{64}$/.test(ref.sha256), 'Ancienne référence de politique invalide.');
   }
   reject(isRecord(value.designBrief) && hasOnly(value.designBrief, ['product', 'character', 'world', 'moments', 'signature', 'brandConstraints']), 'Brief invalide.');
   const brief = value.designBrief;
@@ -165,7 +173,7 @@ export async function hashSnapshot(snapshot: Snapshot): Promise<string> {
 export function initialProject(): M0Project {
   const snapshot: unknown = structuredClone(fixture);
   validateSnapshot(snapshot);
-  return { projectId: PROJECT_ID, draftVersion: 0, contentHash: 'bdd82ee1cea669f41c7b184abbbd891f44388b3f84f38ffee0e7c335c53c102f', snapshot };
+  return { projectId: PROJECT_ID, draftVersion: 0, contentHash: '7fdc68168ddf28cd3c8addcc275fb4b84d6f52948dcdd4918a5ca85fad8c0606', snapshot };
 }
 
 export function applyOperations(snapshot: Snapshot, operations: M0Operation[]): Snapshot {

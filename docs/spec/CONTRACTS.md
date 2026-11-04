@@ -10,7 +10,7 @@ Contrat normatif de départ, version 1.1. Le [schéma de domaine](contracts/doma
 |---|---|
 | Project | id, ownerId, draftId, approvedHeadRevisionId nullable, dates ; jamais un tableau de snapshots imbriqués |
 | Draft | projectId, draftVersion entier monotone, snapshot, contentHash, date ; une ligne autoritative par projet M1 |
-| Snapshot | schemaVersion, pages, theme, assetRefs, catalogLock, designPolicy, designBrief et `dataIntegrationSpecs` ; contenu versionné, sans historique ni secrets |
+| Snapshot | schemaVersion, pages, theme, assetRefs, catalogLock, designBrief et `dataIntegrationSpecs` ; contenu versionné, sans historique ni secrets. `designPolicy` est un champ hérité toléré en lecture, jamais créé ou envoyé au modèle. |
 | Revision | id, projectId, parentRevisionId nullable, snapshotHash, snapshot, approvedAt, authorId ; immuable |
 | Proposal | id, jobId, session, intentEpoch, baseDraftVersion, opérations atomiques, explication courte, statut |
 | Job | id, projectId, utilisateur, type, état, fournisseur/modèle si IA, lease, usage, curseurs ; résultat durable |
@@ -151,7 +151,7 @@ La résolution d'assets retourne assetId, sha256, URL de lecture courte et expir
 
 ## Adaptateurs de modèles
 
-Interface métier proposée : `getCapabilities()`, `generateProposal(context, signal) -> événements`, `normalizeError(error)`, `normalizeUsage(response)`. `context` comprend intent, `assistantProposal` lorsqu'elle a été transmise, snapshot réduit, dataIntegrationIntent non secrète, allowedOperations, allowedTargets, catalogSubset, designPolicyRef, locks, provider/model explicites, budgets et identifiants de causalité.
+Interface métier proposée : `getCapabilities()`, `generateProposal(context, signal) -> événements`, `normalizeError(error)`, `normalizeUsage(response)`. `context` comprend intent, `assistantProposal` lorsqu'elle a été transmise, snapshot réduit sans références de profil héritées, dataIntegrationIntent non secrète, allowedOperations, allowedTargets, catalogSubset, locks, provider/model explicites, budgets et identifiants de causalité.
 
 Chaque adaptateur utilise le SDK officiel et une projection du schéma compatible avec le modèle sélectionné. Le résultat est revalidé avec le schéma commun et le domaine. Les limites du fournisseur ne changent pas les invariants du produit. Au plus une réparation de sortie invalide, facturée/mesurée ; aucun retry en cas de refus, erreur d'auth, budget dépassé ou résultat incertain.
 

@@ -72,27 +72,6 @@ const contentChildren = ['hero', 'section', 'stack', 'grid', 'heading', 'text', 
 const cloudChildren = ['section', 'stack', 'grid', 'heading', 'text', 'button', 'sales-chart'];
 const contentSlot = (accepts: string[]) => [{ id: 'content', required: true, accepts }];
 
-export const UNSLOP_PROFILE = deepFreeze({
-  id: 'unslop-informed',
-  version: '1.1.0',
-  attribution: 'Unslop by Damir Sokolovsky (@heydamir), licensed CC BY 4.0.',
-  passes: ['spacing', 'color', 'icons', 'copy', 'type', 'layout', 'visuals', 'motion', 'check'] as const,
-  rules: [
-    { pass: 'spacing', severity: 'prefer', guidance: 'Use a repeatable spacing scale and a consistent rhythm between sections.' },
-    { pass: 'color', severity: 'block', guidance: 'Keep text contrast readable and preserve colors explicitly locked by the user or brand.' },
-    { pass: 'icons', severity: 'prefer', guidance: 'Use one coherent icon style; do not use emoji as interface icons.' },
-    { pass: 'copy', severity: 'prefer', guidance: 'Use concise, specific labels and content that fits the described product.' },
-    { pass: 'type', severity: 'prefer', guidance: 'Create a clear type hierarchy with readable line lengths.' },
-    { pass: 'layout', severity: 'prefer', guidance: 'Give the main task a clear hierarchy and align repeated elements.' },
-    { pass: 'visuals', severity: 'prefer', guidance: 'Use visuals that explain the product; avoid decorative filler.' },
-    { pass: 'motion', severity: 'review', guidance: 'Use motion to explain state or hierarchy and respect reduced-motion preferences.' },
-    { pass: 'check', severity: 'block', guidance: 'Review responsive layout, keyboard access, contrast, and empty/loading/error states.' },
-  ],
-  constraints: ['Adapt to the product and brand brief.', 'Respect explicit brand locks and reduced-motion preferences.', 'Prefer one specific, useful visual moment over decorative effects throughout.'],
-  exceptions: ['Explicit user and brand choices take precedence over aesthetic preferences, unless they make the page inaccessible or unsafe.', 'Reduced-motion preferences disable nonessential movement.'],
-  adaptable: true,
-});
-
 export const CATALOG_RELEASE = deepFreeze({
   id: 'manifest-core',
   version: '0.3.0',
@@ -124,7 +103,6 @@ export const CATALOG_RELEASE = deepFreeze({
     { id: 'fade-slide-up', version: '1.0.0', category: 'entrance', target: 'react', configSchema: CATALOG_MOTION_SCHEMAS['fade-slide-up'], source: localSource, license: 'NOASSERTION', dependencies: localDependencies, costProfile, reducedMotion: 'disabled' },
     { id: 'composed', version: '2.0.0', category: 'composed', target: 'react', configSchema: CATALOG_MOTION_SCHEMAS.composed, source: localSource, license: 'NOASSERTION', dependencies: localDependencies, costProfile, reducedMotion: 'disabled' },
   ],
-  designProfile: UNSLOP_PROFILE,
 } as const);
 
 export type CatalogComponentId = typeof CATALOG_RELEASE.components[number]['id'];

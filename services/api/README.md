@@ -35,13 +35,14 @@ La ressource utilise `text/html;profile=mcp-app` et lit `apps/editor-web/dist/in
 
 ## Limites volontaires du prototype
 
-- Un principal de développement, un projet `project-m0`, une page `/`, un bloc `Hero` ; aucune identité multi-utilisateur.
-- Opérations admises : `update_props` sur titre, corps, token de fond et animation ; `update_theme` sur les trois couleurs. Les autres mutations sont refusées explicitement.
-- Seuls `none` et `fade` sont disponibles ; les couleurs acceptent `#RRGGBB`. Aucun HTML, callback ou asset externe n'est exécuté.
-- Le Snapshot reste celui du contrat de domaine. Les références de catalogue et de politique de l'exemple sont **fictives** et ne deviennent pas une release M1 par leur utilisation dans cet essai.
-- Les verrous empêchent les modifications des propriétés concernées, y compris manuelles dans ce M0 conservateur. Le déverrouillage ne fait pas partie de l'essai.
+- Un principal de développement, le projet de qualification `project-m0` et un Snapshot initial à une page ; aucune identité multi-utilisateur ni commande de création de page.
+- `apply_ops` accepte les opérations du contrat de domaine, notamment la mutation du Hero historique, les couleurs et `set_catalog_page` avec validation stricte. Le rendu catalogue local couvre Navigation, nuages, graphiques synthétiques et mouvements versionnés ; il reste borné à `manifest-core@0.3.0` et n'exécute aucun HTML, callback, CSS/JS libre ou asset externe produit par un modèle.
+- Le chemin historique Hero conserve `none`/`fade` ; les mouvements du chemin CatalogPage sont `fade-in`, `slide-up/down`, `fade-slide-up/down` et `composed@2.0.0`. Ils sont bornés et respectent reduced-motion. Cela ne couvre pas toute animation imaginable.
+- Le catalogue de code est une baseline interne : provenance, licence de racine, empreinte complète et coût mesuré restent à qualifier avant de le déclarer reproductible ou exportable. Les bibliothèques tierces listées dans les captures ne sont pas réputées installées ou admises.
+- Les verrous empêchent les opérations visant les propriétés verrouillées. Ils sont vérifiés par le contrat avant une mutation.
 - Stockage et reçus en mémoire, perdus au redémarrage. Le store garde jusqu'à 1 000 reçus puis refuse les nouvelles commandes ; il n'évince pas silencieusement des reçus nécessaires au replay.
-- Les jobs de suggestion facultatifs s'exécutent en mémoire et nécessitent un adaptateur compatible configuré. Sans variables fournisseur, seul `get_provider_registry` répond avec un registre vide ; les outils d'inférence ne sont pas enregistrés. Les fournisseurs Anthropic/Google natifs, jobs durables, approbation, export et persistance PostgreSQL restent absents.
+- Les jobs de suggestion sont optionnels et s'exécutent en mémoire. Le runtime actuel configure une cible par variables d'environnement avec protocole OpenAI-compatible (`openai`, `deepseek` ou `custom`) ; il n'expose pas encore des adaptateurs natifs Anthropic/Google, ni une connexion directe au modèle Codex/ChatGPT hôte. Une clé absente laisse le registre vide et n'appelle aucun modèle. Aucun screenshot/DOM du canevas n'est envoyé au fournisseur ; les tests utilisent des réponses simulées.
+- L'adaptateur transmet le brief et le Snapshot au fournisseur configuré pour produire des opérations structurées. Aucun filtre exhaustif ne peut garantir la détection de tout secret que l'utilisateur aurait collé dans son brief ; ne pas saisir de credentials dans le brief et ne connecter une API qu'après revue du contrôle de contenu prévu par AI-02.
 
 La transaction M0 ne contient aucun `await` ni accès disque : comparaison de version, calcul SHA-256, validation et assignation se terminent dans le même tour JavaScript du processus unique. Une base et plusieurs workers exigeront la vraie transaction décrite dans les contrats, pas la réutilisation de cette hypothèse d'exécution.
 

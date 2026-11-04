@@ -394,9 +394,7 @@ test('le modèle attend exactement 1 500 ms et un résultat ancien ne remplace p
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openEmpty(page);
   await page.clock.pauseAt(new Date('2026-11-04T12:01:00.000Z'));
-  const providerDetails = page.locator('.model-provider-disclosure');
-  if (!(await providerDetails.evaluate((element) => (element as HTMLDetailsElement).open))) await providerDetails.locator('summary').click();
-  await page.getByLabel('Fournisseur', { exact: true }).selectOption('openai');
+  await expect(page.getByLabel('Fournisseur', { exact: true })).toHaveValue('openai');
   const input = page.getByRole('textbox', { name: 'Description de la page', exact: true });
   await input.fill('Première intention à générer');
   await page.clock.runFor(1499);
@@ -416,6 +414,42 @@ test('le modèle attend exactement 1 500 ms et un résultat ancien ne remplace p
   await expect(page.getByRole('heading', { name: 'Résultat actuel', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Résultat périmé', exact: true })).toHaveCount(0);
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBeNull();
+});
+
+test('plusieurs modèles exigent un choix avant le debounce et le select reste utilisable', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-04T12:00:00.000Z') });
+  await page.route('**/packages/host-adapters/src/index.ts*', (route) => route.fulfill({ contentType: 'text/javascript', body: `
+    import { initialProject } from ${JSON.stringify(route.request().url().replace(/host-adapters\/src\/index\.ts.*$/, 'm0-contract/src/index.ts'))};
+    let starts = 0;
+    window.__manifestMultipleModelProbe = { starts: () => starts };
+    export function createBrowserTransport() { return {
+      kind:'mcp', read:async()=>initialProject(), close:async()=>{},
+      readProviderRegistry:async()=>({schemaVersion:1,providers:[{id:'deepseek',label:'DeepSeek',protocol:'openai-compatible',status:'configured',supportsBYOK:false,secretConfigured:true,models:[{id:'deepseek-chat',label:'DeepSeek Chat',providerId:'deepseek',capabilities:['structured-output']},{id:'deepseek-reasoner',label:'DeepSeek Reasoner',providerId:'deepseek',capabilities:['structured-output']}]}]}),
+      startSuggestion:async()=>{starts++;return {jobId:'multi-model-job',state:'running',proposalIds:[]}},
+      getSuggestionJob:async()=>({jobId:'multi-model-job',state:'running',proposalIds:[]}),
+      getSuggestionUpdates:async()=>({events:[],nextSeq:0}), readSuggestionProposal:async()=>{throw new Error('Pas de proposition attendue dans ce test')}, cancelSuggestion:async()=>({jobId:'multi-model-job',state:'cancelled',proposalIds:[]})
+    }; }
+    export const createMcpTransport=createBrowserTransport;
+  ` }));
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openEmpty(page);
+  await page.clock.pauseAt(new Date('2026-11-04T12:01:00.000Z'));
+  const details = page.locator('.model-provider-disclosure');
+  if (!(await details.evaluate((element) => (element as HTMLDetailsElement).open))) await details.locator('summary').click();
+  await page.getByLabel('Fournisseur', { exact: true }).selectOption('deepseek');
+  await expect(page.locator('.intent-status')).toContainText('Choisis un modèle');
+  const model = page.getByLabel('Modèle', { exact: true });
+  await expect(model).toBeEnabled();
+  await expect(model).toHaveValue('');
+  await page.getByRole('textbox', { name: 'Description de la page', exact: true }).fill('Ajoute une entrée douce et fluide.');
+  await page.clock.runFor(1500);
+  expect(await page.evaluate(() => (window as unknown as { __manifestMultipleModelProbe: { starts: () => number } }).__manifestMultipleModelProbe.starts())).toBe(0);
+  await model.selectOption('deepseek-reasoner');
+  await expect(page.locator('.intent-status')).toContainText('API DeepSeek (DeepSeek Reasoner)');
+  await page.clock.runFor(1499);
+  expect(await page.evaluate(() => (window as unknown as { __manifestMultipleModelProbe: { starts: () => number } }).__manifestMultipleModelProbe.starts())).toBe(0);
+  await page.clock.runFor(1);
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __manifestMultipleModelProbe: { starts: () => number } }).__manifestMultipleModelProbe.starts())).toBe(1);
 });
 
 test('le passage local→modèle puis modèle→local remplace chaque ancien aperçu', async ({ page }) => {
@@ -444,6 +478,10 @@ test('le passage local→modèle puis modèle→local remplace chaque ancien ape
       await providerDetails.locator('summary').click();
     }
   };
+  // The registry contains one configured model, so Manifest selects it by default.
+  // Clear that choice here to exercise the local-preview → provider-preview switch.
+  await openProviderControls();
+  await page.getByLabel('Fournisseur', { exact: true }).selectOption('');
   const input = page.getByRole('textbox', { name: 'Description de la page', exact: true });
   await input.fill('Fond noir\nHero\nTitre : Proposition locale initiale');
   await expect(page.getByRole('main', { name: 'Aperçu du candidat local', exact: true })).toBeVisible({ timeout: 5000 });

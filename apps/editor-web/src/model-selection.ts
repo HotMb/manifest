@@ -3,12 +3,20 @@ import type { ModelProviderId, ModelProviderRegistry } from '@design-workbench/m
 export type ModelSelection = { providerId: ModelProviderId | null; modelId: string | null };
 export const EMPTY_MODEL_SELECTION: ModelSelection = { providerId: null, modelId: null };
 
+/** Select only a single configured provider with a single model; ambiguity stays explicit. */
+export function defaultModelSelection(registry: ModelProviderRegistry): ModelSelection {
+  const configured = registry.providers.filter((provider) => provider.status === 'configured' && provider.models.length > 0);
+  return configured.length === 1 && configured[0]!.models.length === 1
+    ? selectProvider(registry, EMPTY_MODEL_SELECTION, configured[0]!.id)
+    : EMPTY_MODEL_SELECTION;
+}
+
 export function selectProvider(registry: ModelProviderRegistry, current: ModelSelection, providerId: string): ModelSelection {
   if (!providerId) return EMPTY_MODEL_SELECTION;
   const provider = registry.providers.find((entry) => entry.id === providerId && entry.status === 'configured' && entry.models.length > 0);
   if (!provider) throw new Error('Ce fournisseur n’est pas disponible dans cet atelier.');
   if (provider.id === current.providerId && provider.models.some((model) => model.id === current.modelId)) return current;
-  return { providerId: provider.id, modelId: provider.models[0]!.id };
+  return { providerId: provider.id, modelId: provider.models.length === 1 ? provider.models[0]!.id : null };
 }
 
 export function selectModel(registry: ModelProviderRegistry, current: ModelSelection, modelId: string): ModelSelection {

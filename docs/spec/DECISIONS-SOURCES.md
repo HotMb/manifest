@@ -1,6 +1,6 @@
 # Décisions, qualifications et sources
 
-État mis à jour le 2 novembre 2026. Ce dossier est une proposition de contrats à implémenter et éprouver. Il ne reprend pas comme autorité les affirmations d'une autre IA ; les décisions techniques s'appuient sur la demande utilisateur et les sources primaires ci-dessous.
+État mis à jour le 4 novembre 2026. Ce dossier est une proposition de contrats à implémenter et éprouver. Il ne reprend pas comme autorité les affirmations d'une autre IA ; les décisions techniques s'appuient sur la demande utilisateur et les sources primaires ci-dessous.
 
 ## Décisions retenues
 
@@ -14,10 +14,10 @@
 | ADR-06 | propositions sans mutation automatique serveur | protège le brouillon ; conservation et édition manuelle sur candidat explicitement définies |
 | ADR-07 | commandes atomiques versionnées et idempotentes | empêche écritures partielles, courses et doubles effets |
 | ADR-08 | jobs courts à démarrer, poll via bridge M1 | transport portable ; latence/charge à éprouver avant SSE direct |
-| ADR-09 | un fournisseur M1, adaptateurs pour M2 | prouve la boucle sans bloquer sur toutes les API |
+| ADR-09 | un contrat d'inférence commun avec adaptateurs API par fournisseur | le modèle explicitement choisi traite le brief ; chaque API est configurée et facturée indépendamment, sans inférence cachée via l'hôte |
 | ADR-10 | export React contrôlé, autres cibles qualifiées séparément | fidélité mesurable avant élargissement |
 | ADR-11 | catalogue approuvé, pas de code arbitraire en frappe M1 | garde la vue et ses droits hors de portée du code généré |
-| ADR-12 | profil Unslop versionné, choix de marque préservés | cohérence sans uniformiser les créations |
+| ADR-12 | méthode de revue inspirée d'Unslop, sans profil fixe ; choix de marque préservés | suggestions adaptées au produit et critique de l'aperçu réel, sans uniformiser les pages |
 | [ADR-13](../adr/0002-manifest-workspace-and-handoff.md) | atelier en trois zones, attente de 1,5 s et rapport lié à une révision ; invocation fiable via mention/carte, `/manifest` et `/validate` restent à qualifier comme alias | reprend les captures de référence validées ; distingue le champ propre de Manifest du compositeur hôte et sépare prévisualisation, approbation, rapport et transmission |
 
 ## Points de qualification, responsables et sortie
@@ -42,13 +42,14 @@ Un point non résolu bloque uniquement la capacité correspondante. Il ne justif
 
 | Référence | Utilisation dans ce dossier |
 |---|---|
-| [UI ChatGPT / MCP Apps](https://developers.openai.com/plugins/build/chatgpt-ui) | ressource UI, bridge, séparation outils de données/rendu |
+| [UI ChatGPT / MCP Apps](https://developers.openai.com/plugins/build/chatgpt-ui) | ressource UI, bridge, appels de suivi explicites et séparation outils de données/rendu |
 | [Extensions de plugins ChatGPT](https://developers.openai.com/plugins/build/extensions) | capacités d'ouverture d'app, panneau de conversation, mention du compositeur et transmission au fil selon l'extension supportée |
 | [Plugins dans ChatGPT](https://help.openai.com/en/articles/20001256-plugins-in-chatgpt) | sélection explicite par `@` ou le sélecteur ; limites variables selon hôte/espace |
 | [Cycle MCP Apps](https://apps.extensions.modelcontextprotocol.io/api/documents/overview.html) | initialisation Vue -> Hôte, capacités et cycle |
 | [CSP / CORS](https://apps.extensions.modelcontextprotocol.io/api/documents/csp-and-cors.html) | domaines nécessaires à la vue, origine dépendante de l'hôte |
 | [Autorisation](https://apps.extensions.modelcontextprotocol.io/api/documents/authorization.html) | protection OAuth serveur/outil |
-| [Contexte modèle](https://apps.extensions.modelcontextprotocol.io/api/interfaces/app.McpUiUpdateModelContextRequest.html) | mise à jour du contexte distincte d'un nouveau tour |
+| [Contexte modèle](https://apps.extensions.modelcontextprotocol.io/api/interfaces/app.McpUiUpdateModelContextRequest.html) | met à jour le contexte ; ne déclenche pas une réponse/inférence |
+| [Message UI MCP Apps](https://apps.extensions.modelcontextprotocol.io/api/interfaces/app.McpUiMessageRequest.html) | message utilisateur visible dans le fil, réservé aux actions explicites comme `/validate` |
 | [Config Puck](https://puckeditor.com/docs/integrating-puck/component-configuration) | éditeur et rendu à partir de données/config |
 | [Slots Puck](https://puckeditor.com/docs/api-reference/fields/slot) | emboîtement inline de ComponentData |
 | [Migration vers slots](https://puckeditor.com/docs/guides/migrations/dropzones-to-slots) | ne pas maintenir un ancien zones global parallèle |

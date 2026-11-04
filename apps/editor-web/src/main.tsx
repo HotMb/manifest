@@ -8,7 +8,7 @@ import { heroConfig } from './hero.tsx';
 import { applyDesignHint, DESCRIPTION_PAUSE_MS, isAnalysisCurrent, type DesignHint, type LocalAnalysis } from './manifest-analysis.ts';
 import { launchPreviewSnapshot } from './launch-preview.ts';
 import { useLocalAnalysis } from './use-local-analysis.ts';
-import { EMPTY_MODEL_SELECTION, modelSelectionDeclaration, selectedModel, selectProvider, selectModel, type ModelSelection } from './model-selection.ts';
+import { EMPTY_MODEL_SELECTION, defaultModelSelection, modelSelectionDeclaration, selectedModel, selectProvider, selectModel, type ModelSelection } from './model-selection.ts';
 import { ModelProviderPanel } from './model-provider-panel.tsx';
 import { ComponentExamples } from './component-examples.tsx';
 import { useModelSuggestions } from './use-model-suggestions.ts';
@@ -162,7 +162,12 @@ function Editor() {
         setHistory({ past: [], future: [] }); setConflict(false); retryRef.current = undefined;
         if (current.readProviderRegistry) {
           void current.readProviderRegistry().then((registry) => {
-            if (!disposed) setProviderRegistry(registry);
+            if (!disposed) {
+              setProviderRegistry(registry);
+              // The sole configured model is unambiguous; multiple choices
+              // stay explicit. This enables model inference after the debounce.
+              setModelSelection(defaultModelSelection(registry));
+            }
           }).catch(() => {
             if (!disposed) setProviderRegistryUnavailable(true);
           }).finally(() => {
@@ -558,6 +563,20 @@ function Editor() {
     setTimeout(() => URL.revokeObjectURL(url), 1000); setReportFeedback('Rapport préparé pour téléchargement. Il décrit un brouillon, sans code exporté.');
   }
 
+  async function retryProviderRegistry() {
+    if (!transport?.readProviderRegistry) return;
+    setProviderRegistryLoading(true); setProviderRegistryUnavailable(false);
+    try {
+      const registry = await transport.readProviderRegistry();
+      setProviderRegistry(registry);
+      setModelSelection((current) => selectedModel(registry, current) ? current : defaultModelSelection(registry));
+    } catch {
+      setProviderRegistryUnavailable(true);
+    } finally {
+      setProviderRegistryLoading(false);
+    }
+  }
+
   const config = useMemo(() => canvasSnapshot ? heroConfig(canvasSnapshot.theme) : undefined, [canvasSnapshot?.theme]);
   const connectionLabel = transport?.kind === 'mcp' ? 'Connecté à l’hôte' : transport?.kind === 'browser-local' ? 'Diagnostic navigateur · sauvegarde locale' : 'Diagnostic navigateur · session locale';
   const saveLabel = saving ? 'Enregistrement…' : dirty ? 'Modifications non enregistrées' : transport?.kind === 'mcp' ? 'Version serveur chargée' : confirmed?.draftVersion ? 'Brouillon local enregistré' : 'Brouillon de départ';
@@ -566,9 +585,18 @@ function Editor() {
     ? (() => { const captured = proposalProvenance.current.get(modelProposal.id); const provider = captured && providerRegistry.providers.find((entry) => entry.id === captured.providerId); const model = provider?.models.find((entry) => entry.id === captured?.modelId); return captured ? `${provider?.label ?? captured.providerId} · ${model?.label ?? captured.modelId}` : 'Provenance du fournisseur non enregistrée avec cette proposition'; })()
     : analysis ? 'Pistes locales · règles M0' : activeModel ? 'Modèle sélectionné · aucune proposition' : 'Aucune source sélectionnée';
   const inputStatusTitle = composing ? 'Saisie en cours' : activeModel ? ({ typing: 'Le modèle attend ta pause', syncing: 'Mise à jour du brouillon', starting: 'Demande envoyée', running: 'Le modèle compose', ready: 'Proposition prête', stale: 'Proposition à actualiser', error: 'La proposition a échoué', paused: 'Suggestions suspendues', unavailable: 'Modèle indisponible', idle: 'Prêt à analyser' } as const)[modelSuggestion.phase] : ({ typing: 'Lecture après ta pause', paused: 'Suggestions suspendues', ready: 'Pistes locales prêtes', idle: 'Prêt à analyser' } as const)[analysisPhase];
+  const configuredModelCount = providerRegistry.providers.filter((provider) => provider.status === 'configured').reduce((count, provider) => count + provider.models.length, 0);
   const inputStatusDetail = activeModel
-    ? `Après 1,5 s sans saisie, la description et le brouillon enregistré sont envoyés à ${activeModel.provider.label} (${activeModel.model.label}).`
-    : 'Après 1,5 s sans saisie, les règles locales proposent des pistes. Elles ne remplacent pas un modèle génératif.';
+    ? `Après 1,5 s, envoi à l’API ${activeModel.provider.label} (${activeModel.model.label}) ; facturation API distincte de ChatGPT possible.`
+    : providerRegistryLoading
+      ? 'Vérification du fournisseur configuré…'
+      : providerRegistryUnavailable
+        ? 'Le registre du fournisseur est indisponible ; aucune inférence modèle ne peut démarrer.'
+        : configuredModelCount > 0
+          ? modelSelection.providerId
+            ? 'Choisis un modèle pour activer l’analyse IA ; les pistes locales restent limitées.'
+            : 'Choisis un fournisseur et un modèle pour activer l’analyse IA ; les pistes locales restent limitées.'
+          : 'Aucune API de modèle configurée : après 1,5 s, seules des pistes locales limitées seront proposées.';
   const suggestionPhase = activeModel ? modelSuggestion.phase : analysisPhase;
   const suggestionTitle = activeModel ? ({ idle: 'Prêt à proposer', typing: 'Lecture après ta pause', syncing: 'Enregistrement du brouillon', starting: 'Demande envoyée', running: 'Le modèle compose', ready: 'Proposition prête', stale: 'Proposition à recalculer', error: 'La proposition a échoué', paused: 'Suggestions suspendues', unavailable: 'Modèle indisponible' } as const)[modelSuggestion.phase] : ({ idle: 'Une intention, puis des pistes', typing: 'Lecture après ta pause', paused: 'Lecture automatique suspendue', ready: 'Analyse locale prête' } as const)[analysisPhase];
   const suggestionDetail = activeModel ? ({ idle: 'Écris une intention pour voir un candidat dans l’aperçu.', typing: 'Continue d’écrire. Aucun nouvel appel n’est lancé avant la pause.', syncing: 'Les réglages de la page sont enregistrés avant la génération.', starting: 'La demande part vers le modèle sélectionné.', running: 'La page reste disponible pendant la génération.', ready: 'Le candidat est visible à gauche et attend ton choix.', stale: modelSuggestion.error ?? 'La proposition ne correspond plus au brouillon courant.', error: modelSuggestion.error ?? 'Réessaie après avoir vérifié le fournisseur.', paused: 'La lecture automatique est suspendue. Tu peux proposer maintenant.', unavailable: modelSuggestion.error ?? 'Les pistes locales restent disponibles.' } as const)[modelSuggestion.phase] : analysis ? `${analysis.recognized.length} indication(s) reconnue(s).` : analysisPhase === 'typing' ? 'Les pistes locales apparaissent après la pause.' : 'Décris une couleur, une entrée ou les mots à afficher.';
@@ -599,10 +627,10 @@ function Editor() {
               <div className="intent-status" role="status" aria-live="polite"><span className="intent-status__icon" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" /><path d="M10 6v4l2.5 1.5" /></svg></span><span><strong>{inputStatusTitle}</strong><small>{inputStatusDetail}</small></span></div>
               <div className="analysis-preference" role="note"><span>{activeModel ? `Suggestions ${activeModel.provider.label}` : 'Suggestions locales'}</span><span>après {(DESCRIPTION_PAUSE_MS / 1000).toLocaleString('fr-FR')} s de pause</span></div>
               <button className="button analyze-button" onClick={() => { if (activeModel && ['starting', 'running'].includes(modelSuggestion.phase)) modelSuggestion.cancelCurrent(); else { analyzeNow(); modelSuggestion.runNow(); } }} disabled={launchBusy || (['starting', 'running'].includes(modelSuggestion.phase) ? false : !description.trim() || composing)}>{activeModel && ['starting', 'running'].includes(modelSuggestion.phase) ? 'Annuler la génération' : 'Proposer maintenant'}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" /></svg></button>
-              <p id="description-help" className="description-help">Après 1,5 s sans frappe, Manifest actualise l’aperçu. Sans modèle configuré, seules les règles locales et la recette ventes sont disponibles. Un modèle choisi peut composer les éléments du catalogue : navigation, nuages, graphiques, fondu et glissement. Les animations absentes du catalogue ne sont pas exécutées ; Manifest indique la limite et propose une alternative.</p>
+              <p id="description-help" className="description-help">Après 1,5 s sans frappe, Manifest actualise l’aperçu. Sans modèle configuré, seules des pistes locales limitées et un exemple de ventes synthétiques sont disponibles. Un modèle choisi peut composer les éléments du catalogue : navigation, nuages, graphiques, fondu et glissement. Les animations absentes du catalogue ne sont pas exécutées ; Manifest indique la limite et propose une alternative.</p>
               <details className="model-provider-disclosure">
                 <summary>{activeModel ? `${activeModel.provider.label} · ${activeModel.model.label}` : 'Suggestions par modèle'}</summary>
-                <ModelProviderPanel registry={providerRegistry} selection={modelSelection} onChange={setModelSelection} loading={providerRegistryLoading} unavailable={providerRegistryUnavailable} />
+                <ModelProviderPanel registry={providerRegistry} selection={modelSelection} onChange={setModelSelection} loading={providerRegistryLoading} unavailable={providerRegistryUnavailable} onRetry={() => void retryProviderRegistry()} />
               </details>
               <div className="description-examples"><span>Une direction à explorer</span><button onClick={() => { updateDescription('Un fond clair avec un accent bleu.\nTitre : Des espaces qui nous ressemblent\nTexte : Un atelier indépendant pour imaginer vos lieux de vie.'); descriptionInput.current?.focus(); }}>Page de présentation<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button><button onClick={() => { updateDescription('Un fond sombre avec un accent vert et un fondu à l’entrée.'); descriptionInput.current?.focus(); }}>Page sombre animée<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button></div>
             </div>

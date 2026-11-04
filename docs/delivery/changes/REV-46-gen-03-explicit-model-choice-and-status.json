@@ -1,0 +1,18 @@
+{
+  "title": "Choix du modèle sans implicite et transparence de l’état IA",
+  "ownedPaths": [
+    "apps/editor-web/src/main.tsx",
+    "apps/editor-web/src/model-selection.ts",
+    "apps/editor-web/src/model-provider-panel.tsx",
+    "apps/editor-web/src/manifest.css",
+    "apps/editor-web/test/model-selection.test.ts",
+    "tests/e2e/empty-start.spec.ts",
+    "docs/STATUS.md"
+  ],
+  "acceptance": [
+    "L’auto-sélection ne choisit une cible que si un seul fournisseur et un seul modèle sont configurés. Si le fournisseur a plusieurs modèles, le choix du modèle est obligatoire avant qu’un job IA puisse démarrer ; le contrôle reste utilisable dans cet état.",
+    "Le brief indique près du champ si l’API du fournisseur sera appelée après la pause, si aucune API n’est configurée, si plusieurs modèles doivent être choisis ou si le registre est indisponible. La facturation API distincte de ChatGPT est visible sans ouvrir les réglages détaillés ; l’état indisponible offre un retry ciblé du registre.",
+    "Le test navigateur vérifie qu’aucun job ne démarre avant le choix explicite parmi plusieurs modèles, puis qu’un job part après le debounce de 1 500 ms. Les appels utilisés pour les tests restent simulés.",
+    "Le Snapshot continue d’accepter une référence designPolicy héritée pour lecture, mais les nouveaux projets n’en contiennent pas et aucune référence n’est envoyée au modèle. Unslop reste une méthode de revue contextualisée, sans profil fixe."
+  ]
+}

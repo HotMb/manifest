@@ -1,14 +1,17 @@
 {
   "schemaVersion": 1,
   "productName": "Manifest",
-  "revision": 39,
+  "revision": 47,
   "tickets": [
     {
       "id": "ARC-01",
       "title": "Qualifier le parcours embarqué",
       "phase": "M0",
       "owner": "frontend",
-      "dependencies": [],
+      "dependencies": [
+        "GEN-03",
+        "GEN-04"
+      ],
       "ownedPaths": [
         "apps/mcp-view/",
         "apps/editor-web/",
@@ -16,10 +19,11 @@
         "docs/evidence/ARC-01"
       ],
       "acceptance": [
-        "En navigateur, un nouveau Snapshot M0 est réellement vide ; l'intention principale décrit une page et ses animations, puis l'ajout ou une proposition éligible produit l'aperçu. Les brouillons Hero existants restent préservés.",
-        "Dans ChatGPT Desktop, le bridge officiel initialise Vue vers Hôte, réalise une lecture authentifiée et refuse un jeton invalide ; le parcours réel d'ouverture, de rafraîchissement et de modification est enregistré.",
-        "Clavier, dimensions étroites et poll court sont éprouvés ; les capacités fichier, stockage et iframe sont consignées avec fallback navigateur. Aucun texte non envoyé du compositeur natif n'est lu ; seul un contexte explicitement livré par l'hôte peut préremplir une suggestion modifiable.",
-        "Un enregistrement et une matrice de capacités datée sans secrets sont livrés. Le M0 reste borné à un projet/page et zéro ou un Hero ; le catalogue de composants/menus/animations et le glisser-déposer sont livrés par UI-02, après ses dépendances."
+        "En navigateur, un nouveau Snapshot M0 est réellement vide ; le brief décrit une page et ses animations, puis l'aperçu s'actualise après le debounce à partir d'une proposition structurée valide. Les brouillons existants restent préservés.",
+        "Après livraison de GEN-03 et GEN-04, dans ChatGPT Desktop, ouvrir Manifest depuis la conversation et qualifier l'identité, la lecture, l'écriture, l'actualisation et les capacités de l'hôte. Depuis le champ Manifest, une demande d'animation doit lancer l'adaptateur API sélectionné après 1 500 ms et modifier réellement l'aperçu ; la preuve note clairement que l'inférence live utilise l'API configurée, pas une inférence cachée du modèle hôte.",
+        "Valider la page dans l'interface et vérifier que `/validate` envoie le rapport complet et sa révision à la conversation ChatGPT par la capacité explicite de suivi disponible. Vérifier l'accusé ou relever l'erreur ; vérifier également le fallback de copie/téléchargement. Aucun texte non envoyé du compositeur ChatGPT n'est lu.",
+        "Clavier, dimensions de l'hôte, polling/rafraîchissement, annulation et mouvement réduit sont éprouvés. Les capacités d'identité, fichier, stockage et iframe sont consignées avec fallback navigateur.",
+        "Une preuve datée et une matrice de capacités sans secrets couvrent le flux réel d'ouverture, de génération live, d'aperçu et de transmission du rapport. ARC-01 ne passe pas done sur la seule base d'un mock, d'une capture locale ou d'un test en navigateur autonome."
       ],
       "evidence": [
         "docs/evidence/ARC-01/implementation.md",
@@ -31,7 +35,7 @@
       ],
       "status": "blocked",
       "branch": "work/arc-01",
-      "reason": "Le sous-ensemble local est relu et testé, mais ARC-01 exige encore une exécution dans ChatGPT Desktop avec preuve du bridge, identité OAuth, rafraîchissement, capacités d’hôte et parcours réel. Sans cette preuve, ARC-02 ne peut pas démarrer."
+      "reason": "Retarder la qualification du parcours hôte jusqu'à ce que la génération par API après debounce et l'aperçu direct des animations soient livrés, puis éprouver le même flux complet dans ChatGPT Desktop."
     },
     {
       "id": "ARC-02",
@@ -211,7 +215,7 @@
     },
     {
       "id": "CAT-03",
-      "title": "Release immuable et profil Unslop",
+      "title": "Release immuable et revue de qualité du design",
       "phase": "M1",
       "owner": "designer",
       "dependencies": [
@@ -221,12 +225,14 @@
         "packages/catalog/releases/",
         "packages/catalog/policy/",
         "tests/contract/catalog/",
+        "docs/design/UNSLOP-METHOD-ANALYSIS.md",
         "docs/evidence/CAT-03"
       ],
       "acceptance": [
-        "Les manifests comprennent empreintes sources, assets et lockfile, profil versionné, attribution et notices.",
+        "Les manifests comprennent les empreintes des sources, assets et lockfile, les licences, crédits et notices de chaque release admise.",
         "Une mise à jour du catalogue ne modifie pas une ancienne révision.",
-        "Les règles esthétiques restent adaptables et respectent locks et exceptions documentées ; les contenus tiers sont vérifiés avant admission."
+        "La qualité de design s'appuie sur une revue contextualisée du rendu selon la méthode documentée dans UNSLOP-METHOD-ANALYSIS.md ; le catalogue ne stocke ni profil esthétique universel ni palette imposée. Les préférences utilisateur, les contraintes de marque et les verrous restent prioritaires.",
+        "Les règles applicables aux contenus tiers et bibliothèques sont vérifiées avant admission ; la popularité seule n'est pas un motif d'inclusion."
       ],
       "evidence": [],
       "blockers": [],
@@ -451,7 +457,7 @@
     },
     {
       "id": "AI-02",
-      "title": "Contexte, cibles et profil",
+      "title": "Contexte, cibles et revue de design",
       "phase": "M1",
       "owner": "backend",
       "dependencies": [
@@ -462,12 +468,15 @@
         "packages/inference/context/",
         "packages/inference/policy/",
         "tests/fixtures/briefs/",
-        "docs/evidence/AI-02"
+        "docs/evidence/AI-02",
+        "docs/design/UNSLOP-METHOD-ANALYSIS.md"
       ],
       "acceptance": [
-        "Le contexte réduit comprend l’opération create_project/create_page/modify_page, la cible et baseDraftVersion, la proposition de l’assistant et le candidat initial seulement s’ils sont explicitement fournis, le Snapshot/version, sélection, locks, opérations autorisées, profil versionné, références catalogue et intention de données non secrète issue du Snapshot.",
-        "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global. Aucune clé, aucun jeton et aucun secret n’entre dans le contexte. Une connexion réelle exige une capacité/connecteur autorisé séparément.",
-        "Le modèle reçoit les spécifications de données versionnées avec le Snapshot et les utilise pour relier sources/champs et graphiques sans inventer de connexion réelle. Une intention ambiguë propose des variantes ; les références catalogue enrichissent la demande sans altérer le texte saisi ; plusieurs briefs de référence sont vérifiés."
+        "Le contexte réduit comprend l'opération create_project/create_page/modify_page, la cible et baseDraftVersion, la proposition de l'assistant et le candidat initial seulement s'ils sont explicitement fournis, le Snapshot/version, la sélection, les verrous, les opérations permises, les références exactes du catalogue, l'intention de données non secrète, ainsi que le fournisseur et le modèle sélectionnés. Il n'inclut pas de profil de style fixe.",
+        "La direction de design proposée est déduite du produit, du brief, de l'aperçu actuel et des préférences de marque. La méthode Unslop documentée sert à organiser une critique concrète du rendu ; elle ne fixe ni thème ni résultat visuel universel et conserve son attribution.",
+        "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global. Aucune clé, aucun jeton et aucun secret n'entre dans le contexte. Une connexion réelle exige une capacité/connecteur autorisé séparément.",
+        "Le modèle reçoit les spécifications de données versionnées avec le Snapshot et les utilise pour relier sources/champs et graphiques sans inventer de connexion réelle. Une intention ambiguë propose des variantes ; les références catalogue enrichissent la demande sans altérer le texte saisi ; plusieurs briefs de référence sont vérifiés.",
+        "Une mise à jour `ui/update-model-context` seule ne déclenche pas de génération. Dans ChatGPT, le transfert au modèle hôte utilise une action explicite et visible telle que `/validate`, tandis que le parcours réactif appelle l'adaptateur API sélectionné côté serveur."
       ],
       "evidence": [],
       "blockers": [],
@@ -732,28 +741,27 @@
     },
     {
       "id": "GEN-03",
-      "title": "Génération guidée par les capacités du catalogue",
+      "title": "Choix du modèle sans implicite et transparence de l’état IA",
       "phase": "M1",
       "owner": "backend",
       "dependencies": [
         "GEN-02"
       ],
       "ownedPaths": [
-        "packages/inference/",
-        "services/api/src/suggestion-jobs.ts",
-        "services/api/src/provider-runtime.ts",
-        "tests/contract/inference/",
-        "tests/provider-runtime.test.ts",
+        "apps/editor-web/src/main.tsx",
+        "apps/editor-web/src/model-selection.ts",
+        "apps/editor-web/src/model-provider-panel.tsx",
+        "apps/editor-web/src/manifest.css",
+        "apps/editor-web/test/model-selection.test.ts",
+        "tests/e2e/empty-start.spec.ts",
+        "docs/STATUS.md",
         "docs/evidence/GEN-03"
       ],
       "acceptance": [
-        "Le contexte du modèle contient le brief original, l'opération/cible/version autorisée, le Snapshot réduit, les références exactes du catalogue compatible, les réglages protégés et le profil de design Unslop versionné ; il ne contient ni clé, ni jeton, ni secret.",
-        "Avant tout appel, le brief et les valeurs texte du Snapshot sont contrôlés pour détecter des secrets explicites (clés API, tokens, mots de passe, clés privées et URLs signées). Le contrôle masque localement les valeurs détectées ou suspend l'appel et demande leur retrait ; les valeurs détectées ne sont jamais transmises ni écrites dans les journaux.",
-        "Le modèle interprète les descriptions en langage naturel sans exiger le nom technique d'une animation et peut composer les primitives paramétrables du catalogue avec cible, déclencheur, direction, durée, délai, easing et répétition. La proposition précise les éléments créés/modifiés et leur référence de capacité.",
-        "La sortie du modèle est une proposition d'opérations structurées liée à des IDs/releases du catalogue ; elle est strictement validée et rejetée si elle demande un bloc, une propriété, une animation ou une dépendance inconnue. Aucun fallback de fournisseur n'est silencieux et aucun code arbitraire n'est exécuté.",
-        "Lorsqu'une intention n'est pas représentable par les capacités locales auditées, Manifest nomme la limite, propose une alternative proche et conserve la capacité ou bibliothèque manquante comme demande à examiner ; il ne prétend pas l'avoir installée ou rendue.",
-        "Une interface d'adaptateur permet d'ajouter les API de modèles séparément ; les adaptateurs et les schémas de sortie OpenAI, Anthropic, Google, DeepSeek et endpoint compatible sont couverts par des mocks sans appels payants par défaut.",
-        "Les demandes nuages + graphiques sur ventes synthétiques, mouvements naturels combinés et changements de vitesse sont couvertes par fixtures. Le profil Unslop sert de contraintes et de contrôle qualité du design ; il ne remplace pas le catalogue, le moteur d'animation ni l'audit des bibliothèques."
+        "L’auto-sélection ne choisit une cible que si un seul fournisseur et un seul modèle sont configurés. Si le fournisseur a plusieurs modèles, le choix du modèle est obligatoire avant qu’un job IA puisse démarrer ; le contrôle reste utilisable dans cet état.",
+        "Le brief indique près du champ si l’API du fournisseur sera appelée après la pause, si aucune API n’est configurée, si plusieurs modèles doivent être choisis ou si le registre est indisponible. La facturation API distincte de ChatGPT est visible sans ouvrir les réglages détaillés ; l’état indisponible offre un retry ciblé du registre.",
+        "Le test navigateur vérifie qu’aucun job ne démarre avant le choix explicite parmi plusieurs modèles, puis qu’un job part après le debounce de 1 500 ms. Les appels utilisés pour les tests restent simulés.",
+        "Le Snapshot continue d’accepter une référence designPolicy héritée pour lecture, mais les nouveaux projets n’en contiennent pas et aucune référence n’est envoyée au modèle. Unslop reste une méthode de revue contextualisée, sans profil fixe."
       ],
       "evidence": [],
       "blockers": [],
@@ -776,10 +784,11 @@
         "docs/evidence/GEN-04"
       ],
       "acceptance": [
-        "Le canevas central rend le même arbre validé que le rapport/export ; une proposition à jour issue du debounce devient visible sans clic, tandis que le brouillon conservé reste intact jusqu'à confirmation.",
+        "Le canevas central rend le même arbre validé que le rapport/export ; une proposition à jour issue du job déclenché au debounce devient visible sans clic, tandis que le brouillon conservé reste intact jusqu'à confirmation.",
         "Un brief de tableau de bord ventes peut afficher fond animé, graphiques synthétiques et sections du catalogue ; une modification de direction, d'animation ou de vitesse actualise l'aperçu après la pause, sur dimensions desktop et mobile.",
         "Le panneau droit filtre localement les composants/animations admis ; aperçu au survol et équivalent clavier/tactile ne mutent pas la page. L'insertion choisie ajoute une référence exacte sous le brief et au rapport.",
-        "Toute demande hors capacités installées affiche la limite et les alternatives disponibles. Le profil de design dérivé d'Unslop guide les choix avec attribution, sans écraser une contrainte de marque explicite."
+        "Le moteur de suggestions s'appuie sur les éléments de qualité étudiés dans la méthode Unslop : direction dérivée du produit et du brief, inspection du rendu réel, corrections par étapes et contrôle après rendu. Il ne force ni palette ni style général ; marque, préférences, verrous et mouvement réduit du projet prévalent. L'attribution de la source est conservée.",
+        "Toute demande hors capacités installées affiche la limite et les alternatives disponibles ; la génération n'affirme pas pouvoir réaliser une animation qui n'existe ni dans les primitives admises ni dans les bibliothèques auditées."
       ],
       "evidence": [],
       "blockers": [],
@@ -1284,6 +1293,130 @@
       ],
       "source": "docs/delivery/changes/REV-39-gen02-smoke-entrypoints.json",
       "reason": "La correction de fumée ajoute une icône intégrée au document HTML ; déclarer index.html dans les chemins contrôlés du ticket."
+    },
+    {
+      "revision": 40,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:40:51.500Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-40-gen-03-host-model-and-design-method.json",
+      "reason": "Préciser l'appel réel au modèle après debounce, la limite d'inférence du bridge ChatGPT et remplacer le profil fixe par une méthode de revue inspirée d'Unslop."
+    },
+    {
+      "revision": 41,
+      "ticketId": "GEN-04",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:41:13.077Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-41-gen-04-live-preview-design-method.json",
+      "reason": "Aligner l'aperçu live sur la méthode de conception inspirée d'Unslop, sans profil esthétique imposé."
+    },
+    {
+      "revision": 42,
+      "ticketId": "CAT-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:42:12.238Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-42-cat-03-no-fixed-style-profile.json",
+      "reason": "Remplacer le profil esthétique fixe par une revue contextualisée inspirée de la méthode Unslop, avec licences et attribution."
+    },
+    {
+      "revision": 43,
+      "ticketId": "AI-02",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:42:18.149Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-43-ai-02-context-no-profile.json",
+      "reason": "Aligner le contexte d'inférence sur le modèle API choisi et la méthode de design, sans versionner un style universel."
+    },
+    {
+      "revision": 44,
+      "ticketId": "ARC-01",
+      "from": "blocked",
+      "to": "blocked",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:43:09.125Z",
+      "action": "criteria_updated",
+      "fields": [
+        "dependencies",
+        "acceptance",
+        "reason"
+      ],
+      "source": "docs/delivery/changes/REV-44-arc-01-after-reactive-core.json",
+      "reason": "Le commanditaire veut qualifier ARC-01 dans ChatGPT Desktop après livraison du moteur LLM live et de la modification réelle de l'aperçu."
+    },
+    {
+      "revision": 45,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:59:41.421Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-45-gen-03-select-single-provider-automatically.json",
+      "reason": "Documenter la sélection automatique du fournisseur unique, l’absence d’appel sans fournisseur et l’exclusion du profil hérité"
+    },
+    {
+      "revision": 46,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T13:09:59.075Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-46-gen-03-explicit-model-choice-and-status.json",
+      "reason": "Ne jamais choisir silencieusement un modèle parmi plusieurs et rendre l’usage API facturable visible avant l’analyse automatique"
+    },
+    {
+      "revision": 47,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T13:31:16.811Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-47-gen-03-evidence-path.json",
+      "reason": "Déclarer le dossier d’évidence du correctif API afin que les tests simulés et les limites constatées soient reviewables sans changer le statut ni lever la dépendance GEN-02."
     }
   ]
 }

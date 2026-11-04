@@ -1,0 +1,9 @@
+{
+  "acceptance": [
+    "Le canevas central rend le même arbre validé que le rapport/export ; une proposition à jour issue du job déclenché au debounce devient visible sans clic, tandis que le brouillon conservé reste intact jusqu'à confirmation.",
+    "Un brief de tableau de bord ventes peut afficher fond animé, graphiques synthétiques et sections du catalogue ; une modification de direction, d'animation ou de vitesse actualise l'aperçu après la pause, sur dimensions desktop et mobile.",
+    "Le panneau droit filtre localement les composants/animations admis ; aperçu au survol et équivalent clavier/tactile ne mutent pas la page. L'insertion choisie ajoute une référence exacte sous le brief et au rapport.",
+    "Le moteur de suggestions s'appuie sur les éléments de qualité étudiés dans la méthode Unslop : direction dérivée du produit et du brief, inspection du rendu réel, corrections par étapes et contrôle après rendu. Il ne force ni palette ni style général ; marque, préférences, verrous et mouvement réduit du projet prévalent. L'attribution de la source est conservée.",
+    "Toute demande hors capacités installées affiche la limite et les alternatives disponibles ; la génération n'affirme pas pouvoir réaliser une animation qui n'existe ni dans les primitives admises ni dans les bibliothèques auditées."
+  ]
+}

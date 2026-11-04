@@ -16,6 +16,10 @@ Revue de la boucle réactive : [GEN-01 — aperçu automatique après debounce �
 
 Revue du catalogue composable : [GEN-02 — mouvement déclaré et limites restantes — 4 novembre 2026](2026-11-04-GEN-02-composed-motion-review.md).
 
+Cadrage du modèle live, du bridge ChatGPT et de la méthode de revue inspirée d'Unslop : [GEN-03/04 — clarification de l'inférence et du design — 4 novembre 2026](2026-11-04-GEN-03-inference-and-design-method-review.md).
+
+Revue de la tranche de sélection API et aperçu réactif (39 E2E, mocks uniquement) : [GEN-03/04 — inférence live et limites de la critique visuelle — 4 novembre 2026](2026-11-04-GEN-03-live-inference-review.md).
+
 Vérification du flux de saisie réactive : [Manifest — debounce et aperçu — 3 novembre 2026](2026-11-03-MANIFEST-reactive-input-review.md).
 
 Dernier cadrage : [lancement contextuel, versionnement des données et rapport `/validate` — 3 novembre 2026](2026-11-03-MANIFEST-context-and-data-handoff-review.md).

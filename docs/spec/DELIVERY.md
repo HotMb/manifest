@@ -55,7 +55,7 @@ Le nombre de personnes dépend de la disponibilité et des compétences. Les res
 | Tech lead | domaine, contrats, migrations et intégration | compatibilité des modules et arbitrages |
 | Frontend éditeur | Puck contrôlé, inspecteur, causalité et accessibilité | expérience complète dans la vue |
 | Backend / IA / MCP | auth, commandes, jobs, adaptateurs et budgets | invariants serveur et intégration hôte |
-| Designer + frontend catalogue | primitives, blocs, profil et licences | qualité des compositions et des sources |
+| Designer + frontend catalogue | primitives, blocs, méthode de revue et licences | qualité contextualisée des compositions et des sources |
 | Export / plateforme | builds isolés, packaging, déploiement et restauration | artefacts reproductibles et exploitation |
 | QA / automatisation | fixtures, parcours, tests d'erreur et comparaison | preuves de passage des jalons |
 
@@ -107,9 +107,9 @@ Propriétaire : catalogue. Dépendance : ARC-03. RQ-04/05/14. Livrer Section/Sta
 
 Propriétaire : designer/catalogue. Dépendances : CAT-01, UX-01. RQ-04/08/14. Implémenter les dix blocs de CATALOGUE.md et les préréglages d'animation admis. Chaque bloc inclut états, mobile, clavier, contenu long, mouvement réduit et preuve de licence. Restaurant/portfolio/produit ne doivent pas dépendre d'un unique layout figé. AT-14/15/20.
 
-### CAT-03 — Release immuable et profil Unslop
+### CAT-03 — Release immuable et revue de qualité du design
 
-Propriétaire : catalogue + tech lead. Dépendances : CAT-02. RQ-08/14. Produire manifests avec hashes sources/assets/lockfile, profil et notices. Tester qu'une mise à jour du catalogue ne change pas une ancienne révision. Les règles esthétiques peuvent être adaptées, les locks sont respectés et les exceptions documentées. Aucun contenu tierce partie n'est admis sur la seule base de sa popularité.
+Propriétaire : catalogue + tech lead. Dépendances : CAT-02. RQ-08/14. Produire manifests avec hashes sources/assets/lockfile, licences, attributions et notices. Tester qu'une mise à jour du catalogue ne change pas une ancienne révision. La revue inspirée de la méthode Unslop reste contextualisée ; elle ne stocke aucun thème ni profil de style obligatoire. Les locks sont respectés et les exceptions documentées. Aucun contenu tierce partie n'est admis sur la seule base de sa popularité.
 
 ## Tickets M1 — éditeur
 
@@ -151,9 +151,9 @@ Propriétaire : backend/plateforme. Dépendance : API-01. RQ-02/06/13. Queue dur
 
 Propriétaire : backend IA. Dépendances : JOB-01, CAT-01. RQ-03/07. SDK officiel, sortie structurée et validation domaine, erreurs/usage normalisés. Critères : schéma incompatible refusé ; refus/timeout/quota traités ; réparation bornée ; résultat partiel non appliqué ; clés absentes de toutes sorties. Tests mocks par défaut ; essai réel volontaire et plafonné en intégration.
 
-### AI-02 — Contexte, cibles et profil
+### AI-02 — Contexte, cibles et revue de design
 
-Propriétaire : backend IA + designer. Dépendances : AI-01, CAT-03. RQ-08/12. Construire un contexte réduit avec page/sélection/locks/opérations autorisées et profil. Critères : instruction hostile dans un texte ne donne aucun accès ; demande locale ne modifie pas le thème global ; demande ambiguë propose des variantes. Conserver des briefs de référence et vérifier plusieurs cas, pas un seul prompt heureux.
+Propriétaire : backend IA + designer. Dépendances : AI-01, CAT-03. RQ-08/12. Construire un contexte réduit avec page/sélection/locks/opérations autorisées, le modèle sélectionné et des indications de critique dérivées du brief, pas un profil de style fixe. Critères : instruction hostile dans un texte ne donne aucun accès ; demande locale ne modifie pas le thème global ; demande ambiguë propose des variantes. Conserver des briefs de référence et vérifier plusieurs cas, pas un seul prompt heureux. `ui/update-model-context` ne remplace pas l'appel API réactif ; `ui/message` reste une transmission explicite au modèle hôte.
 
 ### SEC-01 — Autorisations et contrôle d'usage
 

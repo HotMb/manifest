@@ -61,7 +61,7 @@ Le commanditaire n’a pas participé à cette revue asynchrone ; le résultat e
 |---|---|---|
 | Clôturer GEN-01 après approbation QA et preuve de revue distincte | Orchestrateur | Fait via CLI à la révision 34. |
 | Poursuivre l’inventaire et le catalogue typé versionné, dont les mouvements paramétrables et leurs licences | Backend, GEN-02 | En cours ; revue des sources, compatibilité, coûts et sécurité nécessaire. |
-| Ajouter ensuite la génération guidée par modèle, profil Unslop et filtre de secrets | Backend, GEN-03 | Bloqué par GEN-02 ; pas d’appel payant par défaut. |
+| Ajouter ensuite la génération guidée par modèle, la méthode de revue contextualisée inspirée d’Unslop (sans profil fixe) et le traitement des secrets | Backend, GEN-03 | Bloqué par GEN-02 ; pas d’appel payant par défaut. |
 | Produire la preuve d’hôte et d’identité ChatGPT Desktop | Orchestrateur avec le commanditaire | ARC-01 bloqué ; les tests locaux ne lèvent pas ce gate. |
 
 ## Verdict

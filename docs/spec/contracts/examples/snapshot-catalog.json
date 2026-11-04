@@ -56,10 +56,6 @@
     "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "target": "react"
   },
-  "designPolicy": {
-    "releaseId": "policy-unslop-adapted-example",
-    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-  },
   "locks": [],
   "designBrief": {
     "product": "Tableau de bord des ventes",

@@ -45,4 +45,4 @@ Date : 2026-11-04
 - Backend : définir le hash reproductible de release sur sources/styles/assets + lockfile ; GEN-02 reste `in_progress`.
 - Responsable catalogue/design : fixer la licence racine et auditer les bibliothèques mentionnées avant toute admission ; aucun paquet des captures n'a été installé.
 - QA/performance : mesurer le coût/poids/rendu sur fixtures desktop/mobile et refaire navigation tactile/appareil réel avant fermeture.
-- Backend/GEN-03 : connecter le mapping des demandes en langage naturel aux primitives, auditer le profil Unslop, et filtrer les secrets avant le transfert à un fournisseur réel.
+- Backend/GEN-03 : connecter le mapping des demandes en langage naturel aux primitives, étudier la méthode de revue Unslop sans profil fixe, et vérifier le traitement des secrets avant un transfert réel à un fournisseur.

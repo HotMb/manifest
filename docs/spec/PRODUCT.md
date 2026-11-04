@@ -30,8 +30,8 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 | RQ-04 | Modifier composition, thème, texte, images et animations locales | M1 |
 | RQ-05 | Liberté de composition par primitives et blocs ; propriétés contrôlées | M1 |
 | RQ-06 | Annulation, conservation et récupération après erreur | M1 |
-| RQ-07 | API du modèle choisi parmi les adaptateurs pris en charge ; absence de changement silencieux de fournisseur | M1 |
-| RQ-08 | Design guidé par un profil inspiré d'Unslop, adaptable et versionné | M1 |
+| RQ-07 | Après le debounce, génération par l'API du fournisseur/modèle choisi, sans changement silencieux ; le modèle hôte est utilisé seulement par une transmission explicite | M1 |
+| RQ-08 | Direction et critique du design adaptées au produit et au brief, éclairées par l'étude de la méthode Unslop ; pas de profil esthétique universel | M1 |
 | RQ-09 | Pages, routes, thème commun et mises en page mobile | M1 |
 | RQ-10 | Révisions immuables approuvées et restauration ; branches | M1 ; branches M2 |
 | RQ-11 | Export React exécutable depuis une révision figée | M1 |

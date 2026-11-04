@@ -474,7 +474,9 @@
           "$ref": "#/$defs/CatalogLock"
         },
         "designPolicy": {
-          "$ref": "#/$defs/DesignPolicy"
+          "$ref": "#/$defs/DesignPolicy",
+          "deprecated": true,
+          "description": "Compatibilité de lecture uniquement pour les anciens brouillons ; jamais généré ni transmis au modèle."
         },
         "locks": {
           "type": "array",
@@ -495,7 +497,6 @@
         "theme",
         "assetRefs",
         "catalogLock",
-        "designPolicy",
         "locks",
         "designBrief"
       ],

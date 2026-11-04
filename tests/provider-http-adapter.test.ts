@@ -67,21 +67,33 @@ test('le modèle reçoit seulement les capacités de la release locale et peut p
   } });
   const result = await adapter.suggest({ ...request(), snapshot: project.snapshot, baseSignature: stableStringify(project.snapshot) });
   const capabilityMessage = sentMessages[1]!.content;
+  const systemMessage = sentMessages[0]!.content;
   assert.match(capabilityMessage, /manifest-core/);
   assert.match(capabilityMessage, /cloud-background/);
   assert.match(capabilityMessage, /sales-chart/);
   assert.match(capabilityMessage, /fade-in/);
-  assert.match(capabilityMessage, /unslop-informed/);
-  assert.match(capabilityMessage, /CC BY 4\.0/);
-  assert.match(capabilityMessage, /spacing/);
-  assert.match(capabilityMessage, /severity/);
-  assert.match(capabilityMessage, /contrast/);
-  assert.match(capabilityMessage, /exceptions/);
+  assert.match(systemMessage, /direction visuelle du produit et du brief/i);
+  assert.match(systemMessage, /palette universels/i);
+  assert.doesNotMatch(capabilityMessage, /designProfile|unslop-informed|CC BY 4\.0|severity|exceptions/);
   assert.doesNotMatch(capabilityMessage, /React Bits|Aceternity|https?:\/\//);
   assert.doesNotMatch(capabilityMessage, /test-only|secret-test|api[_-]?key|credential/i);
   assert.deepEqual(result.operations, [operation]);
   assert.deepEqual(applyOperations(project.snapshot, result.operations).pages[0]!.catalogPage, catalogPage);
   assert.doesNotMatch(JSON.stringify(result), /<script|<style|dangerouslySetInnerHTML/);
+});
+
+test('une référence de politique héritée reste lisible mais ne part jamais dans le prompt modèle', async () => {
+  const project = initialProject();
+  const legacySnapshot = { ...project.snapshot, designPolicy: { releaseId: 'legacy-design-policy', sha256: 'b'.repeat(64) } };
+  let sentBody = '';
+  const adapter = createOpenAICompatibleModelAdapter({ descriptor, baseUrl: 'https://api.example.test/v1', getApiKey: () => 'test-only', fetchImpl: async (_url, init) => {
+    sentBody = init.body;
+    return response({ choices: [{ message: { content: '{"operations":[],"rationale":"Aucune modification."}' } }] });
+  } });
+  await adapter.suggest({ ...request(), snapshot: legacySnapshot, baseSignature: stableStringify(legacySnapshot) });
+  assert.match(stableStringify(legacySnapshot), /legacy-design-policy/);
+  const userMessage = JSON.parse(sentBody).messages[2].content as string;
+  assert.doesNotMatch(userMessage, /designPolicy|legacy-design-policy/);
 });
 
 test('le fournisseur ne peut pas utiliser update_props pour créer un bloc absent', async () => {

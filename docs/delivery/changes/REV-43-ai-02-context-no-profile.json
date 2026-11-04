@@ -1,0 +1,17 @@
+{
+  "title": "Contexte, cibles et revue de design",
+  "ownedPaths": [
+    "packages/inference/context/",
+    "packages/inference/policy/",
+    "tests/fixtures/briefs/",
+    "docs/evidence/AI-02",
+    "docs/design/UNSLOP-METHOD-ANALYSIS.md"
+  ],
+  "acceptance": [
+    "Le contexte réduit comprend l'opération create_project/create_page/modify_page, la cible et baseDraftVersion, la proposition de l'assistant et le candidat initial seulement s'ils sont explicitement fournis, le Snapshot/version, la sélection, les verrous, les opérations permises, les références exactes du catalogue, l'intention de données non secrète, ainsi que le fournisseur et le modèle sélectionnés. Il n'inclut pas de profil de style fixe.",
+    "La direction de design proposée est déduite du produit, du brief, de l'aperçu actuel et des préférences de marque. La méthode Unslop documentée sert à organiser une critique concrète du rendu ; elle ne fixe ni thème ni résultat visuel universel et conserve son attribution.",
+    "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global. Aucune clé, aucun jeton et aucun secret n'entre dans le contexte. Une connexion réelle exige une capacité/connecteur autorisé séparément.",
+    "Le modèle reçoit les spécifications de données versionnées avec le Snapshot et les utilise pour relier sources/champs et graphiques sans inventer de connexion réelle. Une intention ambiguë propose des variantes ; les références catalogue enrichissent la demande sans altérer le texte saisi ; plusieurs briefs de référence sont vérifiés.",
+    "Une mise à jour `ui/update-model-context` seule ne déclenche pas de génération. Dans ChatGPT, le transfert au modèle hôte utilise une action explicite et visible telle que `/validate`, tandis que le parcours réactif appelle l'adaptateur API sélectionné côté serveur."
+  ]
+}

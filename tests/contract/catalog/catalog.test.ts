@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOG_RELEASE, catalogLibraryInventory, catalogMetadataDigest, renderCatalogPage, resolveMotion, UNSLOP_PROFILE, validateCatalogPage, type CatalogPage } from '../../../packages/catalog/src/index.ts';
+import { CATALOG_RELEASE, catalogLibraryInventory, catalogMetadataDigest, renderCatalogPage, resolveMotion, validateCatalogPage, type CatalogPage } from '../../../packages/catalog/src/index.ts';
 import { createSalesDashboardRecipe } from '../../../packages/catalog/src/recipes.ts';
 
 const fixture = JSON.parse(readFileSync(fileURLToPath(new URL('../../fixtures/catalog/sales-dashboard.json', import.meta.url)), 'utf8')) as CatalogPage;
@@ -223,10 +223,7 @@ test('les bibliothèques de référence sont inventoriées sans être prétendue
   assert.equal(catalogLibraryInventory.length, 39);
   assert.ok(catalogLibraryInventory.every((entry) => entry.admitted === false && entry.installedVersion === null && entry.license === 'unverified' && entry.versionStatus === 'not-installed' && entry.discoveredIn === 'user-supplied-reference-images'));
   assert.deepEqual(CATALOG_RELEASE.dependencies, [{ name: 'react', version: '19.3.1', kind: 'peer', license: 'MIT' }]);
-  assert.equal(UNSLOP_PROFILE.attribution, 'Unslop by Damir Sokolovsky (@heydamir), licensed CC BY 4.0.');
-  assert.equal(UNSLOP_PROFILE.passes.length, 9);
-  assert.equal(UNSLOP_PROFILE.rules.length, 9);
-  assert.ok(UNSLOP_PROFILE.rules.some((rule) => rule.pass === 'motion' && rule.guidance.includes('reduced-motion')));
+  assert.equal('designProfile' in CATALOG_RELEASE, false);
   assert.ok(Object.isFrozen(CATALOG_RELEASE.components) && Object.isFrozen(CATALOG_RELEASE.components[0]!.schema));
 });
 
