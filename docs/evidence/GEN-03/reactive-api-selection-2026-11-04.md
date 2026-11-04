@@ -25,6 +25,7 @@ Unslop n'est pas un profil visuel à injecter. Le prompt demande au modèle de d
 | Typecheck et build | Réussis. Le build émet les avertissements Rolldown existants `use client`. |
 | `npm run check` | Réussi : backlog valide, 31 tickets, révision 47. |
 | `git diff --check` | Réussi ; Git signale seulement des conversions de fins de lignes CRLF/LF à la prochaine écriture. |
+| GitHub Actions `Quality #86` | Réussie sur le commit poussé `4d3c222`; contrats Python exécutés avec dépendances CI disponibles. |
 | Contrats Python | Les deux commandes ont été tentées mais échouent au chargement, car le module `jsonschema` manque dans l'environnement. |
 | API fournisseur réelle / ChatGPT Desktop | Non exécutés : les tests s'arrêtent aux transports simulés ; aucune clé fournisseur ni preuve de l'hôte n'a été utilisée. |
 

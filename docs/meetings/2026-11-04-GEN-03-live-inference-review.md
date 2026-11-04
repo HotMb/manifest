@@ -34,6 +34,7 @@ La méthode Unslop est cadrée comme manière d'analyser un produit et critiquer
 | Fournisseurs / catalogue / M0 | 31/31, 15/15 et 72/72 réussis. Tous les transports modèle sont simulés. |
 | Typecheck / build | Réussis ; avertissements Rolldown `use client` présents. |
 | `npm run check` et `git diff --check` | Réussis : backlog valide en révision 47 ; diff sans erreurs (avertissements de normalisation CRLF/LF uniquement). |
+| GitHub Actions Quality #86 | Réussie sur le commit poussé `4d3c222`, y compris contrats Python dans l'environnement CI. |
 | Python `jsonschema` | Les deux commandes prescrites ont été tentées ; elles n'atteignent pas les tests car le module `jsonschema` manque. |
 | API fournisseur réelle | Non exécutée ; aucun appel facturable n'a été déclenché, les essais étant simulés. |
 | ChatGPT Desktop | Non testé. Le contrôle ARC-01 est volontairement différé selon la séquence demandée. |
