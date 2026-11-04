@@ -6,8 +6,8 @@
 |---|---|
 | Tâche / ticket | GEN-02 — Catalogue local de composition versionné, tranche de mouvement composé |
 | Date et mode | 4 novembre 2026, revue asynchrone avec compte rendu dans Git |
-| Branche / version du suivi | `work/arc-01`, registre révision 36 ; changements GEN-02 locaux, pas encore commités |
-| HEAD distant connu | `cd9098f`, correctif du validateur CI ; les changements GEN-02 ne sont pas dans ce HEAD |
+| Branche / version du suivi | `work/arc-01`, registre révision 36 ; GEN-02 commité et poussé dans `b10a2f0` |
+| HEAD distant connu | `b10a2f09e4b09cf054549d42b415fd632238da8f`; GitHub Actions Quality #78 réussie |
 | Environnement | Windows, Node, build Vite, Chrome/Chromium local, runner GitHub Actions |
 | Responsable | `/root`, orchestrateur |
 | Preuves | [Implémentation partielle](../evidence/GEN-02/implementation.md), [revue QA](../evidence/GEN-02/review.md), [contrat du catalogue](../spec/CATALOGUE.md), PR #27 brouillon |
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | `/root/gen02_motion_primitives` | Backend, propriétaire des fichiers catalogue | Ajout de `composed@2.0.0`, tests de contrat et test Chromium des keyframes, mouvement réduit et opt-in du canevas ; mise à jour de l’évidence. | N’a ni modifié les tickets ni committé/poussé GEN-02. Aucun appel modèle réel. |
 | `/root/gen01_qa` | QA indépendant | Deux revues successives : a demandé la preuve navigateur, la clarification de version et les métadonnées ; a confirmé que le test couvre maintenant aussi échelle et rotation. Verdict global `REVISE`, aucun finding P0/P1 de sécurité. | Revue de code et d’artefacts locaux, pas du fournisseur ni de l’hôte ChatGPT Desktop. |
-| `/root` | Orchestrateur / responsable de livraison | A identifié et corrigé un mauvais chemin de fixture dans le validateur Python, étendu le ticket via le CLI, ajouté une config Playwright isolée, puis revérifié les tests et le suivi. | Le correctif CI est poussé ; GEN-02 ne l’est pas encore. |
+| `/root` | Orchestrateur / responsable de livraison | A identifié et corrigé un mauvais chemin de fixture dans le validateur Python, étendu le ticket via le CLI, ajouté une config Playwright isolée, puis revérifié les tests et le suivi. | Le code GEN-02 est poussé ; la licence, le hash source, les coûts et l’audit des dépendances restent ouverts. |
 
 ## Résultat observé
 
@@ -40,10 +40,10 @@ Cette tranche ne fait pas encore comprendre au modèle une description libre com
 | Revue indépendante | `/root/gen01_qa` | E2E approuvé, ticket global `REVISE` |
 | Suite E2E complète | `npm run test:e2e` sur les changements GEN-02 | Non concluante localement : serveur requis sur le port 4173 non démarré ; arrêt sans résultat. Le précédent 36/36 est sur un HEAD antérieur. |
 | Contrats Python sur le poste local | `python scripts/check_contracts.py` | Non démarré, faute du module `jsonschema` |
-| GitHub Actions `cd9098f` | Deux exécutions du job de qualité | Réussies, validation Python incluse ; GEN-02 n’était pas encore dans ce commit |
+| GitHub Actions `b10a2f0` | Quality #78 | Réussie sur le commit GEN-02 poussé, validation des contrats incluse |
 | Fournisseur / ChatGPT Desktop | Non exécuté | Non démontré ; ARC-01 reste bloqué |
 
-Le premier run CI sur `8873a70` avait échoué car `check_contracts.py` cherchait `snapshot_catalog.json`, alors que le fixture s’appelle `snapshot-catalog.json`. Le correctif `cd9098f` a normalisé le chemin et les deux nouveaux runs ont réussi. Le poste local ne peut pas rejouer Python tant que `jsonschema` manque.
+Le premier run CI sur `8873a70` avait échoué car `check_contracts.py` cherchait `snapshot_catalog.json`, alors que le fixture s’appelle `snapshot-catalog.json`. Le correctif `cd9098f` a normalisé le chemin ; la CI complète Quality #78 sur `b10a2f0` passe également. Le poste local ne peut pas rejouer Python tant que `jsonschema` manque.
 
 ## Dettes, risques et limites
 
@@ -58,7 +58,7 @@ Le premier run CI sur `8873a70` avait échoué car `check_contracts.py` cherchai
 
 | Action | Responsable | Suivi |
 |---|---|---|
-| Maintenir GEN-02 en `in_progress`; ne pas soumettre ni fermer | Orchestrateur | Fait dans le registre révision 36 |
+| Maintenir GEN-02 en `in_progress`; ne pas soumettre ni fermer | Orchestrateur | Fait dans le registre révision 36 ; CI distante #78 passée sur `b10a2f0` |
 | Définir licence/provenance, hash reproductible et mesure de coût | Backend/catalogue | Restant dans GEN-02 avant clôture ou export |
 | Auditer une à une les dépendances proposées à partir de sources officielles | Responsable catalogue | Restant dans GEN-02 ; ne rien installer avant validation |
 | Implémenter interprétation modèle → opérations structurées, filtre de secrets et tests multi-adaptateurs | Backend | GEN-03, dépend de GEN-02 |
