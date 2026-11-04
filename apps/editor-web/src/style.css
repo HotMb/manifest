@@ -165,5 +165,5 @@ textarea { resize: none !important; }
   .error-banner__actions .button { flex: 1 1 auto; }
   .dialog { padding: 20px; }
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+@media (prefers-reduced-motion: reduce) { *:not(.catalog-canvas[data-motion-preview="enabled"] *), *:not(.catalog-canvas[data-motion-preview="enabled"] *)::before, *:not(.catalog-canvas[data-motion-preview="enabled"] *)::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media (forced-colors: active) { * { scrollbar-color: auto; } .button, .segmented button, .mobile-tabs button { border: 1px solid ButtonText; } .connection-dot { forced-color-adjust: none; background: CanvasText; } }

@@ -32,8 +32,8 @@ export function ModelProviderPanel({
       <p id="model-provider-help">{unavailable
         ? 'Le catalogue de modèles ne répond pas. Les règles locales restent disponibles ; vérifie la connexion à l’atelier.'
         : selected
-          ? `Quand les suggestions automatiques sont activées, une pause de 1,5 s envoie ta description et le brouillon enregistré à ${selected.provider.label} (${selected.model.label}). L’automatique est désactivé au départ. Chaque requête peut être facturée selon l’offre du fournisseur ; la clé reste sur le serveur.`
-          : 'Sans modèle sélectionné, seules les pistes locales sont utilisées. Les identifiants et clés restent configurés sur le serveur.'}</p>
+          ? `Après chaque pause de 1,5 s, ta description et le brouillon enregistré sont envoyés à ${selected.provider.label} (${selected.model.label}). Le modèle reste limité aux éléments du catalogue local. Chaque requête peut être facturée selon l’offre du fournisseur ; la clé reste sur le serveur.`
+          : 'Sans modèle sélectionné, seules les règles locales et la recette ventes sont utilisées. Avec un modèle configuré, les propositions restent limitées aux composants et mouvements connus du catalogue. Les identifiants et clés restent sur le serveur.'}</p>
     </fieldset>
   );
 }

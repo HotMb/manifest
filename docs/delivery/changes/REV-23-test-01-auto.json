@@ -1,0 +1,8 @@
+{
+  "acceptance": [
+    "Les fixtures et tests préparatoires sont construits par les tickets dès ARC-03 ; TEST-01 en rassemble les preuves et clôt la recette après toutes ses dépendances.",
+    "Tous les tickets M1 sont clos avec preuves avant de terminer cette recette.",
+    "Le parcours couvre les trois opérations : nouveau projet, nouvelle page dans un projet chargé, modification d’une page ciblée avec contrôle de baseDraftVersion ; il vérifie proposition assistant explicite, préremplissage du texte et analyse automatique après 1 500 ms, appel distant seulement pour un modèle configuré/choisi, candidat modifiable et absence de lecture non envoyée/remplacement silencieux. Il couvre la surface unique, le debounce et le rendu de piste après pause, recherche indépendante, démonstration au survol et équivalents clavier/tactile, menu animé, insertion, référence visible/rapport, et /validate avec reçu ou fallback. Une intention de données éditée est versionnée dans le Snapshot et recopiée depuis la révision approuvée vers le rapport sans secret ; une connexion réelle est affirmée seulement si un connecteur autorisé existe. Le parcours ChatGPT et l’archive reconstruite sont exécutés, AT-01 à AT-25 passent ou chaque écart est accepté explicitement.",
+    "Le registre des limites, versions, résultats et décision produit est livré ; un PASS de modèle ou build seul ne vaut pas cette preuve."
+  ]
+}

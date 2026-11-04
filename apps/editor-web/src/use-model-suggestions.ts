@@ -29,6 +29,7 @@ export function useModelSuggestions({
   const jobRef = useRef<{ jobId: string; epoch: number } | undefined>(undefined);
   const proposalRef = useRef<SuggestionProposal | undefined>(undefined);
   const previewRef = useRef<{ proposal: SuggestionProposal; snapshot: M0Project['snapshot'] } | undefined>(undefined);
+  const selectionRef = useRef<string | undefined>(undefined);
   const suppressed = useRef('');
   const sessionId = useRef<string | undefined>(undefined);
   const intentEpoch = useRef(0);
@@ -59,6 +60,14 @@ export function useModelSuggestions({
     const epoch = ++requestEpoch.current;
     const forced = manualRequest !== consumedManual.current;
     consumedManual.current = manualRequest;
+    const selectionKey = `${providerId ?? ''}\u0000${modelId ?? ''}`;
+    if (selectionRef.current !== undefined && selectionRef.current !== selectionKey) {
+      // A candidate belongs to the provider/model that made it. It must not
+      // shadow local rules or a newly selected provider after switching source.
+      proposalRef.current = undefined;
+      previewRef.current = undefined;
+    }
+    selectionRef.current = selectionKey;
     const suppressionKey = `${intent}\u0000${providerId ?? ''}\u0000${modelId ?? ''}`;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     const isCurrent = () => requestEpoch.current === epoch;

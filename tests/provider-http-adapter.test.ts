@@ -12,6 +12,7 @@ import {
   type ManifestModelRequest,
   type ProviderFetchResponse,
 } from '@design-workbench/m0-contract';
+import { createSalesDashboardRecipe } from '../packages/catalog/src/recipes.ts';
 
 const descriptor = { ...DETERMINISTIC_SIMULATOR_DESCRIPTOR, status: 'configured' as const, secretConfigured: true };
 function request(signal?: AbortSignal): ManifestModelRequest {
@@ -53,6 +54,34 @@ test('le contrat envoyé permet une insertion racine vérifiée sur un Snapshot 
   assert.deepEqual(result.operations, [operation]);
   assert.equal(applyOperations(project.snapshot, result.operations).pages[0]!.composition.content[0]!.props.id, 'from-provider');
   assert.deepEqual(project.snapshot.pages[0]!.composition.content, []);
+});
+
+test('le modèle reçoit seulement les capacités de la release locale et peut proposer une CatalogPage structurée', async () => {
+  const project = initialProject();
+  const catalogPage = createSalesDashboardRecipe();
+  const operation = { op: 'set_catalog_page', pageId: 'page-home', catalogPage };
+  let sentMessages: { role: string; content: string }[] = [];
+  const adapter = createOpenAICompatibleModelAdapter({ descriptor, baseUrl: 'https://api.example.test/v1', getApiKey: () => 'test-only', fetchImpl: async (_url, init) => {
+    sentMessages = JSON.parse(init.body).messages;
+    return response({ choices: [{ message: { content: JSON.stringify({ operations: [operation], rationale: 'Page de ventes composée avec les blocs locaux.' }) } }] });
+  } });
+  const result = await adapter.suggest({ ...request(), snapshot: project.snapshot, baseSignature: stableStringify(project.snapshot) });
+  const capabilityMessage = sentMessages[1]!.content;
+  assert.match(capabilityMessage, /manifest-core/);
+  assert.match(capabilityMessage, /cloud-background/);
+  assert.match(capabilityMessage, /sales-chart/);
+  assert.match(capabilityMessage, /fade-in/);
+  assert.match(capabilityMessage, /unslop-informed/);
+  assert.match(capabilityMessage, /CC BY 4\.0/);
+  assert.match(capabilityMessage, /spacing/);
+  assert.match(capabilityMessage, /severity/);
+  assert.match(capabilityMessage, /contrast/);
+  assert.match(capabilityMessage, /exceptions/);
+  assert.doesNotMatch(capabilityMessage, /React Bits|Aceternity|https?:\/\//);
+  assert.doesNotMatch(capabilityMessage, /test-only|secret-test|api[_-]?key|credential/i);
+  assert.deepEqual(result.operations, [operation]);
+  assert.deepEqual(applyOperations(project.snapshot, result.operations).pages[0]!.catalogPage, catalogPage);
+  assert.doesNotMatch(JSON.stringify(result), /<script|<style|dangerouslySetInnerHTML/);
 });
 
 test('le fournisseur ne peut pas utiliser update_props pour créer un bloc absent', async () => {

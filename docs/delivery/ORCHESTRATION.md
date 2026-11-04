@@ -45,7 +45,7 @@ Si une capacité requiert un vrai compte hôte, des accès d'identité ou un env
 
 `evidence` contient les preuves **obtenues**, initialement vides. `blockers` décrit les conditions encore non établies ; elles ne rendent pas automatiquement un ticket bloqué si du travail utile peut commencer. Les détails attendus sont dans `acceptance` et le ticket de cadrage. Un résultat de modèle n'est pas une preuve d'exécution. Un passage `done` sans références de preuves est refusé.
 
-Les mises à jour du registre relisent sa `revision` avant écriture et incrémentent ce nombre. Une seule session d'orchestration modifie le registre dans un arbre de travail ; une deuxième doit utiliser sa branche et résoudre la divergence avant intégration. Ne pas traiter Git comme un verrou multi-processus.
+Les mises à jour du registre relisent sa `revision` avant écriture et incrémentent ce nombre. Une seule session d'orchestration modifie le registre dans un arbre de travail ; une deuxième doit utiliser sa branche et résoudre la divergence avant intégration. Ne pas traiter Git comme un verrou multi-processus. Seul le rôle orchestrator utilise `npm run team:revise -- <ID> --expected-revision N --agent orchestrator --reason "..." --patch-file docs/delivery/changes/<fichier>.json` pour changer les critères ou dépendances, et `npm run team:add` pour ajouter un ticket. Le patch JSON est conservé comme décision versionnée ; les statuts et preuves suivent toujours les commandes normales.
 
 ## Git et intégration
 
@@ -57,4 +57,4 @@ Les mises à jour du registre relisent sa `revision` avant écriture et incréme
 
 ## Prochaine tranche
 
-Seul ARC-01 est prêt initialement. Il doit livrer le parcours réel ChatGPT avec un bloc et la matrice de capacités. ARC-02 attend cette preuve pour figer les versions et l'identité. ARC-03 attend les deux. Le catalogue, le frontend et le backend M1 se parallélisent ensuite sur le même contrat ; le plan ne contourne pas cette porte de sortie.
+ARC-01 reste bloqué sur la preuve du véritable hôte ChatGPT Desktop et de son identité ; aucune preuve locale ne le clôture. La révision du 4 novembre ajoute un chemin indépendant pour poursuivre le cœur produit : GEN-01 corrige le debounce automatique de l'aperçu, tandis que GEN-02 installe le contrat du catalogue local composé. GEN-03 consomme ensuite les capacités versionnées pour contraindre la génération fournisseur ; GEN-04 relie l'arbre confirmé à l'aperçu et au rapport. Ces tickets maintiennent les contrôles de version, secrets et capacités. Les tickets UI/AI historiques restent nécessaires pour les autres flux M1 et seront harmonisés sans rendre la preuve d'hôte fictive.

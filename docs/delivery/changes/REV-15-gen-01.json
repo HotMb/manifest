@@ -1,0 +1,22 @@
+{
+  "id": "GEN-01",
+  "title": "Boucle de conception réactive",
+  "phase": "M0",
+  "owner": "frontend",
+  "dependencies": [],
+  "ownedPaths": [
+    "apps/editor-web/src/",
+    "apps/editor-web/test/",
+    "tests/e2e/intent/",
+    "docs/evidence/GEN-01"
+  ],
+  "acceptance": [
+    "À chaque lancement ou modification d'un brief non vide, l'analyse démarre seule après 1 500 ms sans frappe ; aucun opt-in n'est requis. La composition IME suspend le minuteur et chaque nouvelle saisie annule ou invalide les résultats antérieurs.",
+    "Si un fournisseur et un modèle sont configurés, seul le modèle choisi reçoit le Snapshot confirmé et le brief après le debounce ; le candidat validé est prévisualisé automatiquement mais jamais enregistré sans action de conservation.",
+    "Sans fournisseur disponible, les règles locales s'exécutent automatiquement pour les intentions qu'elles savent représenter. L'interface indique clairement leur portée et ne fait pas passer une règle locale ou une démonstration pour une génération complète par modèle.",
+    "Des tests à horloge contrôlée couvrent le lancement initial, l'édition après pause, l'IME, l'annulation des résultats périmés, la prévisualisation et le mode hors fournisseur ; les tests n'appellent pas une API facturable."
+  ],
+  "evidence": [],
+  "blockers": [],
+  "status": "ready"
+}

@@ -154,6 +154,9 @@
         },
         "composition": {
           "$ref": "#/$defs/Composition"
+        },
+        "catalogPage": {
+          "$ref": "#/$defs/CatalogPage"
         }
       },
       "required": [
@@ -162,7 +165,116 @@
         "route",
         "composition"
       ],
+      "allOf": [
+        {
+          "if": { "required": ["catalogPage"] },
+          "then": {
+            "properties": {
+              "composition": {
+                "properties": { "content": { "maxItems": 0 } }
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
+    },
+    "CatalogMotion": {
+      "type": "object",
+      "properties": {
+        "id": { "enum": ["fade-in", "slide-up", "slide-down", "fade-slide-down", "fade-slide-up"] },
+        "version": { "const": "1.0.0" },
+        "config": {
+          "type": "object",
+          "properties": {
+            "durationMs": { "type": "integer", "minimum": 0, "maximum": 3000 },
+            "delayMs": { "type": "integer", "minimum": 0, "maximum": 2000 },
+            "distancePx": { "type": "number", "minimum": 0, "maximum": 40 },
+            "opacityFrom": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "required": ["durationMs", "delayMs"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["id", "version", "config"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "id": { "enum": ["fade-slide-down", "fade-slide-up"] } }, "required": ["id"] },
+          "then": { "properties": { "config": { "required": ["durationMs", "delayMs", "distancePx", "opacityFrom"] } } }
+        },
+        {
+          "if": { "properties": { "id": { "const": "fade-in" } }, "required": ["id"] },
+          "then": { "properties": { "config": { "required": ["durationMs", "delayMs", "opacityFrom"] } } }
+        },
+        {
+          "if": { "properties": { "id": { "enum": ["slide-up", "slide-down"] } }, "required": ["id"] },
+          "then": { "properties": { "config": { "required": ["durationMs", "delayMs", "distancePx"] } } }
+        }
+      ]
+    },
+    "CatalogNode": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$" },
+        "component": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": { "enum": ["section", "hero", "stack", "grid", "heading", "text", "button", "navigation", "sales-chart"] },
+                "version": { "const": "1.0.0" }
+              },
+              "required": ["id", "version"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": { "const": "cloud-background" },
+                "version": { "const": "1.1.0" }
+              },
+              "required": ["id", "version"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "props": { "$ref": "#/$defs/JsonObject" },
+        "slots": {
+          "type": "object",
+          "propertyNames": { "not": { "enum": ["__proto__", "prototype", "constructor"] } },
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/CatalogNode" },
+            "maxItems": 100
+          },
+          "maxProperties": 20
+        },
+        "motion": { "$ref": "#/$defs/CatalogMotion" }
+      },
+      "required": ["id", "component", "props"],
+      "additionalProperties": false
+    },
+    "CatalogPage": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "release": {
+          "type": "object",
+          "properties": { "id": { "const": "manifest-core" }, "version": { "const": "0.3.0" } },
+          "required": ["id", "version"],
+          "additionalProperties": false
+        },
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CatalogNode" },
+          "maxItems": 30
+        }
+      },
+      "required": ["schemaVersion", "release", "nodes"],
+      "additionalProperties": false,
+      "maxUtf8Bytes": 131072,
+      "description": "Runtime additionally validates component-specific props, slots, uniqueness, release compatibility and a 128 KiB UTF-8 byte cap against the canonical local catalogue validator."
     },
     "ThemeToken": {
       "type": "object",
@@ -387,7 +499,8 @@
         "locks",
         "designBrief"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "maxUtf8Bytes": 163840
     },
     "Operation": {
       "oneOf": [
@@ -576,6 +689,21 @@
             "op",
             "tokens"
           ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": { "const": "set_catalog_page" },
+            "pageId": { "$ref": "#/$defs/Id" },
+            "catalogPage": {
+              "anyOf": [
+                { "$ref": "#/$defs/CatalogPage" },
+                { "type": "null" }
+              ]
+            }
+          },
+          "required": ["op", "pageId", "catalogPage"],
           "additionalProperties": false
         },
         {
@@ -889,7 +1017,8 @@
           ],
           "additionalProperties": false
         }
-      ]
+      ],
+      "maxUtf8Bytes": 196608
     },
     "SuggestionRequest": {
       "type": "object",

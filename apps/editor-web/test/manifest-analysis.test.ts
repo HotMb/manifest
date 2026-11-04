@@ -82,3 +82,36 @@ test('la piste d’insertion périmée ne remplace pas un Hero ajouté manuellem
   assert.throws(() => applyDesignHint(inserted, analysis, 'insert-hero'), /page a changé/);
   assert.equal(inserted.pages[0]!.composition.content[0]!.props.title, 'Ma section ajoutée');
 });
+
+test('le tableau de bord comprend un fondu vers le haut et préserve la vitesse demandée', () => {
+  const before = initialProject().snapshot;
+  const analysis = analyzeDescription('Un tableau de bord de ventes avec des nuages. Fais apparaître les graphiques en fondu et vers le haut. Accélère x2.', before);
+  const hint = analysis.hints.find((entry) => entry.id === 'sales-cloud-dashboard')!;
+  const preview = applyDesignHint(before, analysis, hint.id);
+  const charts = preview.pages[0]!.catalogPage!.nodes.filter((node) => node.component.id === 'sales-chart');
+  assert.equal(charts.length, 2);
+  for (const chart of charts) {
+    assert.equal(chart.motion?.id, 'fade-slide-up');
+    assert.equal(chart.motion?.config.durationMs, 280);
+  }
+  assert.ok(analysis.recognized.includes('fondu avec montée'));
+});
+
+test('un déplacement vers le haut sans demande de fondu ne choisit pas un fondu composé', () => {
+  const before = initialProject().snapshot;
+  const analysis = analyzeDescription('Un tableau de bord de ventes avec des nuages. Les graphiques glissent vers le haut.', before);
+  const hint = analysis.hints.find((entry) => entry.id === 'sales-cloud-dashboard')!;
+  const preview = applyDesignHint(before, analysis, hint.id);
+  const charts = preview.pages[0]!.catalogPage!.nodes.filter((node) => node.component.id === 'sales-chart');
+  assert.ok(charts.every((chart) => chart.motion?.id === 'slide-up'));
+});
+
+test('des directions contradictoires ne choisissent pas arbitrairement une direction', () => {
+  const before = initialProject().snapshot;
+  const analysis = analyzeDescription('Un tableau de bord de ventes avec des nuages. Fais apparaître les graphiques vers le haut et vers le bas.', before);
+  const hint = analysis.hints.find((entry) => entry.id === 'sales-cloud-dashboard')!;
+  const preview = applyDesignHint(before, analysis, hint.id);
+  const charts = preview.pages[0]!.catalogPage!.nodes.filter((node) => node.component.id === 'sales-chart');
+  assert.ok(charts.every((chart) => chart.motion?.id === 'fade-in'));
+  assert.ok(analysis.recognized.includes('directions de mouvement contradictoires'));
+});

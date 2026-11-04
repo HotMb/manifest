@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "release": { "id": "manifest-core", "version": "0.3.0" },
+  "nodes": [
+    {
+      "id": "navigation-main",
+      "component": { "id": "navigation", "version": "1.0.0" },
+      "props": { "brand": "Studio", "links": [{ "label": "Rapport", "href": "/rapport" }], "primaryLabel": "Exporter", "primaryHref": "/export" }
+    },
+    {
+      "id": "cloud-cover",
+      "component": { "id": "cloud-background", "version": "1.1.0" },
+      "props": { "palette": "sunset", "density": "medium", "speed": 0.45, "motionSpeedMultiplier": 1 },
+      "motion": { "id": "fade-in", "version": "1.0.0", "config": { "durationMs": 680, "delayMs": 0, "opacityFrom": 0 } },
+      "slots": {
+        "content": [
+          { "id": "headline", "component": { "id": "heading", "version": "1.0.0" }, "props": { "text": "Ventes du mois", "level": 1 } },
+          { "id": "intro", "component": { "id": "text", "version": "1.0.0" }, "props": { "text": "Un aperçu des commandes et des revenus.", "tone": "body" } }
+        ]
+      }
+    },
+    {
+      "id": "sales-chart",
+      "component": { "id": "sales-chart", "version": "1.0.0" },
+      "props": {
+        "title": "Chiffre d’affaires",
+        "dataMode": "synthetic",
+        "chartType": "line",
+        "series": [{ "name": "Ventes", "points": [{ "label": "Jan", "value": 14 }, { "label": "Fév", "value": 21 }, { "label": "Mar", "value": 18 }, { "label": "Avr", "value": 32 }] }]
+      },
+      "motion": { "id": "fade-slide-down", "version": "1.0.0", "config": { "durationMs": 560, "delayMs": 90, "distancePx": 14, "opacityFrom": 0 } }
+    }
+  ]
+}

@@ -11,12 +11,12 @@ const blackLaunch: EditorLaunchContext = {
   userRequest: 'Ouvre l’éditeur Manifest et affiche un fond noir.', backgroundColor: '#000000',
 };
 
-async function installLaunchTransport(page: Page, launch: EditorLaunchContext, options: { existingHero?: boolean; draftVersion?: number; configuredModel?: boolean; holdCommits?: boolean; lockedTheme?: boolean } = {}) {
+async function installLaunchTransport(page: Page, launch: EditorLaunchContext, options: { existingHero?: boolean; draftVersion?: number; configuredModel?: boolean; autoModel?: boolean; holdCommits?: boolean; lockedTheme?: boolean } = {}) {
   // Simulate only the host boundary. The real Editor and shared document operations execute.
   // No provider API or native conversation is consulted by this fixture.
   await page.route('**/packages/host-adapters/src/index.ts*', (route) => route.fulfill({ contentType: 'text/javascript', body: `
     import { initialProject, createHeroBlock, applyOperations, hashSnapshot, validateCommand, disconnectedProviderRegistry } from ${JSON.stringify(route.request().url().replace(/host-adapters\/src\/index\.ts.*$/, 'm0-contract/src/index.ts'))};
-    let project = initialProject(), latest = ${JSON.stringify(launch)}, commits = 0, modelCalls = 0;
+    let project = initialProject(), latest = ${JSON.stringify(launch)}, commits = 0, modelCalls = 0, proposal;
     project.draftVersion = ${options.draftVersion ?? 0};
     if (${Boolean(options.existingHero)}) {
       const block = createHeroBlock(); block.props.title = 'Un contenu déjà conservé';
@@ -36,7 +36,17 @@ async function installLaunchTransport(page: Page, launch: EditorLaunchContext, o
       kind: 'mcp', read: async () => structuredClone(project),
       subscribeLaunchContext(listener) { listeners.add(listener); listener(structuredClone(latest)); return () => listeners.delete(listener); },
       readProviderRegistry: async () => ${Boolean(options.configuredModel)} ? ({ schemaVersion: 1, providers: [{ id:'openai', label:'Fournisseur simulé de test', protocol:'openai-responses', status:'configured', supportsBYOK:false, secretConfigured:true, models:[{id:'launch-test-model',label:'Modèle simulé de test',providerId:'openai',capabilities:['structured-output']}]}] }) : disconnectedProviderRegistry(),
-      startSuggestion: async () => { modelCalls++; throw new Error('Aucun modèle ne doit être appelé au lancement.'); },
+      startSuggestion: async (request) => {
+        modelCalls++;
+        if (!${Boolean(options.autoModel)}) throw new Error('Le modèle de test ne doit pas être appelé dans ce scénario.');
+        const block = project.snapshot.pages[0].composition.content[0];
+        proposal = { id:'launch-auto-proposal',jobId:'launch-auto-job',generationId:'launch-auto-generation',status:'ready',editorSessionId:request.editorSessionId,intentEpoch:request.intentEpoch,baseDraftVersion:project.draftVersion,explanation:'Modification produite par le transport simulé après le délai automatique.',operations:[{op:'update_props',pageId:project.snapshot.pages[0].id,blockId:block.props.id,props:{animation:'fade'}}] };
+        return { jobId:proposal.jobId, state:'succeeded', proposalIds:[proposal.id] };
+      },
+      getSuggestionJob: async () => ({ jobId:'launch-auto-job',state:'succeeded',proposalIds:proposal ? [proposal.id] : [] }),
+      getSuggestionUpdates: async () => ({ events:[],nextSeq:0 }),
+      readSuggestionProposal: async () => structuredClone(proposal),
+      markSuggestionProposalStale: async () => {},
       commit: async (command) => {
         if (holdCommits) await new Promise((resolve) => waitingCommits.push(resolve));
         validateCommand(command);
@@ -51,6 +61,13 @@ async function installLaunchTransport(page: Page, launch: EditorLaunchContext, o
     }; }
     export const createMcpTransport = createBrowserTransport;
   ` }));
+  const resetMarker = `manifest:e2e:launch-reset:${Date.now()}:${Math.random()}`;
+  await page.addInitScript((marker) => {
+    if (sessionStorage.getItem(marker) === 'done') return;
+    localStorage.clear();
+    sessionStorage.clear();
+    sessionStorage.setItem(marker, 'done');
+  }, resetMarker);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/');
   await expect(page.getByRole('textbox', { name: 'Description de la page', exact: true })).toBeVisible();
@@ -143,18 +160,42 @@ test('un nouveau lancement textuel retire le fond temporaire précédent sans sa
   expect(await state(page)).toEqual(before);
 });
 
-test('la génération manuelle et automatique reste suspendue pendant l’aperçu du fond reçu', async ({ page }) => {
-  await installLaunchTransport(page, blackLaunch, { configuredModel: true });
+test('une nouvelle saisie remplace le fond reçu et relance le debounce local à 1 500 ms', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-04T12:00:00.000Z') });
+  await installLaunchTransport(page, blackLaunch);
+  await page.clock.pauseAt(new Date('2026-11-04T12:01:00.000Z'));
+  await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  const input = page.getByRole('textbox', { name: 'Description de la page', exact: true });
+  await input.fill('Fond clair avec un accent violet\nHero\nTitre : Ma nouvelle page');
+  await expect(page.getByRole('main', { name: 'Aperçu du fond demandé', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Conserver le fond', exact: true })).toHaveCount(0);
+  await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await page.clock.runFor(1499);
+  await expect(page.getByRole('main', { name: 'Aperçu du candidat local', exact: true })).toHaveCount(0);
+  await page.clock.runFor(1);
+  await expect(page.getByRole('main', { name: 'Aperçu du candidat local', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ma nouvelle page', exact: true })).toBeVisible();
+  await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  expect((await state(page)).commits).toBe(0);
+  expect((await state(page)).modelCalls).toBe(0);
+});
+
+test('la génération automatique attend la fin de l’aperçu temporaire puis modifie le canevas après la pause', async ({ page }) => {
+  await installLaunchTransport(page, blackLaunch, { configuredModel: true, autoModel: true, existingHero: true });
   await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await page.locator('.model-provider-disclosure > summary').click();
   await page.getByLabel('Fournisseur', { exact: true }).selectOption('openai');
-  await page.getByRole('checkbox', { name: 'Analyse automatique du modèle', exact: true }).check();
-  await expect(page.getByRole('button', { name: 'Proposer maintenant', exact: true })).toBeDisabled();
-  // Cross the 1.5 s generation pause with a model selected and automatic mode enabled.
+  await expect(page.getByRole('checkbox', { name: 'Analyse automatique du modèle', exact: true })).toHaveCount(0);
+  await expect(page.getByText('après 1,5 s de pause', { exact: false })).toBeVisible();
+  // A host-provided background candidate temporarily owns the preview, so generation waits.
   await page.waitForTimeout(1800);
   expect((await state(page)).modelCalls).toBe(0);
   expect((await state(page)).commits).toBe(0);
   await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  await page.getByRole('button', { name: 'Ignorer le fond', exact: true }).click();
+  await expect(page.locator('.site-hero--fade')).toHaveCount(1, { timeout: 5000 });
+  expect((await state(page)).modelCalls).toBe(1);
+  expect((await state(page)).commits).toBe(0);
 });
 
 test('un fond arrivé pendant une retouche se reprend après sauvegarde sur le contenu actuel', async ({ page }) => {

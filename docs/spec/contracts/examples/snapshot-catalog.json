@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "projectTitle": "Tableau de bord des ventes",
+  "pages": [
+    {
+      "id": "page-home",
+      "title": "Accueil",
+      "route": "/",
+      "composition": { "content": [], "root": { "props": { "lang": "fr" } } },
+      "catalogPage": {
+        "schemaVersion": 1,
+        "release": { "id": "manifest-core", "version": "0.3.0" },
+        "nodes": [
+          {
+            "id": "cloud-cover",
+            "component": { "id": "cloud-background", "version": "1.1.0" },
+            "props": { "palette": "sunset", "density": "medium", "speed": 0.45, "motionSpeedMultiplier": 1 },
+            "motion": { "id": "fade-in", "version": "1.0.0", "config": { "durationMs": 680, "delayMs": 0, "opacityFrom": 0 } },
+            "slots": {
+              "content": [
+                { "id": "headline", "component": { "id": "heading", "version": "1.0.0" }, "props": { "text": "Ventes du mois", "level": 1 } }
+              ]
+            }
+          },
+          {
+            "id": "sales-chart-revenue",
+            "component": { "id": "sales-chart", "version": "1.0.0" },
+            "props": {
+              "title": "Chiffre d’affaires",
+              "dataMode": "synthetic",
+              "chartType": "line",
+              "series": [
+                { "name": "Ventes", "points": [
+                  { "label": "Jan", "value": 14 },
+                  { "label": "Fév", "value": 21 },
+                  { "label": "Mar", "value": 18 }
+                ] }
+              ]
+            },
+            "motion": { "id": "fade-slide-down", "version": "1.0.0", "config": { "durationMs": 560, "delayMs": 90, "distancePx": 14, "opacityFrom": 0 } }
+          }
+        ]
+      }
+    }
+  ],
+  "theme": {
+    "tokens": {
+      "color.background": { "kind": "color", "value": "#ffffff" },
+      "color.text": { "kind": "color", "value": "#1c2533" },
+      "color.accent": { "kind": "color", "value": "#2454c6" }
+    }
+  },
+  "assetRefs": [],
+  "catalogLock": {
+    "releaseId": "catalog-m1-example",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "target": "react"
+  },
+  "designPolicy": {
+    "releaseId": "policy-unslop-adapted-example",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "locks": [],
+  "designBrief": {
+    "product": "Tableau de bord des ventes",
+    "character": ["clair"],
+    "world": "Données commerciales de démonstration",
+    "moments": ["Suivre revenus et commandes"],
+    "signature": "Nuages décoratifs et graphiques lisibles",
+    "brandConstraints": []
+  }
+}

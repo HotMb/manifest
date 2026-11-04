@@ -1,6 +1,6 @@
 # Manifest — tableau de livraison
 
-Vue générée depuis tickets.json, révision 14. GitHub Issues est un miroir ; les preuves restent dans Git.
+Vue générée depuis tickets.json, révision 34. GitHub Issues est un miroir ; les preuves restent dans Git.
 
 | Ticket | Phase | Responsable | État | Dépendances |
 |---|---|---|---|---|
@@ -30,3 +30,8 @@ Vue générée depuis tickets.json, révision 14. GitHub Issues est un miroir ; 
 | EXP-02 — Construction et vérification isolées | M1 | platform | todo | EXP-01, SEC-01, ASSET-01 |
 | OPS-01 — Déploiement et restauration | M1 | platform | todo | API-01, SEC-01, EXP-02 |
 | TEST-01 — Recette transversale M1 | M1 | qa | todo | ARC-03, DOM-01, DOM-02, DOM-03, CAT-01, CAT-02, CAT-03, UX-01, UI-01, UI-02, UI-03, UI-04, UI-05, API-01, JOB-01, AI-01, AI-02, SEC-01, ASSET-01, REV-01, EXP-01, EXP-02, OPS-01 |
+| GEN-01 — Boucle de conception réactive | M0 | frontend | done | — |
+| GEN-02 — Catalogue local de composition versionné | M1 | backend | in_progress | — |
+| GEN-03 — Génération guidée par les capacités du catalogue | M1 | backend | todo | GEN-02 |
+| GEN-04 — Aperçu réactif de pages composées | M1 | frontend | todo | GEN-01, GEN-02, GEN-03 |
+| GEN-05 — Étendre les mouvements compris depuis le langage libre | M2 | backend | todo | GEN-02, GEN-03, GEN-04 |

@@ -35,9 +35,23 @@ Primitives composables : Section, Stack, Grid, Heading, Text, Button et Image. L
 
 Hero d'exemple : props.id, title, body, backgroundToken et animation sont admis. Les autres champs sont définis dans la release avant livraison, pas acceptés automatiquement par un dictionnaire libre. Des variantes de structure et des primitives évitent que les pages se ressemblent toutes.
 
+### Première release locale `manifest-core@0.3.0`
+
+Un premier runtime local est implémenté sous `packages/catalog/`. Il décrit des nœuds de page typés (`component.id` + version exacte, props strictes, slots déclarés et preset de mouvement) et valide la release, les propriétés, les liens internes, les données, l'unicité des IDs, huit niveaux de profondeur, 100 nœuds et 128 Ko. Le rendu utilise seulement les composants locaux admis. Le modèle ne retourne jamais du JSX ou du CSS exécutable.
+
+La tranche de prévisualisation contient Section, Hero, Stack, Grid, Heading, Text, Button, Navigation, CloudBackground et SalesChart. SalesChart rend seulement des données synthétiques et l'annonce dans le rendu. CloudBackground v1.1 et les presets CSS/SVG locaux `fade-in`, `slide-up`, `slide-down`, `fade-slide-down` et `fade-slide-up` sont admis dans cette release. Les deux presets composés exposent un fondu et un déplacement dans une seule configuration bornée; la recette ventes les applique aux cartes graphiques. La vitesse commune est un multiplicateur de 0,25 à 4 qui ajuste la durée des mouvements des graphiques et le cycle de dérive des nuages, avec des minima pour éviter une animation trop rapide. Durée (0–3000 ms), délai (0–2000 ms), distance (0–40 px) et opacité de départ (0–1) restent validés. `prefers-reduced-motion` neutralise les animations décoratives et les durées/délais du mouvement d’entrée. Le seul peer runtime est React 19.3.1, déclaré dans le package et le lockfile racine. C'est une capacité locale vérifiable, pas une promesse que toute animation imaginable est déjà installée ou rendable. Une demande sans équivalent admis doit obtenir une limite ou une alternative explicite.
+
+### Extension cadrée pour la composition en langage naturel
+
+La release 0.3 ne comporte que les presets nommés ci-dessus. Le ticket GEN-02 vise une configuration déclarative combinant des primitives bornées — opacité, translations X/Y, échelle, rotation et flou — avec durée, délai, easing, répétition et amplitude contrôlés. GEN-03 doit laisser le modèle choisi traduire une description ordinaire en cette configuration sans obliger l'utilisateur à connaître `fade-slide-up` ou un nom de bibliothèque. Les sorties restent des opérations structurées validées par le catalogue. Cette approche élargit fortement les designs web 2D possibles sans prétendre couvrir les shaders, simulations 3D ou effets qui exigent une bibliothèque non installée. Pour ces cas, Manifest indique précisément la capacité manquante et propose une alternative ou l'audit d'une nouvelle dépendance. Le profil Unslop formule des contraintes de qualité visuelle et une auto-revue ; il n'est ni un exécuteur de code ni une source de composants.
+
+Le registre des bibliothèques des captures est inventorié dans le code et ce document. La découverte vient des captures utilisateur ; les noms de paquet éventuels ne sont pas confirmés, les versions installées sont nulles, les licences et sources officielles restent à vérifier, et aucune entrée tierce n'est admise. Le runtime initial n'ajoute pas de dépendance tierce. La prochaine admission exige source officielle et identifiant de paquet vérifiés, version exacte, licence et notices, compatibilité React/éditeur/export, coût et profil d'accessibilité/mouvement réduit, plus tests. Un outil d'auteur comme Blender ou Sketchfab n'est pas une dépendance navigateur ; GLTFJSX, gltf-transform, gltfpack, Draco et Meshopt sont des outils/pipelines d'assets distincts. Un moteur non retenu peut rester une référence de recherche, jamais une suggestion présentée comme installée.
+
+Le paquet indique `NOASSERTION` parce que le dépôt n'a pas de licence de racine déclarée ; cette release locale est interne au prototype et n'est pas annoncée comme exportable/distribuable tant que la licence du code du dépôt n'est pas fixée. La release Unslop conserve l'attribution `Damir Sokolovsky (@heydamir), CC BY 4.0`; ce statut ne couvre aucune autre entrée.
+
 ## Animations
 
-CSS natif d'abord pour les effets adaptés : transitions d'état, opacity et transform de faible amplitude. Révélation au scroll seulement si le navigateur cible est pris en charge ; fallback sans dissimulation du contenu. Un comportement interactif accessible ne doit pas être sacrifié pour revendiquer zéro JavaScript.
+CSS natif d'abord pour les effets adaptés : transitions d'état, opacity et transform de faible amplitude. Les presets composés `fade-slide-down` et `fade-slide-up` placent l'opacité et la translation dans une même entrée, ce qui permet aux cartes graphiques de suivre le réglage d'animation de la recette. Révélation au scroll seulement si le navigateur cible est pris en charge ; fallback sans dissimulation du contenu. Un comportement interactif accessible ne doit pas être sacrifié pour revendiquer zéro JavaScript.
 
 Les préréglages exposent durée, délai, amplitude et déclencheur dans des plages contrôlées. Pas de transition-all ni de will-change généralisé. Le mode réduit retire le mouvement non essentiel tout en maintenant les changements d'état. Une animation complexe peut justifier Motion ou GSAP ; le choix dépend du cas mesuré.
 
@@ -45,7 +59,7 @@ L'éditeur et le site exporté ont des budgets séparés. L'export ne contient p
 
 ## Intégrations des quatre photos
 
-Toutes les entrées sont candidates, non des compatibilités déjà certifiées. M1 utilise une sélection minimale ; admission par release et audit de licence requis pour chacune.
+Toutes les entrées sont candidates, non des compatibilités déjà certifiées. L'inventaire de code marque les bibliothèques listées dans les photos `admitted: false`, sans version installée et avec licence/source non vérifiées. M1 utilise une sélection minimale ; aucune de ces références tierces n'est nécessaire aux presets CSS actuels. Une admission ultérieure exige une release dédiée et un audit de licence pour chacune.
 
 | Entrée | Rôle | Étape / position |
 |---|---|---|
@@ -95,7 +109,7 @@ Une scène 3D expose caméra, éclairage, ressources, matériaux autorisés, qua
 
 Source : Unslop par **Damir Sokolovsky (@heydamir)**, version locale déclarée **CC BY 4.0** ; attribution conservée dans la release et ses notices. Ne pas prétendre que cette licence couvre les autres composants.
 
-La release de profil contient les règles par neuf passes, le niveau de sévérité, les mécanismes d'exception et sa version. La direction propre au projet (produit, caractère, univers, moments, signature et contraintes de marque) appartient à Snapshot.designBrief et se modifie par update_brief. Les règles mesurables alimentent les contrôles ; les préférences esthétiques alimentent des propositions explicables. Une exception de marque explicite ne doit pas être supprimée automatiquement.
+La release `unslop-informed@1.1.0` transmet au modèle neuf passes, chacune avec une consigne et un niveau (préférence, revue ou blocage), ainsi que des exceptions explicites. C'est une adaptation Manifest attribuée à Unslop, pas une exécution automatique de son outil ni une copie de son comportement complet. Les règles décrivent l'intention de conception ; le validateur n'enforce que les contraintes structurelles et celles codées dans le catalogue. La direction propre au projet (produit, caractère, univers, moments, signature et contraintes de marque) appartient à Snapshot.designBrief et se modifie par update_brief. Les choix explicites restent prioritaires s'ils ne rendent pas la page inaccessible ou dangereuse ; la préférence de mouvement réduit désactive les animations non essentielles.
 
 Les résultats doivent être évalués sur plusieurs sujets réels. Le catalogue est accepté pour sa qualité de composition, son accessibilité et son export, pas pour le nombre d'effets ou la ressemblance avec un exemple de référence.
 

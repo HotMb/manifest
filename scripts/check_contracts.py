@@ -74,7 +74,7 @@ def validator_for(schema: dict, definition: str) -> Draft202012Validator:
     return Draft202012Validator(selected, format_checker=FormatChecker())
 
 
-def negative_fixtures(snapshot: dict, command: dict, proposal: dict) -> list[tuple[str, str, dict]]:
+def negative_fixtures(snapshot: dict, command: dict, proposal: dict, snapshot_catalog: dict) -> list[tuple[str, str, dict]]:
     cases: list[tuple[str, str, dict]] = []
 
     def case(name: str, definition: str, value: dict) -> dict:
@@ -94,6 +94,7 @@ def negative_fixtures(snapshot: dict, command: dict, proposal: dict) -> list[tup
     approval = case("approval-missing-head-precondition", "Command", command)
     approval.update(action="approve", payload={"proposalId": None})
     approval.pop("expectedHeadRevisionId", None)
+    case("unknown-catalog-component", "Snapshot", snapshot_catalog)["pages"][0]["catalogPage"]["nodes"][0]["component"]["id"] = "untrusted-component"
     return cases
 
 
@@ -129,7 +130,7 @@ def check_repository(root: Path, *, allow_missing_links: bool = False) -> dict:
     require_local_refs(api, api_path, contract_dir)
     Draft202012Validator.check_schema(schema)
     examples = {}
-    for name, definition in (("snapshot", "Snapshot"), ("command", "Command"), ("proposal", "Proposal")):
+    for name, definition in (("snapshot", "Snapshot"), ("snapshot_catalog", "Snapshot"), ("command", "Command"), ("proposal", "Proposal")):
         value = read_json(contract_dir / f"examples/{name}.json")
         errors = list(validator_for(schema, definition).iter_errors(value))
         if errors:

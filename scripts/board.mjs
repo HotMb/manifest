@@ -79,7 +79,37 @@ export function verifyEvidence(root, path) {
 export function transition(board, command, id, options = {}, root) {
   validateBoard(board);
   assert(Number.isInteger(options.expectedRevision) && options.expectedRevision === board.revision, `conflit de révision : attendu ${options.expectedRevision}, actuel ${board.revision}`);
-  const next = structuredClone(board), ticket = next.tickets.find((t) => t.id === id);
+  const next = structuredClone(board);
+  if (command === 'revise' || command === 'add') {
+    assert(options.agent === 'orchestrator', 'seul orchestrator peut réviser le backlog');
+    assert(typeof options.reason === 'string' && options.reason.trim().length >= 8, 'motif de révision explicite requis');
+    assert(cleanPath(options.source) && options.source.startsWith('docs/delivery/changes/') && options.source.endsWith('.json'), 'source versionnée sous docs/delivery/changes/ requise');
+    assert(options.patch && typeof options.patch === 'object' && !Array.isArray(options.patch), 'patch JSON requis');
+    if (command === 'revise') {
+      const ticket = next.tickets.find((t) => t.id === id);
+      assert(ticket, `ticket inconnu : ${id}`);
+      const allowed = new Set(['title', 'phase', 'owner', 'dependencies', 'ownedPaths', 'acceptance', 'blockers', 'reason']);
+      const fields = Object.keys(options.patch);
+      assert(fields.length > 0 && fields.every((field) => allowed.has(field)), 'champs de révision vides ou interdits');
+      const from = ticket.status;
+      Object.assign(ticket, structuredClone(options.patch));
+      next.history ??= [];
+      next.revision++;
+      next.history.push({ revision: next.revision, ticketId: id, from, to: ticket.status, actor: options.agent, at: new Date().toISOString(), action: 'criteria_updated', fields, source: options.source, reason: options.reason.trim() });
+      return validateBoard(next);
+    }
+    assert(/^[A-Z]+-\d{2}$/.test(id) && !next.tickets.some((t) => t.id === id), `ID invalide ou déjà utilisé : ${id}`);
+    assert(options.patch.id === id, 'l’ID du ticket doit correspondre à celui de la commande');
+    assert(options.patch.status === 'todo' || options.patch.status === 'ready', 'un nouveau ticket doit commencer todo ou ready');
+    const ticket = structuredClone(options.patch);
+    assert(!('reviewer' in ticket) && !('branch' in ticket) && ticket.evidence?.length === 0, 'un nouveau ticket ne peut recevoir branche, reviewer ou preuve préremplis');
+    next.tickets.push(ticket);
+    next.history ??= [];
+    next.revision++;
+    next.history.push({ revision: next.revision, ticketId: id, from: 'absent', to: ticket.status, actor: options.agent, at: new Date().toISOString(), action: 'ticket_added', source: options.source, reason: options.reason.trim() });
+    return validateBoard(next);
+  }
+  const ticket = next.tickets.find((t) => t.id === id);
   assert(ticket, `ticket inconnu : ${id}`);
   const from = ticket.status;
   const depsDone = ticket.dependencies.every((dep) => next.tickets.find((t) => t.id === dep).status === 'done');
@@ -176,13 +206,25 @@ export function renderFile(root) {
 
 function optionsFrom(args) {
   const result = {};
-  const keys = { '--expected-revision': 'expectedRevision', '--agent': 'agent', '--reviewer': 'reviewer', '--evidence': 'evidence', '--reason': 'reason' };
+  const keys = { '--expected-revision': 'expectedRevision', '--agent': 'agent', '--reviewer': 'reviewer', '--evidence': 'evidence', '--reason': 'reason', '--patch-file': 'patchFile' };
   for (let i = 0; i < args.length; i += 2) {
     const key = keys[args[i]];
     assert(key && args[i + 1] !== undefined && !args[i + 1].startsWith('--') && !(key in result), `option invalide : ${args[i]}`);
     result[key] = key === 'expectedRevision' ? Number(args[i + 1]) : args[i + 1];
   }
   return result;
+}
+
+function readGovernancePatch(root, options) {
+  if (!options.patchFile) return options;
+  const patchPath = options.patchFile;
+  assert(cleanPath(patchPath) && patchPath.startsWith('docs/delivery/changes/') && patchPath.endsWith('.json'), 'patch attendu en JSON sous docs/delivery/changes/');
+  const base = realpathSync(resolve(root, 'docs/delivery/changes'));
+  const target = realpathSync(resolve(root, patchPath));
+  const rel = relative(base, target);
+  assert(rel && !isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`), 'patch hors docs/delivery/changes');
+  assert(statSync(target).isFile() && statSync(target).size > 0, 'patch absent ou vide');
+  return { ...options, patch: JSON.parse(readFileSync(target, 'utf8')), source: patchPath };
 }
 
 function main() {
@@ -205,8 +247,10 @@ function main() {
     for (const t of candidates) console.log(`${t.id} [${t.owner}] ${t.title}`);
     if (!candidates.length) console.log('Aucun nouveau ticket éligible. Examiner les tickets actifs ou bloqués.');
   } else {
-    const result = mutateFile(root, command, id, optionsFrom(args));
-    console.log(`${id} : ${result.tickets.find((t) => t.id === id).status} ; révision ${result.revision}. Régénérer BOARD.md puis committer avec la preuve.`);
+    const options = readGovernancePatch(root, optionsFrom(args));
+    const result = mutateFile(root, command, id, options);
+    const ticket = result.tickets.find((t) => t.id === id);
+    console.log(`${id} : ${ticket?.status ?? 'ajouté'} ; révision ${result.revision}. Régénérer BOARD.md puis committer avec la preuve.`);
   }
 }
 

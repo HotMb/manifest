@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Puck, createUsePuck, type Data } from '@puckeditor/core';
-import { COLOR_TOKEN_NAMES, applyOperations, createHeroBlock, disconnectedProviderRegistry, makeEditCommand, stableStringify, validateSnapshot, type ColorTokenName, type M0Project, type Snapshot, type ApplyOpsCommand, type SuggestionProposal, type EditorLaunchContext } from '@design-workbench/m0-contract';
+import { renderCatalogPage } from '@design-workbench/catalog';
+import { COLOR_TOKEN_NAMES, applyOperations, createHeroBlock, disconnectedProviderRegistry, makeEditCommand, stableStringify, validateSnapshot, type ColorTokenName, type M0Operation, type M0Project, type Snapshot, type ApplyOpsCommand, type SuggestionProposal, type EditorLaunchContext } from '@design-workbench/m0-contract';
 import { createBrowserTransport, createMcpTransport, type EditorTransport } from '@design-workbench/host-adapters';
 import { heroConfig } from './hero.tsx';
 import { applyDesignHint, DESCRIPTION_PAUSE_MS, isAnalysisCurrent, type DesignHint, type LocalAnalysis } from './manifest-analysis.ts';
@@ -13,6 +14,7 @@ import { ComponentExamples } from './component-examples.tsx';
 import { useModelSuggestions } from './use-model-suggestions.ts';
 import '@puckeditor/core/no-external.css';
 import 'virtual:editor-tokens.css';
+import '@design-workbench/catalog/styles.css';
 import './style.css';
 import './manifest.css';
 import '@fontsource/instrument-sans/400.css';
@@ -31,6 +33,24 @@ const dictionary = {
 
 function message(error: unknown): string { return error instanceof Error ? error.message : 'Cette action n’a pas abouti. Tes réglages restent ouverts.'; }
 function errorCode(error: unknown): string | undefined { return error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined; }
+
+type LocalPreview = { analysis: LocalAnalysis; operations: M0Operation[]; snapshot: Snapshot };
+
+function localPreviewOperations(analysis: LocalAnalysis): M0Operation[] {
+  // Prefer a complete page candidate over separately recognized hints. A
+  // dashboard recipe and a title can each be valid alone, but combining the
+  // recipe's CatalogPage with an inserted legacy Hero is an invalid page.
+  const fullPageCandidate = analysis.hints.find((hint) => hint.id === 'sales-cloud-dashboard')
+    ?? analysis.hints.find((hint) => hint.id === 'insert-hero');
+  const hints = fullPageCandidate ? [fullPageCandidate] : analysis.hints;
+  const seen = new Set<string>();
+  return hints.flatMap((hint) => hint.operations).filter((operation) => {
+    const signature = stableStringify(operation);
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    return true;
+  });
+}
 
 // External changes such as undo/reload enter Puck through its documented dispatcher.
 // Ordinary onChange updates never dispatch back into the editor, avoiding a feedback loop.
@@ -83,10 +103,14 @@ function Editor() {
   const [saving, setSaving] = useState(false);
   const [syncEpoch, setSyncEpoch] = useState(0);
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
+  const [systemReducedMotion, setSystemReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [motionPreviewOverride, setMotionPreviewOverride] = useState(false);
   const [description, setDescription] = useState('');
   const [composing, setComposing] = useState(false);
-  const [automaticAnalysis, setAutomaticAnalysis] = useState(false);
-  const [localPreview, setLocalPreview] = useState<{ analysis: LocalAnalysis; hintId: string; snapshot: Snapshot }>();
+  // Manifest always reacts to a settled description. A selected provider uses
+  // the same debounce; without one, the disclosed local rules remain available.
+  const automaticAnalysis = true;
+  const [localPreview, setLocalPreview] = useState<LocalPreview>();
   const [providerRegistry, setProviderRegistry] = useState(disconnectedProviderRegistry());
   const [providerRegistryLoading, setProviderRegistryLoading] = useState(true);
   const [providerRegistryUnavailable, setProviderRegistryUnavailable] = useState(false);
@@ -95,6 +119,15 @@ function Editor() {
   const [reportFeedback, setReportFeedback] = useState('');
   const [history, setHistory] = useState<{ past: Snapshot[]; future: Snapshot[] }>({ past: [], future: [] });
   const [feedback, setFeedback] = useState('');
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncPreference = () => {
+      setSystemReducedMotion(preference.matches);
+      if (!preference.matches) setMotionPreviewOverride(false);
+    };
+    preference.addEventListener('change', syncPreference);
+    return () => preference.removeEventListener('change', syncPreference);
+  }, []);
   const workingRef = useRef(working); workingRef.current = working;
   const confirmedRef = useRef(confirmed); confirmedRef.current = confirmed;
   const savingRef = useRef(false);
@@ -110,7 +143,8 @@ function Editor() {
   const [pendingLaunchBackground, setPendingLaunchBackground] = useState<string>();
   const handledLaunch = useRef(new Set<string>());
   const descriptionEdited = useRef(false);
-  const { analysis, phase: analysisPhase, runNow: analyzeNow } = useLocalAnalysis(description, working, automaticAnalysis, composing);
+  const launchBusy = Boolean(launchCandidate || pendingLaunchBackground);
+  const { analysis, phase: analysisPhase, runNow: analyzeNow } = useLocalAnalysis(description, working, automaticAnalysis, composing || launchBusy);
 
   useEffect(() => {
     let disposed = false, current: EditorTransport | undefined;
@@ -146,7 +180,6 @@ function Editor() {
     if (!launchContext || !confirmed || !workingRef.current || handledLaunch.current.has(launchContext.id)) return;
     handledLaunch.current.add(launchContext.id);
     setLaunchCandidate(undefined); setLocalPreview(undefined); setPendingLaunchText(undefined); setPendingLaunchBackground(undefined);
-    setAutomaticAnalysis(false);
     modelSuggestion.cancelCurrent(); modelSuggestion.clearProposal();
     if (launchContext.projectId !== confirmed.projectId || launchContext.baseDraftVersion !== confirmed.draftVersion) {
       setLaunchFeedback('La demande reçue concerne une ancienne version. Le brouillon reste ouvert ; son fond n’a pas été remplacé.');
@@ -171,30 +204,54 @@ function Editor() {
   }, [launchContext, confirmed]);
 
   const dirty = Boolean(working && confirmed && stableStringify(working) !== stableStringify(confirmed.snapshot));
-  const launchBusy = Boolean(launchCandidate || pendingLaunchBackground);
   const activeModel = selectedModel(providerRegistry, modelSelection);
   const modelSuggestion = useModelSuggestions({
     transport, project: confirmed, snapshot: working, description, providerId: activeModel?.provider.id ?? null,
     modelId: activeModel?.model.id ?? null, automatic: automaticAnalysis && !launchBusy, composing: composing || launchBusy, dirty,
   });
-  const modelProposal = modelSuggestion.proposal;
+  // A previous model preview belongs to that provider selection. When the user
+  // returns to local rules, it must not mask a fresh local candidate.
+  const modelProposal = activeModel ? modelSuggestion.proposal : undefined;
   const proposalProjection = { snapshot: modelSuggestion.previewSnapshot ?? working, error: modelProposal && modelSuggestion.phase === 'ready' && !modelSuggestion.previewSnapshot ? 'Cette proposition ne peut pas être affichée.' : '' };
   const proposalEligible = Boolean(!launchBusy && modelProposal && modelProposal.status === 'ready' && modelSuggestion.phase === 'ready' && modelSuggestion.intent === description.trim() && modelProposal.baseDraftVersion === confirmed?.draftVersion && !dirty && !composing && modelSuggestion.providerId === activeModel?.provider.id && modelSuggestion.modelId === activeModel?.model.id && modelSuggestion.previewSnapshot);
   const previewingProposal = Boolean(proposalEligible && !proposalProjection.error);
   const previewingPreviousProposal = Boolean(!launchBusy && modelProposal && !previewingProposal && modelSuggestion.previewSnapshot);
-  const previewingLocalInsertion = Boolean(!launchBusy && localPreview && !modelProposal && !composing && isAnalysisCurrent(localPreview.analysis, description, working));
+  const previewingLocalCandidate = Boolean(!launchBusy && localPreview && !activeModel && !modelProposal && !composing && isAnalysisCurrent(localPreview.analysis, description, working));
   const previewingLaunch = Boolean(launchCandidate && working && launchCandidate.baseSignature === stableStringify(working));
-  const previewingAnyProposal = previewingLaunch || previewingProposal || previewingPreviousProposal || previewingLocalInsertion;
+  const previewingAnyProposal = previewingLaunch || previewingProposal || previewingPreviousProposal || previewingLocalCandidate;
+  useEffect(() => {
+    if (!activeModel) modelSuggestion.clearPrevious();
+  }, [activeModel?.provider.id, activeModel?.model.id, modelSuggestion.clearPrevious]);
   useEffect(() => {
     if (launchCandidate && working && launchCandidate.baseSignature !== stableStringify(working)) {
       setLaunchCandidate(undefined);
       setLaunchFeedback('Le brouillon a changé. L’ancien aperçu du fond a été retiré.');
     }
   }, [launchCandidate, working]);
-  const canvasSnapshot = previewingLaunch ? launchCandidate!.snapshot : previewingProposal || previewingPreviousProposal ? proposalProjection.snapshot : previewingLocalInsertion ? localPreview!.snapshot : working;
+  const canvasSnapshot = previewingLaunch ? launchCandidate!.snapshot : previewingProposal || previewingPreviousProposal ? proposalProjection.snapshot : previewingLocalCandidate ? localPreview!.snapshot : working;
   const hasWorkingHero = Boolean(working?.pages[0]?.composition.content.length);
   const hasCanvasHero = Boolean(canvasSnapshot?.pages[0]?.composition.content.length);
-  useEffect(() => { if (localPreview && !previewingLocalInsertion) setLocalPreview(undefined); }, [localPreview, previewingLocalInsertion]);
+  const hasWorkingCatalog = Boolean(working?.pages[0]?.catalogPage);
+  const canvasCatalog = canvasSnapshot?.pages[0]?.catalogPage;
+  const hasCanvasCatalog = Boolean(canvasCatalog);
+  const reducePreviewMotion = systemReducedMotion && !motionPreviewOverride;
+  useEffect(() => { if (!hasCanvasCatalog) setMotionPreviewOverride(false); }, [hasCanvasCatalog]);
+  useEffect(() => { if (localPreview && !previewingLocalCandidate) setLocalPreview(undefined); }, [localPreview, previewingLocalCandidate]);
+  useEffect(() => {
+    if (!analysis || !working || !analysis.hints.length || activeModel || modelProposal || launchBusy || composing) return;
+    if (!isAnalysisCurrent(analysis, description, working)) return;
+    const operations = localPreviewOperations(analysis);
+    if (!operations.length) return;
+    try {
+      const snapshot = applyOperations(working, operations);
+      if (stableStringify(snapshot) === stableStringify(working)) return;
+      setLocalPreview((previous) => previous?.analysis.description === analysis.description && previous.analysis.baseSignature === analysis.baseSignature
+        ? previous
+        : { analysis, operations, snapshot });
+    } catch {
+      // Rules that cannot be safely projected stay suggestions; no partial or free-form code runs.
+    }
+  }, [analysis, working, activeModel, modelProposal, launchBusy, composing, description]);
   const proposalProvenance = useRef(new Map<string, { providerId: string; modelId: string }>());
   if (proposalEligible && modelProposal && modelSuggestion.providerId && modelSuggestion.modelId && !proposalProvenance.current.has(modelProposal.id)) {
     proposalProvenance.current.set(modelProposal.id, { providerId: modelSuggestion.providerId, modelId: modelSuggestion.modelId });
@@ -206,7 +263,7 @@ function Editor() {
   }, [dirty]);
 
   function edit(next: Snapshot, group: string, keepingLocalPreview = false) {
-    if (savingRef.current || previewingProposal || previewingPreviousProposal || ((previewingLaunch || previewingLocalInsertion) && !keepingLocalPreview)) return;
+    if (savingRef.current || previewingProposal || previewingPreviousProposal || ((previewingLaunch || previewingLocalCandidate) && !keepingLocalPreview)) return;
     const previous = workingRef.current;
     if (!previous || stableStringify(previous) === stableStringify(next)) return;
     const now = Date.now();
@@ -215,6 +272,16 @@ function Editor() {
     setHistory((state) => ({ past: grouped ? state.past : [...state.past.slice(-49), structuredClone(previous)], future: [] }));
     workingRef.current = next; setWorking(next); setFeedback('');
     if (!conflict && !retryRef.current) setError('');
+  }
+
+  function updateDescription(next: string) {
+    if (launchCandidate || pendingLaunchBackground) {
+      setLaunchCandidate(undefined);
+      setPendingLaunchBackground(undefined);
+      setLaunchFeedback('Ta nouvelle description remplace le fond reçu. La lecture automatique reprend après une pause.');
+    }
+    setDescription(next);
+    descriptionEdited.current = true;
   }
 
   function onPuckChange(data: Data) {
@@ -398,22 +465,23 @@ function Editor() {
     if (!workingRef.current || !analysis || previewingAnyProposal || savingRef.current) return;
     try {
       const snapshot = applyDesignHint(workingRef.current, analysis, hint.id);
-      setLocalPreview({ analysis, hintId: hint.id, snapshot });
-      setFeedback('Aperçu local temporaire. Le brouillon reste inchangé avant « Conserver la section ».');
+      setLocalPreview({ analysis, operations: hint.operations, snapshot });
+      setFeedback('Aperçu local temporaire. Le brouillon reste inchangé avant conservation.');
     } catch (failure) { setError(message(failure)); }
   }
 
-  function keepLocalInsertion() {
-    if (!workingRef.current || !localPreview || !previewingLocalInsertion || savingRef.current || conflict) return;
+  function keepLocalCandidate() {
+    if (!workingRef.current || !localPreview || !previewingLocalCandidate || savingRef.current || conflict) return;
     try {
-      const next = applyDesignHint(workingRef.current, localPreview.analysis, localPreview.hintId);
-      edit(next, 'keep-local-hero', true); setLocalPreview(undefined); setSyncEpoch((value) => value + 1);
-      setFeedback('Section locale conservée. Elle sera enregistrée après une courte pause.');
+      if (!isAnalysisCurrent(localPreview.analysis, description, workingRef.current)) throw new Error('La description ou la page a changé depuis cet aperçu.');
+      const next = applyOperations(workingRef.current, localPreview.operations);
+      edit(next, 'keep-local-candidate', true); setLocalPreview(undefined); setSyncEpoch((value) => value + 1);
+      setFeedback('Proposition locale conservée. Elle sera enregistrée après une courte pause.');
     } catch (failure) { setError(message(failure)); }
   }
 
-  function ignoreLocalInsertion() {
-    setLocalPreview(undefined); setFeedback('Aperçu local ignoré. Le brouillon reste inchangé.');
+  function ignoreLocalCandidate() {
+    setLocalPreview(undefined); setFeedback('Proposition locale ignorée. Le brouillon reste inchangé.');
   }
 
   function openReport(nextTab: 'report' | 'version') {
@@ -445,7 +513,7 @@ function Editor() {
     return {
       format: 'manifest.design-report.v1',
       project: { projectId: confirmed?.projectId, draftVersion: confirmed?.draftVersion, contentHash: confirmed?.contentHash, snapshot: confirmed?.snapshot },
-      workingCopy: { hasUncommittedChanges: dirty, snapshot: working, previewedProposal: previewingProposal ? proposalProjection.snapshot : null, previewedLocalInsertion: previewingLocalInsertion ? localPreview!.snapshot : null, previewedLaunch: previewingLaunch ? launchCandidate!.snapshot : null },
+      workingCopy: { hasUncommittedChanges: dirty, snapshot: working, previewedProposal: previewingProposal ? proposalProjection.snapshot : null, previewedLocalCandidate: previewingLocalCandidate ? localPreview!.snapshot : null, previewedLaunch: previewingLaunch ? launchCandidate!.snapshot : null },
       brief: { description, persisted: false, receivedFromChat: launchContext ?? null },
       modelSelection: modelSelectionDeclaration(providerRegistry, modelSelection),
       analysis: {
@@ -497,10 +565,10 @@ function Editor() {
   const reportModelLabel = modelProposal
     ? (() => { const captured = proposalProvenance.current.get(modelProposal.id); const provider = captured && providerRegistry.providers.find((entry) => entry.id === captured.providerId); const model = provider?.models.find((entry) => entry.id === captured?.modelId); return captured ? `${provider?.label ?? captured.providerId} · ${model?.label ?? captured.modelId}` : 'Provenance du fournisseur non enregistrée avec cette proposition'; })()
     : analysis ? 'Pistes locales · règles M0' : activeModel ? 'Modèle sélectionné · aucune proposition' : 'Aucune source sélectionnée';
-  const inputStatusTitle = composing ? 'Saisie en cours' : automaticAnalysis ? activeModel ? ({ typing: 'Le modèle attend ta pause', syncing: 'Mise à jour du brouillon', starting: 'Demande envoyée', running: 'Le modèle compose', ready: 'Proposition prête', stale: 'Proposition à actualiser', error: 'La proposition a échoué', paused: 'Suggestions suspendues', unavailable: 'Modèle indisponible', idle: 'Prêt à analyser' } as const)[modelSuggestion.phase] : ({ typing: 'Lecture après ta pause', paused: 'Suggestions suspendues', ready: 'Pistes locales prêtes', idle: 'Prêt à analyser' } as const)[analysisPhase] : 'Analyse à la demande';
-  const inputStatusDetail = automaticAnalysis
-    ? activeModel ? 'Après 1,5 s sans saisie, la description et le brouillon enregistré sont envoyés au modèle choisi.' : 'Après 1,5 s sans saisie, les règles locales proposent des pistes à appliquer.'
-    : 'L’analyse automatique est désactivée. Lance une proposition quand tu le souhaites ; rien ne part à chaque frappe.';
+  const inputStatusTitle = composing ? 'Saisie en cours' : activeModel ? ({ typing: 'Le modèle attend ta pause', syncing: 'Mise à jour du brouillon', starting: 'Demande envoyée', running: 'Le modèle compose', ready: 'Proposition prête', stale: 'Proposition à actualiser', error: 'La proposition a échoué', paused: 'Suggestions suspendues', unavailable: 'Modèle indisponible', idle: 'Prêt à analyser' } as const)[modelSuggestion.phase] : ({ typing: 'Lecture après ta pause', paused: 'Suggestions suspendues', ready: 'Pistes locales prêtes', idle: 'Prêt à analyser' } as const)[analysisPhase];
+  const inputStatusDetail = activeModel
+    ? `Après 1,5 s sans saisie, la description et le brouillon enregistré sont envoyés à ${activeModel.provider.label} (${activeModel.model.label}).`
+    : 'Après 1,5 s sans saisie, les règles locales proposent des pistes. Elles ne remplacent pas un modèle génératif.';
   const suggestionPhase = activeModel ? modelSuggestion.phase : analysisPhase;
   const suggestionTitle = activeModel ? ({ idle: 'Prêt à proposer', typing: 'Lecture après ta pause', syncing: 'Enregistrement du brouillon', starting: 'Demande envoyée', running: 'Le modèle compose', ready: 'Proposition prête', stale: 'Proposition à recalculer', error: 'La proposition a échoué', paused: 'Suggestions suspendues', unavailable: 'Modèle indisponible' } as const)[modelSuggestion.phase] : ({ idle: 'Une intention, puis des pistes', typing: 'Lecture après ta pause', paused: 'Lecture automatique suspendue', ready: 'Analyse locale prête' } as const)[analysisPhase];
   const suggestionDetail = activeModel ? ({ idle: 'Écris une intention pour voir un candidat dans l’aperçu.', typing: 'Continue d’écrire. Aucun nouvel appel n’est lancé avant la pause.', syncing: 'Les réglages de la page sont enregistrés avant la génération.', starting: 'La demande part vers le modèle sélectionné.', running: 'La page reste disponible pendant la génération.', ready: 'Le candidat est visible à gauche et attend ton choix.', stale: modelSuggestion.error ?? 'La proposition ne correspond plus au brouillon courant.', error: modelSuggestion.error ?? 'Réessaie après avoir vérifié le fournisseur.', paused: 'La lecture automatique est suspendue. Tu peux proposer maintenant.', unavailable: modelSuggestion.error ?? 'Les pistes locales restent disponibles.' } as const)[modelSuggestion.phase] : analysis ? `${analysis.recognized.length} indication(s) reconnue(s).` : analysisPhase === 'typing' ? 'Les pistes locales apparaissent après la pause.' : 'Décris une couleur, une entrée ou les mots à afficher.';
@@ -521,42 +589,42 @@ function Editor() {
 
       <div className="workbench-content">
         <Puck config={config} data={canvasSnapshot!.pages[0]!.composition} onChange={onPuckChange} iframe={{ enabled: false }} permissions={{ drag: false, insert: false, delete: false, duplicate: false, edit: !previewingAnyProposal && !saving }} ui={{ itemSelector: hasCanvasHero ? { index: 0, zone: 'root:default-zone' } : null }} dictionary={dictionary}>
-        <PuckSync composition={canvasSnapshot!.pages[0]!.composition} epoch={`${syncEpoch}:${previewingLaunch ? launchContext?.id : previewingProposal || previewingPreviousProposal ? modelProposal?.generationId : previewingLocalInsertion ? 'local-insertion' : 'manual'}`} />
+        <PuckSync composition={canvasSnapshot!.pages[0]!.composition} epoch={`${syncEpoch}:${previewingLaunch ? launchContext?.id : previewingProposal || previewingPreviousProposal ? modelProposal?.generationId : previewingLocalCandidate ? `${localPreview!.analysis.baseSignature}:${localPreview!.analysis.description}` : 'manual'}`} />
         <div className="workspace">
           <aside className="description-panel" aria-labelledby="description-title">
             <div className="panel-heading"><span className="panel-symbol" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 4h12M4 8h12M4 12h8M4 16h5" /></svg></span><h2 id="description-title">Décrivez votre interface</h2><span className="local-label">M0</span></div>
-            <div className="description-body"><p>Décris la page ; son aperçu et les suggestions restent dans cet espace.</p><p className="launch-status" role="status">{launchFeedback || 'Aucune demande transmise par le chat. Écris ici pour commencer.'}</p>{pendingLaunchBackground && <div className="pending-launch"><button className="button" disabled={dirty || saving || previewingAnyProposal} onClick={resumeLaunchBackground}>Reprendre le fond reçu</button><button className="text-button" onClick={() => { setPendingLaunchBackground(undefined); setLaunchFeedback('Fond reçu ignoré. Le brouillon reste inchangé.'); }}>Ignorer le fond reçu</button></div>}{pendingLaunchText && <div className="pending-launch"><p>Une nouvelle demande est arrivée. Ton texte est conservé.</p><button className="button" onClick={() => { setDescription(pendingLaunchText); setPendingLaunchText(undefined); descriptionEdited.current = true; }}>Utiliser la demande reçue</button></div>}
+            <div className="description-body"><p>Décris la page ; son aperçu et les suggestions restent dans cet espace.</p><p className="launch-status" role="status">{launchFeedback || 'Aucune demande transmise par le chat. Écris ici pour commencer.'}</p>{pendingLaunchBackground && <div className="pending-launch"><button className="button" disabled={dirty || saving || previewingAnyProposal} onClick={resumeLaunchBackground}>Reprendre le fond reçu</button><button className="text-button" onClick={() => { setPendingLaunchBackground(undefined); setLaunchFeedback('Fond reçu ignoré. Le brouillon reste inchangé.'); }}>Ignorer le fond reçu</button></div>}{pendingLaunchText && <div className="pending-launch"><p>Une nouvelle demande est arrivée. Ton texte est conservé.</p><button className="button" onClick={() => { updateDescription(pendingLaunchText); setPendingLaunchText(undefined); }}>Utiliser la demande reçue</button></div>}
               <label className="sr-only" htmlFor="page-description">Description de la page</label>
-              <div className="description-composer"><textarea ref={descriptionInput} id="page-description" className="description-input resize-none" value={description} onChange={(event) => { const next = event.target.value; setDescription(next); descriptionEdited.current = true; }} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} maxLength={6000} placeholder="Décrivez la page et les composants que vous imaginez…" aria-describedby="description-help" /><div className="composer-foot"><span>{description.length.toLocaleString('fr-FR')} / 6 000</span>{description && <button className="text-button" onClick={() => { setDescription(''); descriptionEdited.current = true; descriptionInput.current?.focus(); }}>Effacer</button>}</div></div>
+              <div className="description-composer"><textarea ref={descriptionInput} id="page-description" className="description-input resize-none" value={description} onChange={(event) => updateDescription(event.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} maxLength={6000} placeholder="Décrivez la page et les composants que vous imaginez…" aria-describedby="description-help" /><div className="composer-foot"><span>{description.length.toLocaleString('fr-FR')} / 6 000</span>{description && <button className="text-button" onClick={() => { updateDescription(''); descriptionInput.current?.focus(); }}>Effacer</button>}</div></div>
               <div className="intent-status" role="status" aria-live="polite"><span className="intent-status__icon" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" /><path d="M10 6v4l2.5 1.5" /></svg></span><span><strong>{inputStatusTitle}</strong><small>{inputStatusDetail}</small></span></div>
-              <div className="analysis-preference"><label><input type="checkbox" checked={automaticAnalysis} onChange={(event) => setAutomaticAnalysis(event.target.checked)} />{activeModel ? 'Analyse automatique du modèle' : 'Analyse automatique locale'}</label><span>{(DESCRIPTION_PAUSE_MS / 1000).toLocaleString('fr-FR')} s</span></div>
+              <div className="analysis-preference" role="note"><span>{activeModel ? `Suggestions ${activeModel.provider.label}` : 'Suggestions locales'}</span><span>après {(DESCRIPTION_PAUSE_MS / 1000).toLocaleString('fr-FR')} s de pause</span></div>
               <button className="button analyze-button" onClick={() => { if (activeModel && ['starting', 'running'].includes(modelSuggestion.phase)) modelSuggestion.cancelCurrent(); else { analyzeNow(); modelSuggestion.runNow(); } }} disabled={launchBusy || (['starting', 'running'].includes(modelSuggestion.phase) ? false : !description.trim() || composing)}>{activeModel && ['starting', 'running'].includes(modelSuggestion.phase) ? 'Annuler la génération' : 'Proposer maintenant'}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" /></svg></button>
-              <p id="description-help" className="description-help">Les pistes locales repèrent les couleurs, le fondu, une demande de Hero et les lignes « Titre : » ou « Texte : ». Sans activation automatique, le modèle n’est sollicité que si tu demandes une proposition.</p>
+              <p id="description-help" className="description-help">Après 1,5 s sans frappe, Manifest actualise l’aperçu. Sans modèle configuré, seules les règles locales et la recette ventes sont disponibles. Un modèle choisi peut composer les éléments du catalogue : navigation, nuages, graphiques, fondu et glissement. Les animations absentes du catalogue ne sont pas exécutées ; Manifest indique la limite et propose une alternative.</p>
               <details className="model-provider-disclosure">
                 <summary>{activeModel ? `${activeModel.provider.label} · ${activeModel.model.label}` : 'Suggestions par modèle'}</summary>
                 <ModelProviderPanel registry={providerRegistry} selection={modelSelection} onChange={setModelSelection} loading={providerRegistryLoading} unavailable={providerRegistryUnavailable} />
               </details>
-              <div className="description-examples"><span>Une direction à explorer</span><button onClick={() => { setDescription('Un fond clair avec un accent bleu.\nTitre : Des espaces qui nous ressemblent\nTexte : Un atelier indépendant pour imaginer vos lieux de vie.'); descriptionEdited.current = true; descriptionInput.current?.focus(); }}>Page de présentation<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button><button onClick={() => { setDescription('Un fond sombre avec un accent vert et un fondu à l’entrée.'); descriptionEdited.current = true; descriptionInput.current?.focus(); }}>Page sombre animée<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button></div>
+              <div className="description-examples"><span>Une direction à explorer</span><button onClick={() => { updateDescription('Un fond clair avec un accent bleu.\nTitre : Des espaces qui nous ressemblent\nTexte : Un atelier indépendant pour imaginer vos lieux de vie.'); descriptionInput.current?.focus(); }}>Page de présentation<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button><button onClick={() => { updateDescription('Un fond sombre avec un accent vert et un fondu à l’entrée.'); descriptionInput.current?.focus(); }}>Page sombre animée<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button></div>
             </div>
             <section className="page-controls settings-panel" aria-label="Contenu et couleurs de la page">{hasCanvasHero ? <><div className="inspector-heading"><span className="selection-mark" aria-hidden="true" /><div><h3>Contenu sélectionné</h3><p>Contenu & apparence</p></div></div><div className="puck-fields"><Puck.Fields /></div></> : null}<fieldset className="theme-fields"><legend>Couleurs de la page</legend><p>Ces réglages s’appliquent au site, pas à l’atelier.</p>{COLOR_TOKEN_NAMES.map((name) => <label className="color-control" key={name}><span>{labels[name]}</span><span className="color-control__value"><code>{canvasSnapshot!.theme.tokens[name].value.toUpperCase()}</code><input type="color" aria-label={labels[name]} value={canvasSnapshot!.theme.tokens[name].value} disabled={saving || previewingAnyProposal} onChange={(event) => changeColor(name, event.target.value)} /></span></label>)}</fieldset><div className="inspector-note"><strong>Un changement reste un choix.</strong><p>{previewingAnyProposal ? 'L’aperçu du candidat est en lecture seule. Ignore-le ou attends la proposition suivante avant de modifier le bloc.' : 'Les réglages changent l’aperçu immédiatement et sont enregistrés après une courte pause.'}</p></div></section>
             <div className="description-footer"><span className="connection-dot" aria-hidden="true" /><span>Ton texte reste dans cette session.<br />Seuls les réglages de la page sont enregistrés.</span></div>
           </aside>
-          <main id="page-preview" className="canvas-region" aria-label={previewingLaunch ? 'Aperçu du fond demandé' : previewingPreviousProposal ? 'Aperçu de la proposition précédente' : previewingProposal ? 'Aperçu de la proposition' : previewingLocalInsertion ? 'Aperçu de la piste locale' : 'Aperçu modifiable de la page'} tabIndex={-1}>
-            <div className="workspace-toolbar"><div className="page-meta"><span className="page-indicator" aria-hidden="true" /><strong>{previewingLaunch ? 'Fond demandé' : previewingPreviousProposal ? 'Proposition précédente' : previewingProposal ? 'Proposition' : previewingLocalInsertion ? 'Piste locale' : 'Aperçu'}</strong><span className={`live-label${previewingAnyProposal ? ' live-label--candidate' : ''}`}>{previewingLaunch ? 'À conserver' : previewingProposal ? 'Candidat · non enregistré' : previewingPreviousProposal ? 'Version antérieure · lecture seule' : previewingLocalInsertion ? 'Règle locale · non enregistrée' : 'En direct'}</span></div><div className="segmented" aria-label="Format de l’aperçu"><button aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')} title="Aperçu ordinateur"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="10" rx="1" /><path d="M10 13v4M6 17h8" /></svg><span>Ordinateur</span></button><button aria-pressed={viewport === 'mobile'} onClick={() => setViewport('mobile')} title="Aperçu mobile"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="2" width="8" height="16" rx="1.5" /><path d="M9 15h2" /></svg><span>Mobile</span></button></div><div className="history-controls"><button className="button button--quiet" onClick={() => travel('past')} disabled={!history.past.length || previewingAnyProposal || saving}>Annuler</button><button className="button button--quiet" onClick={() => travel('future')} disabled={!history.future.length || previewingAnyProposal || saving}>Rétablir</button></div></div>
-            <div className="canvas-ruler"><div className="browser-dots" aria-hidden="true"><i /><i /><i /></div><span className="canvas-route"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="3" y="5" width="6" height="5" rx="1" /><path d="M4 5V3a2 2 0 0 1 4 0v2" /></svg>manifest.local / accueil</span><span className="canvas-size">{viewport === 'desktop' ? 'Desktop · 100 %' : 'Mobile · 375 px'}</span></div>
-            <div className="canvas-stage"><div className={`canvas-frame canvas-frame--${viewport}`} style={{ backgroundColor: canvasSnapshot!.theme.tokens['color.background'].value }}>{hasCanvasHero ? <Puck.Preview /> : <div className="empty-canvas" role="region" aria-label="Canevas vide" />}</div></div>
-            <div className="canvas-bottom"><p>{previewingLaunch ? 'Fond reçu du chat · aperçu temporaire.' : previewingLocalInsertion ? 'Piste locale temporaire · le brouillon reste inchangé.' : previewingProposal ? 'Candidat temporaire · garde-le ou ignore-le.' : previewingPreviousProposal ? 'Proposition précédente · lecture seule, non applicable.' : hasWorkingHero ? 'Section d’accueil du brouillon.' : 'Canevas vide · aucun composant ajouté.'}</p>{previewingLaunch ? <div className="proposal-actions"><button className="button button--primary" disabled={saving || conflict} onClick={keepLaunchCandidate}>Conserver le fond</button><button className="button" onClick={() => { setLaunchCandidate(undefined); setLaunchFeedback('Fond proposé ignoré. Le brouillon reste inchangé.'); }}>Ignorer le fond</button></div> : previewingLocalInsertion ? <div className="proposal-actions"><button className="button button--primary" disabled={saving || conflict} onClick={keepLocalInsertion}>Conserver la section</button><button className="button" disabled={saving} onClick={ignoreLocalInsertion}>Ignorer l’aperçu local</button></div> : !previewingAnyProposal && (hasWorkingHero ? <span>Le contenu et les couleurs sont à gauche.</span> : <button className="button" disabled={saving || conflict} onClick={addFirstHero}>Ajouter une section d’accueil</button>)}</div>
+          <main id="page-preview" className="canvas-region" aria-label={previewingLaunch ? 'Aperçu du fond demandé' : previewingPreviousProposal ? 'Aperçu de la proposition précédente' : previewingProposal ? 'Aperçu de la proposition' : previewingLocalCandidate ? 'Aperçu du candidat local' : 'Aperçu modifiable de la page'} tabIndex={-1}>
+            <div className="workspace-toolbar"><div className="page-meta"><span className="page-indicator" aria-hidden="true" /><strong>{previewingLaunch ? 'Fond demandé' : previewingPreviousProposal ? 'Proposition précédente' : previewingProposal ? 'Proposition' : previewingLocalCandidate ? 'Candidat local' : 'Aperçu'}</strong><span className={`live-label${previewingAnyProposal ? ' live-label--candidate' : ''}`}>{previewingLaunch ? 'À conserver' : previewingProposal ? 'Candidat · non enregistré' : previewingPreviousProposal ? 'Version antérieure · lecture seule' : previewingLocalCandidate ? 'Règles locales · non enregistré' : 'En direct'}</span></div><div className="segmented" aria-label="Format de l’aperçu"><button aria-pressed={viewport === 'desktop'} onClick={() => setViewport('desktop')} title="Aperçu ordinateur"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="10" rx="1" /><path d="M10 13v4M6 17h8" /></svg><span>Ordinateur</span></button><button aria-pressed={viewport === 'mobile'} onClick={() => setViewport('mobile')} title="Aperçu mobile"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="2" width="8" height="16" rx="1.5" /><path d="M9 15h2" /></svg><span>Mobile</span></button></div><div className="history-controls"><button className="button button--quiet" onClick={() => travel('past')} disabled={!history.past.length || previewingAnyProposal || saving}>Annuler</button><button className="button button--quiet" onClick={() => travel('future')} disabled={!history.future.length || previewingAnyProposal || saving}>Rétablir</button></div></div>
+            <div className="canvas-ruler"><div className="browser-dots" aria-hidden="true"><i /><i /><i /></div><span className="canvas-route"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="3" y="5" width="6" height="5" rx="1" /><path d="M4 5V3a2 2 0 0 1 4 0v2" /></svg><span>manifest.local / accueil</span></span><span className="canvas-size">{viewport === 'desktop' ? 'Desktop · 100 %' : 'Mobile · 375 px'}</span>{systemReducedMotion && hasCanvasCatalog && <div className="motion-preview-control"><span role="status" aria-live="polite">{motionPreviewOverride ? 'Aperçu animé' : 'Mouvement réduit'}</span><button className="text-button" aria-label={motionPreviewOverride ? 'Réduire les animations dans l’aperçu' : 'Lire les animations dans l’aperçu'} aria-pressed={motionPreviewOverride} onClick={() => setMotionPreviewOverride((enabled) => !enabled)}>{motionPreviewOverride ? 'Réduire' : 'Lire'}</button></div>}</div>
+            <div className="canvas-stage"><div className={`canvas-frame canvas-frame--${viewport}`} style={{ backgroundColor: canvasSnapshot!.theme.tokens['color.background'].value }}>{hasCanvasCatalog ? <div className="catalog-canvas" data-motion-preview={motionPreviewOverride ? 'enabled' : undefined}>{renderCatalogPage(canvasCatalog!, { prefersReducedMotion: reducePreviewMotion })}</div> : hasCanvasHero ? <Puck.Preview /> : <div className="empty-canvas" role="region" aria-label="Canevas vide" />}</div></div>
+            <div className="canvas-bottom"><p>{previewingLaunch ? 'Fond reçu du chat · aperçu temporaire.' : previewingLocalCandidate ? 'Candidat local temporaire · le brouillon reste inchangé.' : previewingProposal ? 'Candidat temporaire · garde-le ou ignore-le.' : previewingPreviousProposal ? 'Proposition précédente · lecture seule, non applicable.' : hasWorkingCatalog ? 'Page catalogue du brouillon.' : hasWorkingHero ? 'Section d’accueil du brouillon.' : 'Canevas vide · aucun composant ajouté.'}</p>{previewingLaunch ? <div className="proposal-actions"><button className="button button--primary" disabled={saving || conflict} onClick={keepLaunchCandidate}>Conserver le fond</button><button className="button" onClick={() => { setLaunchCandidate(undefined); setLaunchFeedback('Fond proposé ignoré. Le brouillon reste inchangé.'); }}>Ignorer le fond</button></div> : previewingLocalCandidate ? <div className="proposal-actions"><button className="button button--primary" disabled={saving || conflict} onClick={keepLocalCandidate}>Conserver la proposition locale</button><button className="button" disabled={saving} onClick={ignoreLocalCandidate}>Ignorer la proposition locale</button></div> : !previewingAnyProposal && (hasWorkingCatalog ? <span>La page catalogue reste visible dans ce canevas.</span> : hasWorkingHero ? <span>Le contenu et les couleurs sont à gauche.</span> : <button className="button" disabled={saving || conflict} onClick={addFirstHero}>Ajouter une section d’accueil</button>)}</div>
           </main>
           <aside className="inspector" aria-label="Panneau de conception">
             <div className="panel-heading"><span className="panel-symbol" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 4h10M5 10h10M5 16h10" /><circle cx="8" cy="4" r="2" /><circle cx="13" cy="10" r="2" /><circle cx="7" cy="16" r="2" /></svg></span><h2>Suggestions</h2><span className="hint-count">{(analysis?.hints.length ?? 0) + (modelProposal ? 1 : 0)} piste{(analysis?.hints.length ?? 0) + (modelProposal ? 1 : 0) === 1 ? '' : 's'}</span></div>
-            <ComponentExamples />
             <div className="suggestions-panel" data-analysis-phase={suggestionPhase}>
               <div className={`analysis-state analysis-state--${suggestionPhase}`} role="status" aria-live="polite"><span className="analysis-indicator" aria-hidden="true" /><div><strong>{suggestionTitle}</strong><span>{suggestionDetail}</span></div></div>
               {modelProposal && !launchBusy && <ModelProposalCard proposal={modelProposal} eligible={proposalEligible} previous={previewingPreviousProposal} projectionError={proposalProjection.error} saving={saving} onKeep={() => void keepModelProposal()} onReject={() => void rejectModelProposal()} />}
-              {analysis?.hints.length ? <div className="hint-list">{analysis.hints.map((hint) => <article className={`hint-card hint-card--${hint.category}`} key={hint.id}><div className="hint-category">{hint.category === 'palette' ? 'Couleurs' : hint.category === 'motion' ? 'Mouvement' : hint.category === 'component' ? 'Composant' : 'Contenu'}<span>Règle locale</span></div><h3>{hint.title}</h3><p>{hint.description}</p>{hint.swatches && <div className="hint-swatches" aria-label={`Palette proposée : ${hint.swatches.join(', ')}`}>{hint.swatches.map((color, index) => <span style={{ backgroundColor: color }} key={`${color}-${index}`} />)}</div>}<button className="button hint-apply" onClick={() => hint.category === 'component' ? previewLocalHint(hint) : applyHint(hint)} disabled={previewingAnyProposal || saving}>{hint.category === 'component' ? 'Prévisualiser la section' : 'Appliquer '}{hint.category === 'component' ? '' : hint.category === 'palette' ? 'la palette' : hint.category === 'motion' ? 'l’animation' : 'le contenu'}<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3l5 5-5 5" /></svg></button></article>)}</div> : !modelProposal && <div className="suggestions-empty"><div className="empty-diagram" aria-hidden="true"><span /><span /><span /></div><h3>{analysisPhase === 'ready' ? analysis?.recognized.length ? 'Ta page suit déjà ces indications.' : 'Précisons la direction.' : modelProposal ? 'Le candidat est prêt à examiner.' : 'La prochaine idée commence à gauche.'}</h3><p>{analysisPhase === 'ready' ? 'Essaie un fond sombre, un accent vert, un fondu, ou un titre explicite. Les pistes locales restent des choix à appliquer.' : 'Décris une couleur, une entrée ou les mots à afficher. Les pistes locales apparaissent après une pause.'}</p></div>}
-              {hasWorkingHero && <section className="component-summary"><h3>Dans cette page</h3><div><span className="component-thumb" aria-hidden="true"><i /><i /></span><div><strong>Section d’accueil</strong><span>Hero · contenu modifiable</span></div></div></section>}
-              <p className="suggestions-disclosure">Les propositions de modèle prévisualisent un candidat avant conservation. Les règles locales restent disponibles ; l’export de code arrivera dans une étape ultérieure.</p>
+              {analysis?.hints.length ? <div className="hint-list">{analysis.hints.map((hint) => <article className={`hint-card hint-card--${hint.category}`} key={hint.id}><div className="hint-category">{hint.category === 'palette' ? 'Couleurs' : hint.category === 'motion' ? 'Mouvement' : hint.category === 'component' ? 'Composant' : 'Contenu'}<span>Règle locale</span></div><h3>{hint.title}</h3><p>{hint.description}</p>{hint.swatches && <div className="hint-swatches" aria-label={`Palette proposée : ${hint.swatches.join(', ')}`}>{hint.swatches.map((color, index) => <span style={{ backgroundColor: color }} key={`${color}-${index}`} />)}</div>}<button className="button hint-apply" onClick={() => hint.category === 'component' ? previewLocalHint(hint) : applyHint(hint)} disabled={previewingAnyProposal || saving}>{hint.category === 'component' ? 'Prévisualiser la section' : 'Appliquer '}{hint.category === 'component' ? '' : hint.category === 'palette' ? 'la palette' : hint.category === 'motion' ? 'l’animation' : 'le contenu'}<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3l5 5-5 5" /></svg></button></article>)}</div> : !modelProposal && <div className="suggestions-empty"><div className="empty-diagram" aria-hidden="true"><span /><span /><span /></div><h3>{analysisPhase === 'ready' ? analysis?.recognized.length ? 'Ta page suit déjà ces indications.' : 'Précisons la direction.' : modelProposal ? 'Le candidat est prêt à examiner.' : 'La prochaine idée commence à gauche.'}</h3><p>{analysisPhase === 'ready' ? 'Aucune piste locale applicable : la page reste inchangée. Le catalogue reconnaît actuellement le Hero, la navigation, les nuages, les graphiques, le fondu et le glissement. Un modèle configuré reste limité à ces mêmes capacités ; essaie un exemple à droite ou reformule ton intention.' : 'Décris la page et ses mouvements. Les règles locales et le modèle configuré actualisent leur candidat après une pause.'}</p></div>}
+              {(hasWorkingHero || hasWorkingCatalog) && <section className="component-summary"><h3>Dans cette page</h3><div><span className="component-thumb" aria-hidden="true"><i /><i /></span><div><strong>{hasWorkingCatalog ? 'Page catalogue' : 'Section d’accueil'}</strong><span>{hasWorkingCatalog ? 'Menu · nuages · graphiques synthétiques' : 'Hero · contenu modifiable'}</span></div></div></section>}
+              <p className="suggestions-disclosure">Les modèles utilisent des opérations vérifiées et la release locale du catalogue. Aucun JSX, CSS ou JavaScript libre n’est exécuté ; chaque candidat reste à prévisualiser et à conserver explicitement.</p>
             </div>
+            <ComponentExamples />
 
           </aside>
         </div>

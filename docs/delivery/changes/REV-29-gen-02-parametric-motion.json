@@ -1,0 +1,8 @@
+{
+  "acceptance": [
+    "Un arbre de page typé et versionné accepte uniquement des composants, propriétés, slots et mouvements du catalogue local ; profondeur, taille, paramètres de mouvement et budget sont bornés. Aucun JSX, HTML, CSS ou JavaScript libre produit par le modèle n'est exécuté.",
+    "La release de départ expose les primitives nécessaires à une page de tableau de bord, un fond de nuages animé, des graphiques de ventes sur données synthétiques explicitement étiquetées, un menu, ainsi que des mouvements paramétrables et combinables : opacité, translation X/Y, échelle, rotation, flou et fondu avec montée/descente. Durée, délai, easing, répétition et amplitude ont des bornes et un comportement prefers-reduced-motion sûr.",
+    "Chaque entrée contient une version exacte, source, empreinte, licence et attribution, dépendances locales, propriétés validées, compatibilité, coût mesuré et statut. Une référence refusée ou absente ne peut pas être recommandée comme intégrable.",
+    "Chaque bibliothèque vue en référence est inventoriée et classée comme runtime, composant source, moteur d'animation, pipeline d'assets ou service/outillage ; l'installation locale est limitée aux entrées retenues après vérification officielle de licence, versions, compatibilité, sécurité, accessibilité et coût, avec lockfile reproductible."
+  ]
+}

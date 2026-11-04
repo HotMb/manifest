@@ -7,6 +7,16 @@ import type { M0Project, M0CommandResult } from '@design-workbench/m0-contract';
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
+ajv.addKeyword({
+  keyword: 'maxUtf8Bytes',
+  type: 'object',
+  schemaType: 'number',
+  errors: false,
+  validate: (limit: number, value: unknown) => {
+    try { return new TextEncoder().encode(JSON.stringify(value)).byteLength <= limit; }
+    catch { return false; }
+  },
+});
 const snapshotSchema = ajv.compile({ ...schema, $ref: '#/$defs/Snapshot' });
 const commandSchema = ajv.compile({ ...schema, $id: `${schema.$id}/command`, $ref: '#/$defs/Command' });
 const sha256 = (value: unknown) => createHash('sha256').update(stableStringify(value)).digest('hex');

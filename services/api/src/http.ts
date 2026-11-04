@@ -6,7 +6,8 @@ import { createDesignerMcpServer } from './mcp.ts';
 import { MemoryProjectStore } from './domain.ts';
 import type { SuggestionJobManager } from './suggestion-jobs.ts';
 
-const MAX_BODY_BYTES = 65_536;
+// MCP commands are capped at 192 KiB of compact UTF-8 JSON; leave 64 KiB for framing.
+const MAX_BODY_BYTES = 256 * 1024;
 function json(res: ServerResponse, status: number, value: unknown) {
   res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }).end(JSON.stringify(value));
 }

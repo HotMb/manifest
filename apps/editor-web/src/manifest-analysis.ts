@@ -1,4 +1,5 @@
 import { applyOperations, createHeroBlock, stableStringify, type M0Operation, type Snapshot } from '@design-workbench/m0-contract';
+import { createSalesDashboardRecipe, type SalesDashboardRecipeOptions } from '@design-workbench/catalog/recipes';
 
 export const DESCRIPTION_PAUSE_MS = 1500;
 
@@ -71,7 +72,49 @@ export function analyzeDescription(description: string, snapshot: Snapshot): Loc
   if (requestedTitle && requestedTitle.length <= 200) { recognized.push('titre explicite'); if (requestedTitle !== hero?.props.title) props.title = requestedTitle; }
   if (requestedBody && requestedBody.length <= 1200) { recognized.push('texte explicite'); if (requestedBody !== hero?.props.body) props.body = requestedBody; }
   const requestsHero = /\bhero\b|(?:section|bandeau) d[’']accueil/.test(normalized);
-  if (!hero && (requestsHero || Object.keys(props).length)) {
+  const asksCloudSalesDashboard = /\b(?:nuage|nuages|cloud|clouds)\b/.test(normalized)
+    && /\b(?:vente|ventes|sales|tableau de bord|dashboard|rapport)\b/.test(normalized);
+  if (asksCloudSalesDashboard && !hero) {
+    const speedMatch = normalized.match(/(?:\bspeed\b|\bvitesse\b|\baccelere\b|\bplus rapide\b|\bplus vite\b)[^\d]{0,24}(\d+(?:[.,]\d+)?)/);
+    const speed = speedMatch ? Number(speedMatch[1]!.replace(',', '.')) : /\b(plus rapide|plus vite|accelere)\b/.test(normalized) ? 1.5 : undefined;
+    const requestsDownMotion = /\bvers le bas\b|\bdescend\w*\b|\bslide[ .-]?down\b/.test(normalized);
+    const requestsUpMotion = /\bvers le haut\b|\bmonte\w*\b|\bremonte\w*\b|\bslide[ .-]?up\b/.test(normalized);
+    const requestsFadeMotion = /\bfondu\b|\bfade\b|\bapparait\w*\b/.test(normalized);
+    const hasOneDirection = requestsDownMotion !== requestsUpMotion;
+    const dashboardMotionId = requestsDownMotion && requestsUpMotion ? 'fade-in' as const
+      : hasOneDirection && requestsFadeMotion
+        ? requestsUpMotion ? 'fade-slide-up' as const : 'fade-slide-down' as const
+        : hasOneDirection ? requestsUpMotion ? 'slide-up' as const : 'slide-down' as const
+          : requestsFadeMotion ? 'fade-in' as const : undefined;
+    if (requestsDownMotion || requestsUpMotion || requestsFadeMotion) {
+      recognized.push(requestsDownMotion && requestsUpMotion ? 'directions de mouvement contradictoires' : requestsFadeMotion && hasOneDirection ? `fondu avec ${requestsUpMotion ? 'montée' : 'descente'}` : requestsUpMotion ? 'montée' : requestsDownMotion ? 'descente' : 'fondu');
+    }
+    const options: SalesDashboardRecipeOptions = {
+      ...(requestedTitle && requestedTitle.length <= 100 ? { pageTitle: requestedTitle } : {}),
+      ...( /coucher de soleil|sunset/.test(normalized) ? { cloudPalette: 'sunset' as const }
+        : /lever de soleil|aube|dawn/.test(normalized) ? { cloudPalette: 'dawn' as const }
+          : /plein jour|daylight/.test(normalized) ? { cloudPalette: 'day' as const } : {}),
+      ...( /nuages? nombreux|beaucoup de nuages|clouds? dense/.test(normalized) ? { cloudDensity: 'high' as const }
+        : /peu de nuages|quelques nuages|nuages? discrets/.test(normalized) ? { cloudDensity: 'low' as const } : {}),
+      ...( /graphique en barres|bar chart|histogramme/.test(normalized) ? { chartType: 'bar' as const }
+        : /graphique en aire|area chart/.test(normalized) ? { chartType: 'area' as const } : {}),
+      ...((dashboardMotionId || Number.isFinite(speed)) ? { motion: {
+        ...(dashboardMotionId ? { id: dashboardMotionId } : {}),
+        ...(Number.isFinite(speed) ? { speed } : {}),
+      } } : {}),
+    };
+    const catalogPage = createSalesDashboardRecipe(options);
+    if (stableStringify(page.catalogPage ?? null) !== stableStringify(catalogPage)) {
+      recognized.push('tableau de bord ventes et nuages du catalogue local');
+      hints.push({
+        id: 'sales-cloud-dashboard', title: 'Un tableau de bord ventes et nuages',
+        description: `Prévisualiser la recette catalogue locale : menu, nuages animés et deux graphiques à données synthétiques.${requestsDownMotion && requestsUpMotion ? ' Les directions demandées se contredisent : aucun mouvement directionnel n’a été choisi.' : dashboardMotionId ? ` Le preset ${dashboardMotionId} suit la direction et le fondu demandés.` : ''} Aucun rapport externe n’est connecté.`,
+        category: 'component',
+        operations: [...(hints.find((hint) => hint.id === 'palette')?.operations ?? []), { op: 'set_catalog_page', pageId: page.id, catalogPage }],
+      });
+    }
+  }
+  if (!hero && !asksCloudSalesDashboard && (requestsHero || Object.keys(props).length)) {
     const block = createHeroBlock();
     Object.assign(block.props, props);
     block.props.animation = fade ? 'fade' : 'none';

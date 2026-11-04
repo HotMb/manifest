@@ -10,9 +10,14 @@ const SCREENSHOTS = fileURLToPath(new URL('../../.team/screenshots/', import.met
 async function openEditor(page: Page) {
   // Editing regressions exercise a previously saved populated project explicitly.
   // Fresh-user tests below never use this fixture initializer.
-  await page.addInitScript(({ key, project }) => {
-    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, project }));
-  }, { key: STORAGE_KEY, project: heroProject() });
+  const marker = `manifest:e2e:seed-editor-project:${Date.now()}:${Math.random()}`;
+  await page.addInitScript(({ key, project, marker }) => {
+    if (sessionStorage.getItem(marker) === 'done') return;
+    localStorage.clear();
+    sessionStorage.clear();
+    localStorage.setItem(key, JSON.stringify({ expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, project }));
+    sessionStorage.setItem(marker, 'done');
+  }, { key: STORAGE_KEY, project: heroProject(), marker });
   await page.goto('/');
   if ((page.viewportSize()?.width ?? 1280) <= 1100) await expect(page.getByRole('textbox', { name: 'Description de la page', exact: true })).toBeVisible();
   else await expect(page.getByRole('heading', { name: INITIAL_TITLE, exact: true })).toBeVisible();
@@ -49,12 +54,21 @@ test('sur mobile la saisie et les autres zones restent accessibles sans changer 
   const description = page.locator('#page-description');
   await description.fill('Un fond noir');
   await expect(description).toBeFocused();
-  await page.getByRole('button', { name: 'Proposer maintenant', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Appliquer la palette', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Appliquer la palette', exact: true }).click();
+  await expect(page.getByRole('main', { name: 'Aperçu du candidat local', exact: true })).toBeVisible({ timeout: 5000 });
   await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
+  expect(await page.evaluate(() => {
+    const status = document.querySelector('.inspector .analysis-state');
+    const candidate = document.querySelector('.inspector .hint-list');
+    const examples = document.querySelector('.inspector .component-examples');
+    return Boolean(status && candidate && examples
+      && (status.compareDocumentPosition(examples) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && (candidate.compareDocumentPosition(examples) & Node.DOCUMENT_POSITION_FOLLOWING));
+  })).toBe(true);
+  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).not.toBeNull();
+  await page.getByRole('button', { name: 'Conserver la proposition locale', exact: true }).click();
   await expect(description).toHaveValue('Un fond noir');
   await expect(page.locator('.description-panel')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Brouillon v1', exact: true })).toBeVisible();
 });
 
 test('les réglages modifient la page et une sauvegarde locale survit au rechargement', async ({ page }) => {

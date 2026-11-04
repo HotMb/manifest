@@ -9,9 +9,9 @@ L'outil est un atelier de composition utilisable dans ChatGPT, puis Claude, avec
 ## Parcours de référence
 
 1. Dans le chat de projet, sélectionner `@Manifest` ou l'application, puis ouvrir la carte « Ouvrir Manifest ». Le handoff explicite identifie l'opération `create_project`, `create_page` ou `modify_page`, la cible et sa version de base quand elle existe, la proposition de l'assistant et, si disponible, un candidat de page structuré. `/manifest` reste une commande native à qualifier selon l'hôte.
-2. `create_project` part d'un Snapshot vide ; un candidat structuré est projeté comme une première page éditable. `create_page` charge le Snapshot du projet choisi et prévisualise une page neuve comme candidate non conservée. `modify_page` charge le Snapshot et la page ciblée, puis prévisualise la proposition comme un changement fondé sur `baseDraftVersion`. Si l'hôte ne transmet qu'un texte, il préremplit le champ principal sans appeler de modèle automatiquement ; une proposition est générée après activation explicite de l'analyse automatique et une pause de 1,5 s, ou par « Proposer maintenant ». Aucune proposition n'est une approbation ni un remplacement silencieux.
+2. `create_project` part d'un Snapshot vide ; un candidat structuré est projeté comme une première page éditable. `create_page` charge le Snapshot du projet choisi et prévisualise une page neuve comme candidate non conservée. `modify_page` charge le Snapshot et la page ciblée, puis prévisualise la proposition comme un changement fondé sur `baseDraftVersion`. Si l'hôte ne transmet qu'un texte, il préremplit le champ principal ; après 1,5 s de pause, Manifest lance automatiquement l'analyse locale ou, si configuré, l'API du fournisseur et du modèle explicitement choisi. Aucune proposition n'est une approbation ni un remplacement silencieux.
 3. Tout le travail se fait dans un seul espace : champ principal à gauche pour décrire la page, sa logique, ses animations et ses données ; aperçu dominant au centre ; recherche locale de composants/animations à droite. Pas d'étapes qui naviguent vers d'autres pages ni de page séparée de réglage d'un bloc ; les réglages sont contextuels à la sélection dans le canevas.
-4. Choisir explicitement un fournisseur et un modèle. Une fois l'analyse automatique activée pour la session, le champ principal déclenche une proposition après 1,5 seconde d'inactivité hors IME ; le modèle, le coût/usage applicable et l'état restent visibles. La recherche du catalogue ne redémarre pas cette génération.
+4. Choisir explicitement un fournisseur et un modèle pour activer la génération distante. Le champ principal déclenche l'analyse après 1,5 seconde d'inactivité hors IME, sans case d'activation ; le modèle, le coût/usage applicable et l'état restent visibles. Sans API configurée, seules les pistes locales prises en charge sont proposées et cette limite est affichée. La recherche du catalogue ne redémarre pas cette génération.
 5. Chercher par exemple « menu », puis comparer des composants qui affichent leur rendu, animation, emplacement admissible, source, version, licence et compatibilité. Prévisualiser, puis insérer à l'endroit voulu par glisser-déposer ou par une action clavier/tactile équivalente.
 6. L'insertion affiche sous le champ principal une référence lisible et son identifiant stable (ID de catalogue, bibliothèque, release et configuration). Cette pièce jointe enrichit le contexte des propositions et suit le projet jusque dans le rapport, sans réécrire le texte de l'utilisateur.
 7. Modifier la description ou les propriétés, observer l'aperçu réagir, puis conserver/annuler les changements. Une proposition nouvelle ne remplace pas silencieusement le dernier état conservé.
@@ -25,12 +25,12 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 | ID | Exigence | M1 / suite |
 |---|---|---|
 | RQ-01 | Ouvrir l'éditeur dans ChatGPT avec un utilisateur autorisé | M0/M1 |
-| RQ-02 | Saisie propre, pause configurable, arrêt, action manuelle équivalente | M1 |
+| RQ-02 | Saisie réactive automatique après pause de 1 500 ms, respect IME et action « Proposer maintenant » immédiate | M0/M1 |
 | RQ-03 | Aperçu automatique des propositions valides sans envoyer un message au chat à chaque frappe | M1 |
 | RQ-04 | Modifier composition, thème, texte, images et animations locales | M1 |
 | RQ-05 | Liberté de composition par primitives et blocs ; propriétés contrôlées | M1 |
 | RQ-06 | Annulation, conservation et récupération après erreur | M1 |
-| RQ-07 | API du modèle choisi ; absence de changement silencieux de fournisseur | M1 + M2 |
+| RQ-07 | API du modèle choisi parmi les adaptateurs pris en charge ; absence de changement silencieux de fournisseur | M1 |
 | RQ-08 | Design guidé par un profil inspiré d'Unslop, adaptable et versionné | M1 |
 | RQ-09 | Pages, routes, thème commun et mises en page mobile | M1 |
 | RQ-10 | Révisions immuables approuvées et restauration ; branches | M1 ; branches M2 |
@@ -52,7 +52,7 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 ## Périmètre M1
 
 - Un propriétaire par projet ; aucune collaboration simultanée promise. Contrôle de concurrence obligatoire entre onglets.
-- OpenAI comme premier adaptateur. Anthropic et Gemini restent des livraisons M2, avec contrats communs préparés en M1.
+- Un contrat d’adaptateur commun ; les API OpenAI, Anthropic, Google, DeepSeek et les endpoints compatibles sont qualifiés ticket par ticket. « N’importe quel modèle » signifie un fournisseur explicitement pris en charge ou un adaptateur compatible configuré, jamais une API supposée universelle ni une bascule silencieuse.
 - Dix blocs et primitives de composition : voir CATALOGUE.md. Plusieurs pages simples, routes uniques, thème commun.
 - Images possédées ou utilisables, texte, navigation, FAQ, liens et formulaire avec validation locale. Les envois serveur non configurés restent explicitement désactivés dans l'export.
 - Animation légère et amélioration progressive ; contenu lisible avec mouvement réduit et sans moteur d'animation.
@@ -75,7 +75,7 @@ M1 produit du React. Les interfaces de document et de catalogue déclarent leurs
 |---|---|---|
 | Pause avant analyse IA | 1 500 ms, hors composition IME | Valeur M1 ; ajuster seulement après mesure et décision produit |
 | Sauvegarde du brouillon | 1 s après modification, une écriture en vol | Désactivation autorisée, état explicite |
-| Analyse automatique | Déclenchée après sélection du fournisseur et activation explicite dans la session ; ensuite, propositions après pause de 1 500 ms | Arrêt immédiat, indicateur d'usage et mode manuel |
+| Analyse automatique | Toujours active après pause de 1 500 ms ; API distante seulement pour le fournisseur/modèle explicitement configuré | Annulation des jobs périmés, indicateur d'usage et fallback local clairement borné |
 | Proposition ambiguë | Jusqu'à trois alternatives, jamais trois fournisseurs implicites | Choix utilisateur |
 | Révision approuvée | Action explicite, pas une conséquence de l'autosave | Invariant |
 | Langue interface | Français ; architecture localisable | Anglais ensuite |

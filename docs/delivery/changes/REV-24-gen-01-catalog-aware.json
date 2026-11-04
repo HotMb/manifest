@@ -1,0 +1,8 @@
+{
+  "acceptance": [
+    "À chaque lancement ou modification d'un brief non vide, l'analyse démarre seule après 1 500 ms sans frappe ; chaque nouvelle saisie redémarre le délai, l'IME suspend le minuteur et invalide les résultats antérieurs.",
+    "Si un fournisseur et un modèle sont configurés, seul le modèle explicitement choisi reçoit le Snapshot confirmé et le brief après le debounce ; la proposition structurée validée s'affiche automatiquement comme candidat temporaire, sans enregistrer le brouillon.",
+    "Sans modèle sélectionné, les règles locales s'exécutent automatiquement et affichent directement dans le canevas les pistes qu'elles savent représenter. Elles couvrent les couleurs, indications de contenu reconnues, Hero M0 et recette catalogue locale ventes + nuages + graphiques synthétiques ; les modifications de direction/vitesse reconnues actualisent ce même candidat après une nouvelle pause. Une demande hors capacité est signalée avec les limites et alternatives, sans résultat inventé.",
+    "Des tests à horloge contrôlée couvrent le lancement initial, le redémarrage après frappe, le seuil de 1 499/1 500 ms, l'IME, l'invalidation des résultats périmés, le candidat catalogue, les retouches de mouvement, la prévisualisation modèle, une intention non supportée et le mode sans fournisseur. Les tests n'appellent pas d'API facturable."
+  ]
+}

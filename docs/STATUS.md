@@ -1,10 +1,21 @@
 # Manifest — suivi du projet
 
-Mise à jour : **3 novembre 2026**. Référence : dépôt [HotMb/manifest](https://github.com/HotMb/manifest), branche locale `work/arc-01`, registre **révision 14**. Les Issues GitHub sont des miroirs ; `docs/delivery/tickets.json` fait foi.
+Mise à jour : **4 novembre 2026**. Référence : [HotMb/manifest](https://github.com/HotMb/manifest), branche locale `work/arc-01`, registre tickets **révision 34**. Le fichier `docs/delivery/tickets.json` fait foi ; `BOARD.md` est sa vue générée.
 
-**Dernière vérification ARC-01 :** PR [#27](https://github.com/HotMb/manifest/pull/27) toujours en brouillon. Après correction des liens documentaires dans `ae30e58444855ee815135bb67836e7fe6185a25b`, les deux jobs GitHub Actions Quality sont verts (runs 41715501015 et 41715512819). Les preuves ChatGPT Desktop/OAuth restent manquantes ; voir le [dossier des preuves bridge et identité](evidence/ARC-01/bridge-identity-proof-2026-11-03.md). Le rapport CI précédent documentait correctement un échec de contrat désormais résolu.
+## État de la reprise — 4 novembre
 
-## État actuel
+- **GEN-01 — terminé :** l’analyse automatique démarre après 1,5 s et le candidat dashboard avec nuages/graphiques se met à jour sans sauvegarde implicite. Les tests couvrent les directions, la vitesse, l’IME, l’invalidation, reduced-motion et le seuil exact. Le ticket est clos en révision 34 après approbation QA. Voir la [preuve d’implémentation](evidence/GEN-01/implementation.md), la [revue QA](evidence/GEN-01/review.md) et le [compte rendu](meetings/2026-11-04-GEN-01-reactive-preview-review.md).
+- **GEN-02 — en cours :** `manifest-core@0.3.0` est intégré au Snapshot et à l’aperçu. La release actuelle conserve un catalogue fini ; les primitives de mouvement paramétrables restent à construire. Licence racine, empreinte SHA-256 source, mesures de poids/coût/rendu et audit des bibliothèques des captures sont ouverts. Voir la [preuve catalogue](evidence/GEN-02/implementation.md).
+- **GEN-03 — à faire :** cadrage révisé pour interpréter le langage naturel avec le modèle sélectionné, composer les primitives auditées, utiliser Unslop comme profil de qualité et détecter/arrêter les secrets avant transfert. Aucun fournisseur réel n’a été appelé ; les tests existants utilisent des simulateurs.
+- **Validation locale :** Playwright complet 36/36 ; ciblé 4/4 ; M0 72/72 ; fournisseurs 29/29 ; `npm test` 22 réussis, 1 ignoré par restriction Windows ; typecheck, build, `team:done`, BOARD et `npm run check` passent en révision 34. Python n’a pas pu démarrer, `jsonschema` manquant. Avertissements observés : Puck `setData` coûteux, Rolldown sur `use client`, variables `NO_COLOR`/`FORCE_COLOR` ; aucun n’a causé d’échec E2E.
+- **Orchestration :** GEN-02 reste le seul ticket actif ; `team:next` ne trouve aucun nouveau ticket éligible. La révision 34 contient la soumission et la revue QA ; le tableau a été généré depuis le registre.
+- **ARC-01 reste bloqué** tant qu’ouverture, identité, lecture/écriture et rafraîchissement ne sont pas prouvés dans ChatGPT Desktop. La vérification locale et les mocks ne remplacent pas cette preuve ; aucune fusion de la PR #27 n’est autorisée par les critères actuels.
+
+## Historique au 3 novembre (conservé)
+
+Les paragraphes ci-dessous décrivent l’état antérieur à la reprise du 4 novembre ; ils sont conservés pour retracer les constats et décisions précédents.
+
+## État du 3 novembre
 
 - **Vérification du flux réactif — 3 novembre :** le brief du fil partagé arrive bien, mais l’analyse automatique est décochée au départ et remise à `false` à chaque lancement. Après activation, les règles locales ne savent pas transformer le brief libre de dashboard/nuages en composants ; une piste requiert un clic pour modifier ou prévisualiser le canevas. Le contrat M0 ne sait rendre qu’un Hero, et aucun E2E ne couvre positivement le parcours automatique complet. Les tentatives E2E ciblées n’ont pas produit de résultat avant leur interruption ; aucun PASS n’est revendiqué. Voir [l’audit du code](evidence/MANIFEST-reactive-input-audit-2026-11-03.md) et [sa revue](meetings/2026-11-03-MANIFEST-reactive-input-review.md). Aucun fichier applicatif ou statut de ticket n’a changé ; `team:next` reste à zéro et ARC-01 reste bloqué.
 

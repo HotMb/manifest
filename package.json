@@ -8,7 +8,8 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test tests/*.test.mjs && npm run test:catalog",
+    "test:catalog": "tsx --test tests/contract/catalog/catalog.test.ts",
     "check": "node scripts/board.mjs check",
     "team:status": "node scripts/board.mjs status",
     "team:next": "node scripts/board.mjs next",
@@ -17,6 +18,8 @@
     "team:done": "node scripts/board.mjs done",
     "team:block": "node scripts/board.mjs block",
     "team:reopen": "node scripts/board.mjs reopen",
+    "team:revise": "node scripts/board.mjs revise",
+    "team:add": "node scripts/board.mjs add",
     "team:board": "node scripts/board.mjs render",
     "team:brief": "node scripts/start-team.mjs --print",
     "team:start": "node scripts/start-team.mjs",

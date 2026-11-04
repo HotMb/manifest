@@ -10,6 +10,7 @@ import {
   initialProject,
   makeEditCommand,
   stableStringify,
+  validateSuggestionJob,
 } from '@design-workbench/m0-contract';
 import { heroProject } from './fixtures/m0-project.ts';
 import { MemoryProjectStore } from '../services/api/src/domain.ts';
@@ -40,6 +41,12 @@ function input(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+test('le contrat refuse un job réussi sans proposition à afficher', () => {
+  const job = { jobId: 'job-success', projectId: 'project-m0', type: 'suggestion', state: 'succeeded', lastSeq: 3, proposalIds: [], artifactId: null, error: null };
+  assert.throws(() => validateSuggestionJob(job), /au moins une proposition/);
+  assert.doesNotThrow(() => validateSuggestionJob({ ...job, proposalIds: ['proposal-ready'] }));
+});
 
 test('un candidat insère le premier Hero dans la projection puis seulement sur conservation', async () => {
   const { store, jobs } = setup(0, true);

@@ -1,0 +1,22 @@
+{
+  "id": "GEN-04",
+  "title": "Aperçu réactif de pages composées",
+  "phase": "M1",
+  "owner": "frontend",
+  "dependencies": ["GEN-01", "GEN-02", "GEN-03"],
+  "ownedPaths": [
+    "apps/editor-web/src/",
+    "tests/e2e/intent/",
+    "tests/visual/catalog/",
+    "docs/evidence/GEN-04"
+  ],
+  "acceptance": [
+    "Le canevas central rend le même arbre validé que le rapport/export ; une proposition à jour issue du debounce devient visible sans clic, tandis que le brouillon conservé reste intact jusqu'à confirmation.",
+    "Un brief de tableau de bord ventes peut afficher fond animé, graphiques synthétiques et sections du catalogue ; une modification de direction, d'animation ou de vitesse actualise l'aperçu après la pause, sur dimensions desktop et mobile.",
+    "Le panneau droit filtre localement les composants/animations admis ; aperçu au survol et équivalent clavier/tactile ne mutent pas la page. L'insertion choisie ajoute une référence exacte sous le brief et au rapport.",
+    "Toute demande hors capacités installées affiche la limite et les alternatives disponibles. Le profil de design dérivé d'Unslop guide les choix avec attribution, sans écraser une contrainte de marque explicite."
+  ],
+  "evidence": [],
+  "blockers": [],
+  "status": "todo"
+}

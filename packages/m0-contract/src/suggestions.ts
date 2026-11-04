@@ -69,6 +69,7 @@ export function validateSuggestionJob(value: unknown): asserts value is Suggesti
   if (!record(value) || !only(value, ['jobId', 'projectId', 'type', 'state', 'lastSeq', 'proposalIds', 'artifactId', 'error'])) throw new Error('Réponse de job invalide.');
   if (!safeId(value.jobId) || !safeId(value.projectId) || value.type !== 'suggestion' || !states.includes(value.state as SuggestionJobState) || !Number.isSafeInteger(value.lastSeq) || Number(value.lastSeq) < 0) throw new Error('Identité ou état du job invalide.');
   if (!Array.isArray(value.proposalIds) || value.proposalIds.length > 3 || value.proposalIds.some((id) => !safeId(id)) || (value.artifactId !== null && !safeId(value.artifactId))) throw new Error('Résultat du job invalide.');
+  if (value.state === 'succeeded' && value.proposalIds.length === 0) throw new Error('Un job réussi doit référencer au moins une proposition.');
   if (value.error !== null && (!record(value.error) || !only(value.error, ['code', 'message', 'requestId', 'retryable', 'details']) || typeof value.error.code !== 'string' || typeof value.error.message !== 'string' || !safeId(value.error.requestId) || typeof value.error.retryable !== 'boolean' || !record(value.error.details))) throw new Error('Erreur du job invalide.');
 }
 

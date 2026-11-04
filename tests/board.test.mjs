@@ -120,6 +120,30 @@ test('blocage motivé puis reprise n’invente aucune clôture', () => {
   b = transition(b, 'reopen', 'ARC-01', { agent: 'orchestrator', expectedRevision: 1, reason: 'Accès hôte disponible' });
   assert.equal(b.tickets[0].status, 'todo');
 });
+test('révision de critères CAS, journalisée et protégée aux champs autorisés', () => {
+  const b = board(ticket('ARC-01'));
+  const revised = transition(b, 'revise', 'ARC-01', {
+    agent: 'orchestrator', expectedRevision: 0, reason: 'Rendre le debounce automatique obligatoire', source: 'docs/delivery/changes/REV-15-ui-03.json',
+    patch: { acceptance: ['Après une pause de 1,5 s, la génération se lance automatiquement.'] },
+  });
+  assert.equal(revised.revision, 1);
+  assert.deepEqual(revised.tickets[0].acceptance, ['Après une pause de 1,5 s, la génération se lance automatiquement.']);
+  assert.equal(revised.history[0].action, 'criteria_updated');
+  assert.deepEqual(revised.history[0].fields, ['acceptance']);
+  assert.throws(() => transition(revised, 'revise', 'ARC-01', { agent: 'orchestrator', expectedRevision: 1, reason: 'Ne pas respecter les garde-fous', source: 'docs/delivery/changes/REV-16-invalid.json', patch: { status: 'done' } }), /champs.*interdits/);
+  assert.throws(() => transition(b, 'revise', 'ARC-01', { agent: 'orchestrator', expectedRevision: 8, reason: 'Révision périmée', patch: { title: 'Autre' } }), /conflit de révision/);
+});
+test('ajout ticket versionné valide dépendances, critères et journal', () => {
+  const b = board(ticket('ARC-01'));
+  const added = transition(b, 'add', 'GEN-01', {
+    agent: 'orchestrator', expectedRevision: 0, reason: 'Débloquer le parcours réactif M0', source: 'docs/delivery/changes/REV-15-gen-01.json',
+    patch: { id: 'GEN-01', title: 'Boucle de conception réactive', phase: 'M0', owner: 'frontend', dependencies: [], ownedPaths: ['apps/editor-web/', 'tests/e2e/intent/', 'docs/evidence/GEN-01'], acceptance: ['Le brief se relit automatiquement après 1,5 s.'], evidence: [], blockers: [], status: 'ready' },
+  });
+  assert.equal(added.revision, 1);
+  assert.deepEqual(eligibleTickets(added).map((t) => t.id), ['ARC-01', 'GEN-01']);
+  assert.equal(added.history[0].action, 'ticket_added');
+  assert.throws(() => transition(added, 'add', 'GEN-02', { agent: 'orchestrator', expectedRevision: 1, reason: 'Ajouter une entrée invalide', source: 'docs/delivery/changes/REV-16-invalid.json', patch: { id: 'GEN-02', title: 'Invalide', phase: 'M0', owner: 'frontend', dependencies: ['NO-99'], ownedPaths: ['apps/editor-web/'], acceptance: ['test'], evidence: [], status: 'ready' } }), /dépendance inconnue/);
+});
 test('écriture CAS atomique : un seul gagnant et lock libéré', () => {
   const root = fixture();
   mutateFile(root, 'claim', 'ARC-01', { agent: 'frontend', expectedRevision: 0 });

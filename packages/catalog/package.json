@@ -1,0 +1,14 @@
+{
+  "name": "@design-workbench/catalog",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./recipes": "./src/recipes.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "peerDependencies": {
+    "react": "19.3.1"
+  }
+}

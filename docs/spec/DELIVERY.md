@@ -14,6 +14,12 @@ Le commanditaire a validé le parcours des captures : invocation depuis le chat 
 | Réactivité et provenance | UI-03, UI-04, AI-01/02 | 1 500 ms hors IME, dernière prévisualisation stable pendant la génération, obsolescence correcte et origine capturée par le job/proposal |
 | Version et transmission du rapport | REV-01, UI-02/04, API/MCP et TEST-01 à détailler | rapport lié à une révision/hash, avec preuve d'éligibilité capturée et hash JCS déterministe ; relu avant envoi, provenance fidèle, reçu d'envoi confirmé ou fallback explicite |
 
+## Addendum de produit — 4 novembre 2026
+
+Le commanditaire confirme que l'analyse doit démarrer automatiquement après 1 500 ms de pause à chaque lancement ou modification du brief, sans case opt-in. Un modèle distant n'est appelé que si l'utilisateur a configuré et choisi ce fournisseur/modèle ; sinon seules les règles locales indiquées comme telles sont utilisées. Une proposition se prévisualise dans le canevas sans être sauvegardée implicitement. La demande de nuages, graphiques de vente synthétiques et changements d'animation devient le premier cas vertical du catalogue : les capacités doivent être des composants locaux versionnés et validés, pas du code arbitraire exécuté depuis le modèle.
+
+Cette révision est suivie par les tickets GEN-01 à GEN-04 ajoutés via les commandes versionnées du registre. GEN-01 et GEN-02 peuvent avancer indépendamment du blocage de preuve ChatGPT Desktop dans ARC-01 ; ils ne valent pas preuve de l'hôte et ne clôturent pas ARC-01/02.
+
 Les critères du registre machine ont été précisés en révision 6 sans modifier les statuts ni les dépendances. ARC-01 reste le seul ticket actif. Le nouveau parcours local vide -> ajout explicite -> édition/enregistrement est qualifié séparément de l'ouverture/authentification réelle dans ChatGPT Desktop. UI-02 précise la recherche catalogue, le rendu/animation, les licences, l'insertion accessible et les références de rapport ; il demeure non éligible jusqu'à UI-01 et CAT-02.
 
 ### Correction de fidélité au démarrage — audit du 3 novembre 2026
@@ -183,7 +189,7 @@ Propriétaire : QA + produit. Commence après ARC-03 ; se termine après tous ti
 
 | ID | Sujet | Condition de démarrage / acceptation |
 |---|---|---|
-| MOD-02 | Anthropic et Gemini | adaptateur commun stabilisé ; suite de conformité commune passée pour chaque modèle admis |
+| MOD-02 | Fournisseurs ou modèles supplémentaires | contrat GEN-03 stabilisé ; adaptateur dédié et suite de conformité commune avant admission |
 | HOST-02 | Claude et commande Claude Code | M1 éprouvé ; même projet et mêmes contrôles sans nouveau domaine métier |
 | REV-02 | branches avancées | snapshots/reçus robustes ; branche/merge explicites, pas de fusion opaque |
 | CAT-04 | animations enrichies | mesure par bloc, fallback et mouvement réduit |

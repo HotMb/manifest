@@ -1,7 +1,11 @@
 /** Shared M0 subset. The Snapshot shape is the canonical page document, never a second tree. */
 import fixture from '../../../docs/spec/contracts/examples/snapshot-empty.json' with { type: 'json' };
+import { validateCatalogPage, type CatalogPage } from '@design-workbench/catalog';
 
 export const PROJECT_ID = 'project-m0';
+export const MAX_SNAPSHOT_UTF8_BYTES = 160 * 1024;
+export const MAX_COMMAND_UTF8_BYTES = 192 * 1024;
+const MAX_JSON_DEPTH = 32;
 export const COLOR_TOKEN_NAMES = ['color.background', 'color.text', 'color.accent'] as const;
 export type ColorTokenName = typeof COLOR_TOKEN_NAMES[number];
 export type ColorToken = { kind: 'color'; value: string };
@@ -16,7 +20,7 @@ export function createHeroBlock(blockId = 'block-hero'): HeroBlock {
 export type Snapshot = {
   schemaVersion: 1;
   projectTitle: string;
-  pages: { id: string; title: string; route: string; composition: { content: HeroBlock[]; root: { props: { lang: string } } } }[];
+  pages: { id: string; title: string; route: string; composition: { content: HeroBlock[]; root: { props: { lang: string } } }; catalogPage?: CatalogPage }[];
   theme: { tokens: Record<ColorTokenName, ColorToken> };
   assetRefs: unknown[];
   catalogLock: { releaseId: string; sha256: string; target: 'react' };
@@ -29,7 +33,9 @@ export type UpdatePropsOperation = { op: 'update_props'; pageId: string; blockId
 export type UpdateThemeOperation = { op: 'update_theme'; tokens: Partial<Record<ColorTokenName, ColorToken>> };
 export type InsertBlockOperation = { op: 'insert_block'; pageId: string; parentBlockId: null; slot: 'content'; beforeBlockId: null; block: HeroBlock };
 export type RemoveBlockOperation = { op: 'remove_block'; pageId: string; blockId: string };
-export type M0Operation = UpdatePropsOperation | UpdateThemeOperation | InsertBlockOperation | RemoveBlockOperation;
+/** Replaces the current allowlisted catalogue page, or removes it when catalogPage is null. */
+export type SetCatalogPageOperation = { op: 'set_catalog_page'; pageId: string; catalogPage: CatalogPage | null };
+export type M0Operation = UpdatePropsOperation | UpdateThemeOperation | InsertBlockOperation | RemoveBlockOperation | SetCatalogPageOperation;
 export type ApplyOpsCommand = { projectId: string; expectedDraftVersion: number; idempotencyKey: string; action: 'apply_ops'; payload: { operations: M0Operation[] } };
 export type M0CommandResult = M0Project & { revisionId: null; receiptId: string };
 export type M0ErrorCode = 'INVALID_INPUT' | 'CAPABILITY_UNSUPPORTED' | 'VERSION_CONFLICT' | 'IDEMPOTENCY_CONFLICT' | 'LOCKED_TARGET' | 'NOT_FOUND' | 'RATE_LIMITED';
@@ -44,7 +50,7 @@ const hasOnly = (value: Record<string, unknown>, keys: readonly string[]) => Obj
 const text = (value: unknown, min: number, max: number): value is string => typeof value === 'string' && value.length >= min && value.length <= max;
 
 function guardJson(value: unknown, depth = 0): void {
-  reject(depth <= 12, 'Document trop profond.');
+  reject(depth <= MAX_JSON_DEPTH, 'Document trop profond.');
   if (Array.isArray(value)) { for (const item of value) guardJson(item, depth + 1); return; }
   if (isRecord(value)) {
     reject(Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null, 'Objet non JSON.');
@@ -72,20 +78,25 @@ function validateColor(value: unknown): asserts value is ColorToken {
   reject(isRecord(value) && hasOnly(value, ['kind', 'value']) && value.kind === 'color' && typeof value.value === 'string' && /^#[a-fA-F0-9]{6}$/.test(value.value), 'Couleur attendue au format #RRGGBB.');
 }
 
-/** Semantic validation of the one-page, zero-or-one-Hero M0 catalogue. */
+/** Semantic validation of the one-page document, preserving legacy Hero snapshots. */
 export function validateSnapshot(value: unknown): asserts value is Snapshot {
   guardJson(value);
   reject(isRecord(value) && hasOnly(value, ['schemaVersion', 'projectTitle', 'pages', 'theme', 'assetRefs', 'catalogLock', 'designPolicy', 'locks', 'designBrief']), 'Document inconnu.');
   reject(value.schemaVersion === 1 && text(value.projectTitle, 1, 200), 'Version ou titre de projet invalide.');
   reject(Array.isArray(value.pages) && value.pages.length === 1, 'M0 prend en charge une page.');
   const page = value.pages[0];
-  reject(isRecord(page) && hasOnly(page, ['id', 'title', 'route', 'composition']) && id(page.id) && text(page.title, 1, 200) && page.route === '/', 'Page M0 invalide.');
+  reject(isRecord(page) && hasOnly(page, ['id', 'title', 'route', 'composition', 'catalogPage']) && id(page.id) && text(page.title, 1, 200) && page.route === '/', 'Page M0 invalide.');
   reject(isRecord(page.composition) && hasOnly(page.composition, ['content', 'root']), 'Composition invalide.');
   reject(Array.isArray(page.composition.content) && page.composition.content.length <= 1, 'M0 prend en charge zéro ou un bloc.');
   const block = page.composition.content[0];
   if (block !== undefined) {
     validateHeroBlock(block);
     reject(block.props.id !== page.id, 'Identifiant de bloc déjà utilisé par la page.');
+  }
+  if (page.catalogPage !== undefined) {
+    reject(page.composition.content.length === 0, 'Une page catalogue ne peut pas coexister avec le Hero historique.');
+    try { validateCatalogPage(page.catalogPage); }
+    catch { throw new M0Error('INVALID_INPUT', 'Page catalogue non admise par la release locale.'); }
   }
   reject(isRecord(page.composition.root) && hasOnly(page.composition.root, ['props']) && isRecord(page.composition.root.props) && hasOnly(page.composition.root.props, ['lang']) && page.composition.root.props.lang === 'fr', 'Racine M0 invalide.');
   reject(isRecord(value.theme) && hasOnly(value.theme, ['tokens']) && isRecord(value.theme.tokens) && Object.keys(value.theme.tokens).length === 3 && hasOnly(value.theme.tokens, COLOR_TOKEN_NAMES), 'Thème M0 invalide.');
@@ -104,13 +115,14 @@ export function validateSnapshot(value: unknown): asserts value is Snapshot {
   reject(Array.isArray(brief.moments) && brief.moments.length <= 2 && brief.moments.every((s) => text(s, 1, 500)), 'Moments du brief invalides.');
   reject(Array.isArray(brief.brandConstraints) && brief.brandConstraints.length <= 30 && brief.brandConstraints.every((s) => text(s, 1, 500)), 'Contraintes de marque invalides.');
   reject(Array.isArray(value.locks) && value.locks.length <= 200, 'Verrouillages invalides.');
-  const lockProperties = ['content', 'title', 'body', 'backgroundToken', 'animation', 'theme', 'theme.tokens', ...COLOR_TOKEN_NAMES, ...COLOR_TOKEN_NAMES.map((s) => `theme.tokens.${s}`)];
+  const lockProperties = ['content', 'catalogPage', 'title', 'body', 'backgroundToken', 'animation', 'theme', 'theme.tokens', ...COLOR_TOKEN_NAMES, ...COLOR_TOKEN_NAMES.map((s) => `theme.tokens.${s}`)];
   for (const lock of value.locks) reject(isRecord(lock) && hasOnly(lock, ['pageId', 'blockId', 'properties']) && lock.pageId === page.id && (lock.blockId === null || (block !== undefined && lock.blockId === block.props.id)) && Array.isArray(lock.properties) && lock.properties.every((p) => typeof p === 'string' && lockProperties.includes(p)), 'Cible de verrouillage invalide.');
-  reject(JSON.stringify(value).length <= 32_768, 'Document M0 trop volumineux.');
+  reject(new TextEncoder().encode(JSON.stringify(value)).byteLength <= MAX_SNAPSHOT_UTF8_BYTES, 'Document M0 trop volumineux (160 Ko UTF-8 maximum).');
 }
 
 export function validateCommand(value: unknown): asserts value is ApplyOpsCommand {
   guardJson(value);
+  reject(new TextEncoder().encode(JSON.stringify(value)).byteLength <= MAX_COMMAND_UTF8_BYTES, 'Commande M0 trop volumineuse (192 Ko UTF-8 maximum).');
   reject(isRecord(value) && hasOnly(value, ['projectId', 'expectedDraftVersion', 'idempotencyKey', 'action', 'payload']), 'Commande inconnue.');
   reject(id(value.projectId) && id(value.idempotencyKey) && Number.isSafeInteger(value.expectedDraftVersion) && Number(value.expectedDraftVersion) >= 0, 'Enveloppe de commande invalide.');
   if (value.action !== 'apply_ops') throw new M0Error('CAPABILITY_UNSUPPORTED', 'Seule la modification manuelle est disponible en M0.');
@@ -128,6 +140,12 @@ export function validateCommand(value: unknown): asserts value is ApplyOpsComman
       validateHeroBlock(op.block);
     } else if (op.op === 'remove_block') {
       reject(hasOnly(op, ['op', 'pageId', 'blockId']) && id(op.pageId) && id(op.blockId), 'Suppression Hero invalide.');
+    } else if (op.op === 'set_catalog_page') {
+      reject(hasOnly(op, ['op', 'pageId', 'catalogPage']) && id(op.pageId), 'Remplacement de page catalogue invalide.');
+      if (op.catalogPage !== null) {
+        try { validateCatalogPage(op.catalogPage); }
+        catch { throw new M0Error('CAPABILITY_UNSUPPORTED', 'La page catalogue contient une entrée, une propriété ou une release non admise.'); }
+      }
     } else throw new M0Error('CAPABILITY_UNSUPPORTED', 'Cette opération n’est pas disponible en M0.');
   }
 }
@@ -178,11 +196,21 @@ export function applyOperations(snapshot: Snapshot, operations: M0Operation[]): 
       if (op.pageId !== page.id) throw new M0Error('NOT_FOUND', 'Page inaccessible dans ce projet.');
       reject(!block && op.block.props.id !== page.id, 'La composition doit être vide et les identifiants uniques.');
       if (compositionLocked()) throw new M0Error('LOCKED_TARGET', 'Cette composition est verrouillée.');
+      if (page.catalogPage !== undefined) throw new M0Error('CAPABILITY_UNSUPPORTED', 'Retire d’abord la page catalogue avant de créer un Hero historique.');
       page.composition.content.push(structuredClone(op.block));
-    } else {
+    } else if (op.op === 'remove_block') {
       if (op.pageId !== page.id || !block || op.blockId !== block.props.id) throw new M0Error('NOT_FOUND', 'Bloc inaccessible dans ce projet.');
       if (compositionLocked(block.props.id)) throw new M0Error('LOCKED_TARGET', 'Ce bloc est verrouillé.');
       page.composition.content = [];
+    } else {
+      if (op.pageId !== page.id) throw new M0Error('NOT_FOUND', 'Page inaccessible dans ce projet.');
+      if (page.composition.content.length > 0 && op.catalogPage !== null) throw new M0Error('CAPABILITY_UNSUPPORTED', 'Une page catalogue ne peut pas remplacer implicitement le Hero historique.');
+      if (next.locks.some((lock) => lock.pageId === page.id && lock.blockId === null && (lock.properties.length === 0 || lock.properties.some((property) => ['content', 'catalogPage'].includes(property))))) {
+        const unchanged = stableStringify(page.catalogPage ?? null) === stableStringify(op.catalogPage);
+        if (!unchanged) throw new M0Error('LOCKED_TARGET', 'La composition catalogue de cette page est verrouillée.');
+      }
+      if (op.catalogPage === null) delete page.catalogPage;
+      else page.catalogPage = structuredClone(op.catalogPage);
     }
   }
   validateSnapshot(next);
@@ -194,7 +222,10 @@ export function makeEditCommand(project: M0Project, nextSnapshot: Snapshot, key:
   const before = project.snapshot.pages[0]!, after = nextSnapshot.pages[0]!;
   const beforeBlock = before.composition.content[0], afterBlock = after.composition.content[0];
   const operations: M0Operation[] = [];
+  const beforeCatalog = before.catalogPage ?? null, afterCatalog = after.catalogPage ?? null;
+  const catalogChanged = stableStringify(beforeCatalog) !== stableStringify(afterCatalog);
   if (beforeBlock && (!afterBlock || beforeBlock.props.id !== afterBlock.props.id)) operations.push({ op: 'remove_block', pageId: before.id, blockId: beforeBlock.props.id });
+  if (catalogChanged && afterCatalog === null) operations.push({ op: 'set_catalog_page', pageId: before.id, catalogPage: null });
   if (afterBlock && (!beforeBlock || beforeBlock.props.id !== afterBlock.props.id)) {
     operations.push({ op: 'insert_block', pageId: before.id, parentBlockId: null, slot: 'content', beforeBlockId: null, block: structuredClone(afterBlock) });
   } else if (beforeBlock && afterBlock) {
@@ -204,6 +235,7 @@ export function makeEditCommand(project: M0Project, nextSnapshot: Snapshot, key:
     }
     if (Object.keys(props).length) operations.push({ op: 'update_props', pageId: before.id, blockId: beforeBlock.props.id, props });
   }
+  if (catalogChanged && afterCatalog !== null) operations.push({ op: 'set_catalog_page', pageId: before.id, catalogPage: structuredClone(afterCatalog) });
   const tokens: Partial<Record<ColorTokenName, ColorToken>> = {};
   for (const name of COLOR_TOKEN_NAMES) if (stableStringify(project.snapshot.theme.tokens[name]) !== stableStringify(nextSnapshot.theme.tokens[name])) tokens[name] = structuredClone(nextSnapshot.theme.tokens[name]);
   if (Object.keys(tokens).length) operations.push({ op: 'update_theme', tokens });

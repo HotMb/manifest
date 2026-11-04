@@ -1,0 +1,79 @@
+.manifest-page { color: #20242b; font: inherit; }
+.manifest-section, .manifest-hero { padding: clamp(22px, 5vw, 64px); }
+.manifest-section--quiet { background: #f5f6f8; }
+.manifest-section--accent { background: #edf4f2; }
+.manifest-hero { background: linear-gradient(135deg, #f3f6fa, #fff); }
+.manifest-stack { display: flex; gap: var(--manifest-gap, 16px); align-items: var(--manifest-align, stretch); }
+.manifest-stack--vertical { flex-direction: column; }
+.manifest-stack--horizontal { flex-direction: row; }
+.manifest-grid { display: grid; grid-template-columns: repeat(var(--manifest-columns, 2), minmax(0, 1fr)); gap: var(--manifest-gap, 16px); }
+.manifest-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 16px; border-radius: 9px; text-decoration: none; }
+.manifest-button--primary { color: #fff; background: #245e5a; }
+.manifest-button--secondary { color: #23413e; background: #dcebe8; }
+.manifest-button--quiet { color: #23413e; background: transparent; }
+.manifest-navigation { display: flex; align-items: center; gap: 24px; padding: 16px 22px; border-bottom: 1px solid #e4e8ed; }
+.manifest-navigation__brand { color: inherit; font-weight: 650; text-decoration: none; }
+.manifest-navigation__menu { display: contents; }
+.manifest-navigation__toggle { display: none; }
+.manifest-navigation ul { display: flex; flex: 1; gap: 18px; margin: 0; padding: 0; list-style: none; }
+.manifest-navigation a { color: inherit; text-decoration: none; }
+.manifest-clouds { position: relative; min-height: 330px; overflow: hidden; isolation: isolate; background: #d8e9ef; }
+.manifest-clouds--dawn { color: #477084; background: linear-gradient(180deg, #dfeef3 0%, #e9d9cf 100%); }
+.manifest-clouds--day { color: #6892a6; background: linear-gradient(180deg, #dceef6 0%, #edf3ed 100%); }
+.manifest-clouds--sunset { color: #7d5d70; background: linear-gradient(180deg, #f2b987 0%, #c7777e 65%, #485c77 100%); }
+.manifest-clouds__art { position: absolute; inset: 0; width: 100%; height: 100%; color: inherit; animation: manifest-cloud-drift var(--manifest-cloud-speed, 18s) ease-in-out infinite alternate; }
+.manifest-clouds__sun { fill: #ffe1a2; opacity: .8; }
+.manifest-clouds__cloud { fill: rgba(255,255,255,.72); }
+.manifest-clouds__cloud--one { animation: manifest-cloud-drift var(--manifest-cloud-speed, 23s) ease-in-out infinite alternate; }
+.manifest-clouds__cloud--two { animation: manifest-cloud-drift var(--manifest-cloud-speed-slow, 29s) ease-in-out -5s infinite alternate-reverse; }
+.manifest-clouds--low .manifest-clouds__cloud--two { opacity: .35; }
+.manifest-clouds--high .manifest-clouds__cloud { opacity: .95; }
+.manifest-clouds--reduced .manifest-clouds__art, .manifest-clouds--reduced .manifest-clouds__cloud { animation: none !important; }
+.manifest-clouds__horizon { fill: currentColor; opacity: .16; }
+.manifest-clouds__content { position: relative; z-index: 1; }
+.manifest-chart { margin: 0; padding: 22px; border: 1px solid #e5e9ef; border-radius: 14px; background: #fff; color: #273039; }
+.manifest-chart__heading { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 14px; font-weight: 600; }
+.manifest-chart__heading small { color: #707983; font-size: 11px; font-weight: 450; }
+.manifest-chart svg { display: block; width: 100%; overflow: visible; }
+.manifest-chart__grid { fill: none; stroke: #e8edf0; stroke-width: 1; }
+.manifest-chart__axis-label { fill: #7b848c; font-size: 12px; }
+.manifest-chart__legend { display: flex; gap: 16px; margin: 6px 0 0; padding: 0; list-style: none; color: #606b73; font-size: 12px; }
+.manifest-chart__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.manifest-chart__legend-marker { width: 8px; height: 8px; border-radius: 50%; }
+.manifest-motion { animation-duration: var(--manifest-motion-duration, 500ms); animation-delay: var(--manifest-motion-delay, 0ms); animation-fill-mode: both; animation-timing-function: cubic-bezier(.2,.75,.25,1); }
+.manifest-motion--fade-in { animation-name: manifest-fade-in; }
+.manifest-motion--slide-up { animation-name: manifest-slide-up; }
+.manifest-motion--slide-down { animation-name: manifest-slide-down; }
+.manifest-motion--fade-slide-up { animation-name: manifest-fade-slide-up; }
+.manifest-motion--fade-slide-down { animation-name: manifest-fade-slide-down; }
+@keyframes manifest-fade-in { from { opacity: var(--manifest-motion-opacity, 0); } to { opacity: 1; } }
+@keyframes manifest-slide-up { from { transform: translateY(var(--manifest-motion-distance, 12px)); } to { transform: translateY(0); } }
+@keyframes manifest-slide-down { from { transform: translateY(calc(-1 * var(--manifest-motion-distance, 12px))); } to { transform: translateY(0); } }
+@keyframes manifest-fade-slide-up { from { opacity: var(--manifest-motion-opacity, 0); transform: translateY(var(--manifest-motion-distance, 12px)); } to { opacity: 1; transform: translateY(0); } }
+@keyframes manifest-fade-slide-down { from { opacity: var(--manifest-motion-opacity, 0); transform: translateY(calc(-1 * var(--manifest-motion-distance, 12px))); } to { opacity: 1; transform: translateY(0); } }
+@keyframes manifest-cloud-drift { from { transform: translateX(-8px); } to { transform: translateX(10px); } }
+@media (max-width: 680px) {
+  .manifest-grid { grid-template-columns: 1fr; }
+  .manifest-navigation { position: relative; flex-wrap: wrap; gap: 12px; }
+  .manifest-navigation__menu { display: block; margin-left: auto; }
+  .manifest-navigation__toggle { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 0 12px; border: 1px solid #d9e0e4; border-radius: 8px; cursor: pointer; list-style: none; }
+  .manifest-navigation__toggle::-webkit-details-marker { display: none; }
+  .manifest-navigation__chevron { width: 7px; height: 7px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(45deg) translateY(-2px); }
+  .manifest-navigation__menu[open] .manifest-navigation__chevron { transform: rotate(225deg) translate(-1px, -1px); }
+  .manifest-navigation__menu > ul { position: absolute; z-index: 3; top: calc(100% + 6px); right: 0; display: flex; flex-direction: column; gap: 0; min-width: 190px; padding: 6px; border: 1px solid #dce2e6; border-radius: 10px; background: #fff; box-shadow: 0 12px 28px rgba(25, 36, 42, .12); }
+  .manifest-navigation__menu:not([open]) > ul { display: none; }
+  .manifest-navigation__menu[open][data-motion="fade"] > ul { animation: manifest-menu-fade var(--manifest-menu-duration, 240ms) ease-out both; }
+  .manifest-navigation__menu[open][data-motion="slide-down"] > ul { animation: manifest-menu-slide var(--manifest-menu-duration, 240ms) ease-out both; }
+  .manifest-navigation__menu[open][data-motion="none"] > ul { animation: none; }
+  .manifest-navigation__menu li a { display: block; padding: 11px 12px; border-radius: 6px; }
+  .manifest-navigation__menu li a:hover, .manifest-navigation__menu li a:focus-visible { background: #f1f5f4; }
+  .manifest-chart { padding: 15px; }
+}
+@keyframes manifest-menu-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes manifest-menu-slide { from { opacity: 0; transform: translateY(-7px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .manifest-motion:not(.catalog-canvas[data-motion-preview="enabled"] .manifest-motion),
+  .manifest-clouds__art:not(.catalog-canvas[data-motion-preview="enabled"] .manifest-clouds__art),
+  .manifest-clouds__cloud:not(.catalog-canvas[data-motion-preview="enabled"] .manifest-clouds__cloud) { animation: none !important; scroll-behavior: auto !important; }
+  .manifest-navigation__menu[open]:not(.catalog-canvas[data-motion-preview="enabled"] .manifest-navigation__menu[open]) > ul { animation: none !important; }
+}

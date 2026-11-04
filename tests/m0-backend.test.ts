@@ -9,8 +9,10 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { MemoryProjectStore } from '../services/api/src/domain.ts';
 import { createDesignerMcpServer, EDITOR_URI } from '../services/api/src/mcp.ts';
 import { createDesignerHttpServer } from '../services/api/src/http.ts';
-import { initialProject, hashSnapshot, makeEditCommand, M0Error, stableStringify, applyOperations, createHeroBlock, validateSnapshot } from '@design-workbench/m0-contract';
+import { initialProject, hashSnapshot, makeEditCommand, M0Error, stableStringify, applyOperations, createHeroBlock, validateCommand, validateSnapshot, MAX_COMMAND_UTF8_BYTES } from '@design-workbench/m0-contract';
 import { heroProject } from './fixtures/m0-project.ts';
+import { createSalesDashboardRecipe } from '../packages/catalog/src/recipes.ts';
+import { validateCatalogPage, type CatalogNode, type CatalogPage } from '../packages/catalog/src/index.ts';
 import type { ApplyOpsCommand, M0Project } from '@design-workbench/m0-contract';
 
 const make = (key = 'edit-one', title = 'Un titre modifié', version = 0): ApplyOpsCommand => ({
@@ -42,6 +44,124 @@ test('la fixture Hero historique reste lisible sans migration ni suppression imp
   const twoBlocks = structuredClone(previous.snapshot);
   twoBlocks.pages[0]!.composition.content.push(createHeroBlock('second-hero'));
   assert.throws(() => validateSnapshot(twoBlocks), code('INVALID_INPUT'));
+});
+
+test('CatalogPage versionnée est une projection réversible et son diff conserve le Hero historique', async () => {
+  const empty = initialProject(), catalogPage = createSalesDashboardRecipe({ motion: { speed: 1.5 } });
+  const preview = applyOperations(empty.snapshot, [{ op: 'set_catalog_page', pageId: 'page-home', catalogPage }]);
+  assert.deepEqual(preview.pages[0]!.catalogPage, catalogPage);
+  assert.deepEqual(preview.pages[0]!.composition.content, []);
+  assert.deepEqual(empty.snapshot.pages[0]!.composition.content, []);
+  const add = makeEditCommand(empty, preview, 'catalog-page-add');
+  assert.deepEqual(add.payload.operations.map((operation) => operation.op), ['set_catalog_page']);
+  assert.deepEqual((await new MemoryProjectStore(empty).commit(add)).snapshot, preview);
+
+  const projected = { ...empty, snapshot: preview };
+  const remove = makeEditCommand(projected, empty.snapshot, 'catalog-page-remove');
+  assert.deepEqual(remove.payload.operations, [{ op: 'set_catalog_page', pageId: 'page-home', catalogPage: null }]);
+  assert.deepEqual(new MemoryProjectStore(projected).commit(remove).snapshot, empty.snapshot);
+
+  const oldHero = heroProject();
+  assert.throws(() => applyOperations(oldHero.snapshot, [{ op: 'set_catalog_page', pageId: 'page-home', catalogPage }]), code('CAPABILITY_UNSUPPORTED'));
+  const locked = initialProject();
+  locked.snapshot.locks = [{ pageId: 'page-home', blockId: null, properties: ['catalogPage'] }];
+  assert.throws(() => applyOperations(locked.snapshot, [{ op: 'set_catalog_page', pageId: 'page-home', catalogPage }]), code('LOCKED_TARGET'));
+});
+
+test('un Snapshot accepte les huit niveaux documentés du catalogue', () => {
+  const nestedNode = (depth: number, maxDepth: number): CatalogNode => ({
+    id: `section-${depth}`,
+    component: { id: 'section', version: '1.0.0' },
+    props: { variant: 'default' },
+    slots: { content: depth < maxDepth ? [nestedNode(depth + 1, maxDepth)] : [] },
+  });
+  const project = initialProject();
+  project.snapshot.pages[0]!.catalogPage = {
+    schemaVersion: 1,
+    release: { id: 'manifest-core', version: '0.3.0' },
+    nodes: [nestedNode(0, 7)],
+  } satisfies CatalogPage;
+  assert.doesNotThrow(() => validateCatalogPage(project.snapshot.pages[0]!.catalogPage!));
+  assert.doesNotThrow(() => validateSnapshot(project.snapshot));
+  const tooDeep = structuredClone(project.snapshot);
+  tooDeep.pages[0]!.catalogPage!.nodes = [nestedNode(0, 8)];
+  assert.throws(() => validateSnapshot(tooDeep), code('INVALID_INPUT'));
+});
+
+test('la recette ventes borne vitesse, durée, direction et densité des animations', () => {
+  const fast = createSalesDashboardRecipe({ motion: { speed: 1.5, id: 'slide-down' } });
+  const slow = createSalesDashboardRecipe({ motion: { speed: 0.5, durationMs: 1200, delayMs: 9000, distancePx: 900 } });
+  const fastMotion = fast.nodes.find((node) => node.id === 'sales-chart-revenue')!.motion!;
+  const slowMotion = slow.nodes.find((node) => node.id === 'sales-chart-revenue')!.motion!;
+  assert.equal(fastMotion.id, 'slide-down');
+  assert.equal(fastMotion.config.durationMs, 373);
+  assert.equal(slowMotion.config.durationMs, 2400);
+  assert.equal(slowMotion.config.delayMs, 2000);
+  assert.equal(slowMotion.config.distancePx, 40);
+  const clouds = createSalesDashboardRecipe({ cloudSpeed: 8, cloudDensity: 'high' }).nodes.find((node) => node.id === 'cloud-cover')!;
+  assert.equal(clouds.props.speed, 1);
+  assert.equal(clouds.props.density, 'high');
+  const fasterClouds = createSalesDashboardRecipe({ motion: { speed: 1.5 } }).nodes.find((node) => node.id === 'cloud-cover')!;
+  assert.equal(fasterClouds.props.motionSpeedMultiplier, 1.5);
+});
+
+test('un Snapshot catalogue supérieur à 32 Ko reste accepté par le contrat et Ajv', () => {
+  const project = initialProject();
+  const longText = 'x'.repeat(1600);
+  const catalogPage = createSalesDashboardRecipe();
+  catalogPage.nodes = Array.from({ length: 30 }, (_, index) => ({
+    id: `text-${index}`,
+    component: { id: 'text' as const, version: '1.0.0' },
+    props: { text: longText, tone: 'body' },
+  }));
+  project.snapshot.pages[0]!.catalogPage = catalogPage;
+  const bytes = new TextEncoder().encode(JSON.stringify(project.snapshot)).byteLength;
+  assert.ok(bytes > 32_768, `expected >32 KiB, got ${bytes}`);
+  assert.ok(bytes < 160 * 1024, `expected <160 KiB, got ${bytes}`);
+  validateSnapshot(project.snapshot);
+  assert.deepEqual(new MemoryProjectStore(project).read('project-m0').snapshot, project.snapshot);
+});
+
+test('une commande M0 accepte exactement 192 Kio UTF-8 et rejette un octet de plus', () => {
+  const catalogPage = createSalesDashboardRecipe();
+  catalogPage.nodes = Array.from({ length: 30 }, (_, index) => ({
+    id: `text-${index}`,
+    component: { id: 'text' as const, version: '1.0.0' },
+    props: { text: 'x'.repeat(1600), tone: 'body' as const },
+  }));
+  const command: ApplyOpsCommand = {
+    projectId: 'project-m0', expectedDraftVersion: 0, idempotencyKey: 'catalog-command-limit', action: 'apply_ops',
+    payload: { operations: Array.from({ length: 4 }, (_, index) => ({
+      op: 'set_catalog_page' as const, pageId: 'page-home', catalogPage: structuredClone(catalogPage),
+    })) },
+  };
+  const enc = () => new TextEncoder().encode(JSON.stringify(command)).byteLength;
+  let excess = enc() - MAX_COMMAND_UTF8_BYTES;
+  assert.ok(excess > 0, 'fixture must exercise the command-size boundary');
+  for (const operation of command.payload.operations) {
+    if (operation.op !== 'set_catalog_page' || !operation.catalogPage) continue;
+    for (const node of operation.catalogPage.nodes) {
+      const text = node.props.text;
+      if (typeof text !== 'string' || excess <= 0) continue;
+      const shrink = Math.min(text.length, excess);
+      node.props.text = text.slice(0, text.length - shrink);
+      excess -= shrink;
+    }
+  }
+  assert.equal(excess, 0);
+  assert.equal(enc(), MAX_COMMAND_UTF8_BYTES);
+  validateCommand(command);
+  assert.equal(new MemoryProjectStore().commit(command).snapshot.pages[0]!.catalogPage?.nodes.length, 30);
+
+  const oversized = structuredClone(command);
+  const textNode = oversized.payload.operations
+    .filter((operation) => operation.op === 'set_catalog_page')
+    .flatMap((operation) => operation.op === 'set_catalog_page' && operation.catalogPage ? operation.catalogPage.nodes : [])
+    .find((node) => String(node.props.text).length < 1600)!;
+  textNode.props.text = `${String(textNode.props.text)}x`;
+  assert.equal(new TextEncoder().encode(JSON.stringify(oversized)).byteLength, MAX_COMMAND_UTF8_BYTES + 1);
+  assert.throws(() => validateCommand(oversized), /192 Ko UTF-8 maximum/);
+  assert.ok(MAX_COMMAND_UTF8_BYTES < 256 * 1024, 'the compact command leaves room for MCP framing');
 });
 
 test('insertion puis modification dans un lot résout le nouveau bloc sans muter la base', () => {
@@ -295,7 +415,7 @@ test('HTTP local : authentification, origine, corps borné et vrai client MCP', 
   assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: 'Bearer invalid', 'Content-Type': 'application/json' }, body: '{}' })).status, 401);
   assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, Origin: 'https://foreign.invalid', 'Content-Type': 'application/json' }, body: '{}' })).status, 403);
   assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{' })).status, 400);
-  assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'x'.repeat(70_000) }) })).status, 413);
+  assert.equal((await fetch(`${base}/mcp`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' }, body: JSON.stringify({ text: 'x'.repeat(270_000) }) })).status, 413);
   const client = new Client({ name: 'http-m0-test', version: '0.0.0' });
   t.after(() => client.close());
   await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/mcp`), { requestInit: { headers: { Authorization: `Bearer ${token}` } } }));
