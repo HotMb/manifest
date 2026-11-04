@@ -97,8 +97,8 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
   const htmlPath = options.htmlPath ?? defaultHtmlPath;
   const server = new McpServer({ name: 'manifest-m0', version: '0.0.0' }, {
     instructions: options.suggestionJobs
-      ? 'Ouvrez open_designer en transmettant la demande envoyée dans userRequest, la proposition déjà formulée dans assistantProposal si elle existe et backgroundColor si une couleur précise est demandée. Manifest ne lit pas la conversation. Les suggestions sont des propositions en mémoire ; elles ne modifient jamais le brouillon sans une action explicite.'
-      : 'Ouvrez open_designer en transmettant la demande envoyée dans userRequest, la proposition déjà formulée dans assistantProposal si elle existe et backgroundColor si une couleur précise est demandée. Manifest ne lit pas la conversation. Les outils de données ne rouvrent pas la vue. Stockage éphémère en mémoire : aucune IA, approbation, export ou identité OAuth de production.',
+      ? 'Ouvrez open_designer en transmettant uniquement la demande utilisateur déjà envoyée dans userRequest. Si userRequest et assistantProposal sont tous deux fournis, userRequest est prioritaire ; transmettez assistantProposal seulement si une proposition existe déjà, ne l’inventez jamais. Sans demande ni proposition, ouvrez Manifest avec le champ vide et le canevas blanc. Manifest ne lit pas la conversation. Les suggestions sont des propositions en mémoire ; elles ne modifient jamais le brouillon sans action explicite.'
+      : 'Ouvrez open_designer en transmettant uniquement la demande utilisateur déjà envoyée dans userRequest. Si userRequest et assistantProposal sont tous deux fournis, userRequest est prioritaire ; transmettez assistantProposal seulement si une proposition existe déjà, ne l’inventez jamais. Sans demande ni proposition, ouvrez Manifest avec le champ vide et le canevas blanc. Manifest ne lit pas la conversation. Les outils de données ne rouvrent pas la vue. Stockage éphémère en mémoire : aucune IA, approbation, export ou identité OAuth de production.',
   });
   registerAppResource(server, 'design-editor', EDITOR_URI, { mimeType: RESOURCE_MIME_TYPE }, async () => ({
     contents: [{
@@ -110,7 +110,7 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
   }));
   registerAppTool(server, 'open_designer', {
     title: 'Ouvrir l’atelier de design',
-    description: 'Ouvre l’espace Manifest et lui transmet explicitement la demande du chat dans userRequest, une proposition déjà formulée dans assistantProposal et, si demandé, backgroundColor (#000000 pour noir). Sans ces arguments le champ reste vide. Le lancement ne remplace pas le brouillon et ne lance pas de modèle.',
+    description: 'Ouvre l’espace Manifest. Transmets la demande utilisateur explicitement envoyée dans userRequest ; si userRequest et assistantProposal sont tous deux fournis, Manifest privilégie userRequest. Transmets assistantProposal uniquement si elle a déjà été formulée, sans l’inventer. Sans demande ni proposition, le champ reste vide et le canevas reste blanc. backgroundColor ne change que si une couleur est explicitement demandée. Le lancement ne remplace pas le brouillon et ne lance pas de modèle.',
     inputSchema: launchInput,
     outputSchema: summarySchema,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },

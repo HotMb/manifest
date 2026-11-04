@@ -25,7 +25,7 @@
     "team:start": "node scripts/start-team.mjs",
     "package:desktop-plugin": "npm run build && node integrations/chatgpt-desktop/build.mjs",
     "smoke:desktop-plugin": "node integrations/chatgpt-desktop/smoke.mjs",
-    "test:m0": "tsx --test tests/m0-backend.test.ts tests/m0-bundle.test.ts tests/suggestion-jobs.test.ts tests/provider-runtime.test.ts packages/host-adapters/test/adapter.test.ts",
+    "test:m0": "tsx --test tests/m0-backend.test.ts tests/m0-bundle.test.ts tests/suggestion-jobs.test.ts tests/provider-runtime.test.ts packages/host-adapters/test/adapter.test.ts apps/editor-web/test/launch-intent.test.ts",
     "test:providers": "tsx --test tests/model-providers.test.ts tests/provider-simulator.test.ts tests/provider-orchestrator.test.ts tests/provider-http-adapter.test.ts apps/editor-web/test/model-selection.test.ts",
     "build": "npm run build --workspace @design-workbench/editor-web",
     "dev": "npm run dev --workspace @design-workbench/editor-web",

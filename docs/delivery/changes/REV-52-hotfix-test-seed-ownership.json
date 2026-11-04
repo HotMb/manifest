@@ -1,0 +1,22 @@
+{
+  "ownedPaths": [
+    "apps/editor-web/src/main.tsx",
+    "apps/editor-web/src/manifest.css",
+    "apps/editor-web/test/launch-intent.test.ts",
+    "tests/e2e/launch-context.spec.ts",
+    "integrations/chatgpt-desktop/plugin.json",
+    "services/api/src/mcp.ts",
+    "packages/m0-contract/src/index.ts",
+    "packages/host-adapters/test/adapter.test.ts",
+    "docs/spec/contracts/examples/snapshot-empty.json",
+    "package.json",
+    "docs/evidence/HOTFIX-01"
+  ],
+  "acceptance": [
+    "Quand le chat fournit userRequest et assistantProposal, la demande explicite de l’utilisateur préremplit le champ et pilote l’analyse après 1 500 ms ; une proposition d’assistant n’est utilisée qu’en absence de userRequest explicite.",
+    "L’ouverture sans demande n’invente aucun brief ni composant : un projet initial vide affiche un canevas blanc. Les brouillons existants réellement enregistrés restent préservés.",
+    "À 736×704 px, l’atelier intégré tient dans la hauteur disponible sans défilement de page ; seuls les panneaux latéraux et l’aperçu défilent intérieurement, et les trois zones restent visibles.",
+    "Sous 560 px de largeur, Manifest reste borné au viewport et permet de passer entre Décrire, Aperçu et Suggestions sans empiler les zones en une longue page.",
+    "Les tests automatisés dans la CI couvrent la priorité de la demande, le Snapshot de départ sans style imposé, les brouillons existants et les dimensions intégrées 736×704 et 390×844 sans appel API réel."
+  ]
+}

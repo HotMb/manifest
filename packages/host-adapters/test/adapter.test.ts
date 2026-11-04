@@ -24,7 +24,11 @@ function localFixture(project: M0Project | null = heroProject()) {
 async function populatedMemoryTransport() {
   const transport = createBrowserTransport({ storage: null });
   const empty = await transport.read();
-  await transport.commit(makeEditCommand(empty, heroProject().snapshot, 'fixture-hero-insertion'));
+  // Seed only the content of an existing draft. Project metadata is immutable
+  // through M0 edit commands and the initial project brief is intentionally neutral.
+  const populated = structuredClone(empty.snapshot);
+  populated.pages[0]!.composition.content = structuredClone(heroProject().snapshot.pages[0]!.composition.content);
+  await transport.commit(makeEditCommand(empty, populated, 'fixture-hero-insertion'));
   return transport;
 }
 
@@ -91,6 +95,25 @@ test('stockage local : le verrou partagé protège deux vues et la réouverture 
   const reopened = createBrowserTransport(fixture);
   assert.equal(reopened.kind, 'browser-local');
   assert.equal((await reopened.read()).snapshot.pages[0]!.composition.content[0]!.props.title, 'Atelier enregistré');
+});
+
+test('une nouvelle session reprend le brouillon sauvegardé sans le remplacer par le projet initial vide', async () => {
+  const fixture = localFixture(null);
+  const firstSession = createBrowserTransport(fixture);
+  const empty = await firstSession.read();
+  const snapshot = structuredClone(empty.snapshot);
+  snapshot.pages[0]!.composition.content = structuredClone(heroProject().snapshot.pages[0]!.composition.content);
+  snapshot.pages[0]!.composition.content[0]!.props.title = 'Brouillon conservé après réouverture';
+  const saved = await firstSession.commit(makeEditCommand(empty, snapshot, 'save-before-reopen'));
+  const storedBeforeReopen = fixture.values.get('design-workbench:m0:project-m0:v1');
+
+  const nextSession = createBrowserTransport(fixture);
+  const reopened = await nextSession.read();
+
+  assert.equal(reopened.snapshot.pages[0]!.composition.content[0]!.props.title, 'Brouillon conservé après réouverture');
+  assert.equal(reopened.draftVersion, saved.draftVersion);
+  assert.equal(reopened.contentHash, saved.contentHash);
+  assert.equal(fixture.values.get('design-workbench:m0:project-m0:v1'), storedBeforeReopen);
 });
 
 test('un brouillon local illisible n’est pas écrasé par la fixture', async () => {

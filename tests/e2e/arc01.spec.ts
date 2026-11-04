@@ -34,38 +34,65 @@ async function screenshot(page: Page, filename: string) {
   await page.screenshot({ path: `${SCREENSHOTS}${filename}`, fullPage: true, animations: 'disabled' });
 }
 
-test('le brief, l’aperçu et les suggestions restent réunis sur une seule surface', async ({ page }) => {
+test('les trois zones restent visibles à partir de 560 px et se commutent sous ce seuil', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openEditor(page);
-  for (const width of [1440, 1100, 1000, 375]) {
+  for (const width of [1440, 1100, 1000, 736, 560]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect(page.locator('.description-panel')).toBeVisible();
     await expect(page.locator('.canvas-region')).toBeVisible();
     await expect(page.locator('.inspector')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Panneaux de l’atelier' })).toBeHidden();
     await expect(page.locator('.mobile-tabs, .workflow-bar, .inspector-tabs')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Réglages du bloc', exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   }
+  await page.setViewportSize({ width: 559, height: 844 });
+  const nav = page.getByRole('navigation', { name: 'Panneaux de l’atelier' });
+  await expect(nav).toBeVisible();
+  await expect(page.locator('.description-panel')).toBeVisible();
+  await expect(page.locator('.canvas-region')).toBeHidden();
+  const describe = page.getByRole('button', { name: 'Décrire', exact: true });
+  const preview = page.getByRole('button', { name: 'Aperçu', exact: true });
+  const suggestions = page.getByRole('button', { name: 'Suggestions', exact: true });
+  await describe.focus();
+  await page.keyboard.press('Tab');
+  await expect(preview).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(suggestions).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(preview).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.canvas-region')).toBeVisible();
+  await expect(page.locator('.description-panel')).toBeHidden();
+  await expect(preview).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });
 
-test('sur mobile la saisie et les autres zones restent accessibles sans changer de page', async ({ page }) => {
+test('le lien clavier Aller à l’aperçu ouvre le panneau sur téléphone', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await openEditor(page);
+  const skipLink = page.getByRole('link', { name: 'Aller à l’aperçu', exact: true });
+  await skipLink.focus();
+  await expect(skipLink).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.canvas-region')).toBeVisible();
+  await expect(page.locator('.description-panel')).toBeHidden();
+  await expect(page.locator('.canvas-region')).toBeFocused();
+});
+
+test('sur mobile la saisie pilote le candidat et les panneaux restent accessibles sans changer de page', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 844 });
   await openEditor(page);
   const description = page.locator('#page-description');
   await description.fill('Un fond noir');
   await expect(description).toBeFocused();
+  await page.getByRole('button', { name: 'Aperçu', exact: true }).click();
   await expect(page.getByRole('main', { name: 'Aperçu du candidat local', exact: true })).toBeVisible({ timeout: 5000 });
   await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-  expect(await page.evaluate(() => {
-    const status = document.querySelector('.inspector .analysis-state');
-    const candidate = document.querySelector('.inspector .hint-list');
-    const examples = document.querySelector('.inspector .component-examples');
-    return Boolean(status && candidate && examples
-      && (status.compareDocumentPosition(examples) & Node.DOCUMENT_POSITION_FOLLOWING)
-      && (candidate.compareDocumentPosition(examples) & Node.DOCUMENT_POSITION_FOLLOWING));
-  })).toBe(true);
   expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).not.toBeNull();
   await page.getByRole('button', { name: 'Conserver la proposition locale', exact: true }).click();
+  await page.getByRole('button', { name: 'Décrire', exact: true }).click();
   await expect(description).toHaveValue('Un fond noir');
   await expect(page.locator('.description-panel')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Brouillon v1', exact: true })).toBeVisible();
@@ -150,8 +177,12 @@ test('la largeur 375 px garde le contenu et les actions accessibles au clavier',
   await page.keyboard.type('Un atelier sur mobile');
   await expect(title).toBeFocused();
   await expect(title).toHaveValue('Un atelier sur mobile');
+  await page.getByRole('button', { name: 'Aperçu', exact: true }).focus();
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Un atelier sur mobile', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Suggestions', exact: true }).click();
   await expect(page.getByRole('complementary', { name: 'Panneau de conception', exact: true })).toBeVisible();
+  await expect(page.locator('.canvas-region')).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await screenshot(page, 'arc01-mobile-workspace.png');
   await expect(page.getByRole('button', { name: 'Brouillon v1', exact: true })).toBeVisible();

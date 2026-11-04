@@ -13,7 +13,7 @@
         "developerName": "Manifest",
         "category": "Productivity",
         "capabilities": ["Interactive"],
-        "defaultPrompt": "Ouvre l’éditeur Manifest et affiche son aperçu de page."
+        "defaultPrompt": "Ouvre Manifest sans ajouter de composant ; laisse l’aperçu blanc jusqu’à ce que je décrive ma page."
       }
     }
   }

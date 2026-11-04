@@ -20,6 +20,9 @@ async function openEmpty(page: Page) {
     sessionStorage.setItem(marker, 'done');
   }, { key: STORAGE_KEY, marker: resetToken });
   await page.goto('/');
+  if ((page.viewportSize()?.width ?? 1280) < 560) {
+    await page.getByRole('button', { name: 'Aperçu', exact: true }).click();
+  }
   await expect(page.getByRole('region', { name: 'Canevas vide', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ajouter une section d’accueil', exact: true })).toBeVisible();
 }
@@ -36,9 +39,10 @@ test('un nouveau projet affiche un canevas blanc réellement vide, sans Hero ni 
   await capture(page, '01-empty-desktop');
 
   await page.setViewportSize({ width: 375, height: 844 });
+  await page.getByRole('button', { name: 'Aperçu', exact: true }).click();
   await capture(page, '02-empty-mobile');
   await expect(page.locator('.canvas-region')).toBeVisible();
-  await expect(page.locator('.inspector')).toBeVisible();
+  await expect(page.locator('.inspector')).toBeHidden();
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });
@@ -53,23 +57,41 @@ test('l’ajout manuel du premier Hero est annulable, sauvegardable et conservé
   await expect(page.getByRole('region', { name: 'Canevas vide', exact: true })).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Titre', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Rétablir', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Titre', exact: true }).fill('Notre premier espace');
+  const title = 'Notre premier espace';
+  await page.getByRole('textbox', { name: 'Titre', exact: true }).fill(title);
+  await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Voir la version 1', exact: true })).toBeVisible();
+  const storedTitle = await page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw).project.snapshot.pages[0].composition.content[0].props.title : null;
+  }, STORAGE_KEY);
+  expect(storedTitle).toBe(title);
+  const savedRecord = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+  expect(savedRecord).not.toBeNull();
   await capture(page, '03-manual-hero');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Notre premier espace', exact: true })).toBeVisible();
   await expect(page.locator('.site-hero')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Ajouter une section d’accueil', exact: true })).toHaveCount(0);
+  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(savedRecord);
 });
 
-test('une ouverture à 375 px présente toutes les zones dans la même page', async ({ page }) => {
+test('une ouverture à 375 px garde une seule zone visible et permet de passer aux suggestions', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 844 });
   await page.goto('/');
   const description = page.getByRole('textbox', { name: 'Description de la page', exact: true });
   await expect(description).toBeVisible();
-  await expect(page.locator('.mobile-tabs, .workflow-bar')).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'Panneaux de l’atelier' })).toBeVisible();
+  await expect(page.locator('.canvas-region')).toBeHidden();
+  await expect(page.locator('.inspector')).toBeHidden();
+  await page.getByRole('button', { name: 'Aperçu', exact: true }).click();
   await expect(page.getByRole('main', { name: 'Aperçu modifiable de la page', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Canevas vide', exact: true })).toBeVisible();
   await capture(page, '06-direct-mobile-description');
+  await page.getByRole('button', { name: 'Suggestions', exact: true }).click();
+  await expect(page.locator('.inspector')).toBeVisible();
+  await expect(page.locator('.canvas-region')).toBeHidden();
+  await page.getByRole('button', { name: 'Décrire', exact: true }).click();
   await description.fill('Une intention à saisir sur mobile');
   await expect(description).toHaveValue('Une intention à saisir sur mobile');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
@@ -261,11 +283,13 @@ test('le mouvement réduit est expliqué et l’utilisateur peut activer les ani
   await page.setViewportSize({ width: 375, height: 812 });
   await openEmpty(page);
   await page.clock.pauseAt(new Date('2026-11-04T12:01:00.000Z'));
+  await page.getByRole('button', { name: 'Décrire', exact: true }).click();
   const input = page.getByRole('textbox', { name: 'Description de la page', exact: true });
   await input.fill('Un tableau de bord de ventes avec des nuages. Fais apparaître les graphiques en fondu et vers le haut.');
   await page.clock.runFor(1499);
   await expect(page.locator('.manifest-chart')).toHaveCount(0);
   await page.clock.runFor(1);
+  await page.getByRole('button', { name: 'Aperçu', exact: true }).click();
   await expect(page.locator('.manifest-chart')).toHaveCount(2);
   const chart = page.locator('.manifest-chart').first();
   const clouds = page.locator('.manifest-clouds__art');

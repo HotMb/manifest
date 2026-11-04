@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "projectTitle": "Portfolio exemple",
+  "projectTitle": "Nouveau projet",
   "pages": [
     {
       "id": "page-home",
@@ -28,7 +28,7 @@
       },
       "color.accent": {
         "kind": "color",
-        "value": "#2454c6"
+        "value": "#666666"
       }
     }
   },
@@ -40,18 +40,13 @@
   },
   "locks": [],
   "designBrief": {
-    "product": "Portfolio atelier architecture",
+    "product": "Interface à concevoir",
     "character": [
-      "précis",
-      "accueillant"
+      "à définir"
     ],
-    "world": "Plans, matières et lumière naturelle",
-    "moments": [
-      "Photographies des projets"
-    ],
-    "signature": "Repères de plan discrets",
-    "brandConstraints": [
-      "Conserver une page claire et lisible"
-    ]
+    "world": "À définir selon la demande",
+    "moments": [],
+    "signature": "",
+    "brandConstraints": []
   }
 }

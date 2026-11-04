@@ -103,6 +103,7 @@ function Editor() {
   const [saving, setSaving] = useState(false);
   const [syncEpoch, setSyncEpoch] = useState(0);
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
+  const [compactPanel, setCompactPanel] = useState<'describe' | 'preview' | 'suggestions'>('describe');
   const [systemReducedMotion, setSystemReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [motionPreviewOverride, setMotionPreviewOverride] = useState(false);
   const [description, setDescription] = useState('');
@@ -190,7 +191,9 @@ function Editor() {
       setLaunchFeedback('La demande reçue concerne une ancienne version. Le brouillon reste ouvert ; son fond n’a pas été remplacé.');
       return;
     }
-    const text = launchContext.assistantProposal ?? launchContext.userRequest;
+    // The explicit user brief is authoritative. An assistant proposal is only
+    // a fallback when the host did not send a user request.
+    const text = launchContext.userRequest?.trim() ? launchContext.userRequest : launchContext.assistantProposal;
     if (text) {
       if (!descriptionEdited.current) setDescription(text);
       else setPendingLaunchText(text);
@@ -607,7 +610,13 @@ function Editor() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a className="skip-link" href="#page-preview">Aller à l’aperçu</a>
+        <a className="skip-link" href="#page-preview" onClick={(event) => {
+          if (window.matchMedia('(max-width: 559px)').matches) {
+            event.preventDefault();
+            setCompactPanel('preview');
+            requestAnimationFrame(() => document.getElementById('page-preview')?.focus());
+          }
+        }}>Aller à l’aperçu</a>
         <div className="app-identity"><div className="workbench-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18V6l8 7 8-7v12M4 6l8 12 8-12" /></svg></div><strong>manifest<span>.</span></strong></div>
         <div className="project-heading"><div className="project-heading__copy"><span>{working.projectTitle}<span className="project-divider" aria-hidden="true"> / </span>Accueil</span><small>Design · Espace de conception</small></div><span className="draft-badge">Brouillon</span><button className="version-button" onClick={() => openReport('version')} aria-label={`Voir la version ${confirmed.draftVersion}`}>v{confirmed.draftVersion}</button></div>
         <div className="topbar-actions"><button className="button save-button" onClick={() => void save()} disabled={saving || !dirty || conflict || Boolean(retryRef.current)} aria-busy={saving}>{saving ? 'Enregistrement…' : 'Enregistrer le brouillon'}</button><button className="button report-button" onClick={() => openReport('report')}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5h7l3 3V17.5H5zM12 2.5V6h3M8 9h4M8 12h4" /></svg>Préparer le rapport</button></div>
@@ -618,8 +627,13 @@ function Editor() {
       <div className="workbench-content">
         <Puck config={config} data={canvasSnapshot!.pages[0]!.composition} onChange={onPuckChange} iframe={{ enabled: false }} permissions={{ drag: false, insert: false, delete: false, duplicate: false, edit: !previewingAnyProposal && !saving }} ui={{ itemSelector: hasCanvasHero ? { index: 0, zone: 'root:default-zone' } : null }} dictionary={dictionary}>
         <PuckSync composition={canvasSnapshot!.pages[0]!.composition} epoch={`${syncEpoch}:${previewingLaunch ? launchContext?.id : previewingProposal || previewingPreviousProposal ? modelProposal?.generationId : previewingLocalCandidate ? `${localPreview!.analysis.baseSignature}:${localPreview!.analysis.description}` : 'manual'}`} />
-        <div className="workspace">
-          <aside className="description-panel" aria-labelledby="description-title">
+        <div className="workspace" data-mobile-panel={compactPanel}>
+          <nav className="workspace-mobile-nav" aria-label="Panneaux de l’atelier">
+            <button type="button" aria-pressed={compactPanel === 'describe'} aria-controls="workspace-description" onClick={() => setCompactPanel('describe')}>Décrire</button>
+            <button type="button" aria-pressed={compactPanel === 'preview'} aria-controls="page-preview" onClick={() => setCompactPanel('preview')}>Aperçu</button>
+            <button type="button" aria-pressed={compactPanel === 'suggestions'} aria-controls="workspace-suggestions" onClick={() => setCompactPanel('suggestions')}>Suggestions</button>
+          </nav>
+          <aside id="workspace-description" className="description-panel" aria-labelledby="description-title">
             <div className="panel-heading"><span className="panel-symbol" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 4h12M4 8h12M4 12h8M4 16h5" /></svg></span><h2 id="description-title">Décrivez votre interface</h2><span className="local-label">M0</span></div>
             <div className="description-body"><p>Décris la page ; son aperçu et les suggestions restent dans cet espace.</p><p className="launch-status" role="status">{launchFeedback || 'Aucune demande transmise par le chat. Écris ici pour commencer.'}</p>{pendingLaunchBackground && <div className="pending-launch"><button className="button" disabled={dirty || saving || previewingAnyProposal} onClick={resumeLaunchBackground}>Reprendre le fond reçu</button><button className="text-button" onClick={() => { setPendingLaunchBackground(undefined); setLaunchFeedback('Fond reçu ignoré. Le brouillon reste inchangé.'); }}>Ignorer le fond reçu</button></div>}{pendingLaunchText && <div className="pending-launch"><p>Une nouvelle demande est arrivée. Ton texte est conservé.</p><button className="button" onClick={() => { updateDescription(pendingLaunchText); setPendingLaunchText(undefined); }}>Utiliser la demande reçue</button></div>}
               <label className="sr-only" htmlFor="page-description">Description de la page</label>
@@ -643,7 +657,7 @@ function Editor() {
             <div className="canvas-stage"><div className={`canvas-frame canvas-frame--${viewport}`} style={{ backgroundColor: canvasSnapshot!.theme.tokens['color.background'].value }}>{hasCanvasCatalog ? <div className="catalog-canvas" data-motion-preview={motionPreviewOverride ? 'enabled' : undefined}>{renderCatalogPage(canvasCatalog!, { prefersReducedMotion: reducePreviewMotion })}</div> : hasCanvasHero ? <Puck.Preview /> : <div className="empty-canvas" role="region" aria-label="Canevas vide" />}</div></div>
             <div className="canvas-bottom"><p>{previewingLaunch ? 'Fond reçu du chat · aperçu temporaire.' : previewingLocalCandidate ? 'Candidat local temporaire · le brouillon reste inchangé.' : previewingProposal ? 'Candidat temporaire · garde-le ou ignore-le.' : previewingPreviousProposal ? 'Proposition précédente · lecture seule, non applicable.' : hasWorkingCatalog ? 'Page catalogue du brouillon.' : hasWorkingHero ? 'Section d’accueil du brouillon.' : 'Canevas vide · aucun composant ajouté.'}</p>{previewingLaunch ? <div className="proposal-actions"><button className="button button--primary" disabled={saving || conflict} onClick={keepLaunchCandidate}>Conserver le fond</button><button className="button" onClick={() => { setLaunchCandidate(undefined); setLaunchFeedback('Fond proposé ignoré. Le brouillon reste inchangé.'); }}>Ignorer le fond</button></div> : previewingLocalCandidate ? <div className="proposal-actions"><button className="button button--primary" disabled={saving || conflict} onClick={keepLocalCandidate}>Conserver la proposition locale</button><button className="button" disabled={saving} onClick={ignoreLocalCandidate}>Ignorer la proposition locale</button></div> : !previewingAnyProposal && (hasWorkingCatalog ? <span>La page catalogue reste visible dans ce canevas.</span> : hasWorkingHero ? <span>Le contenu et les couleurs sont à gauche.</span> : <button className="button" disabled={saving || conflict} onClick={addFirstHero}>Ajouter une section d’accueil</button>)}</div>
           </main>
-          <aside className="inspector" aria-label="Panneau de conception">
+          <aside id="workspace-suggestions" className="inspector" aria-label="Panneau de conception">
             <div className="panel-heading"><span className="panel-symbol" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5 4h10M5 10h10M5 16h10" /><circle cx="8" cy="4" r="2" /><circle cx="13" cy="10" r="2" /><circle cx="7" cy="16" r="2" /></svg></span><h2>Suggestions</h2><span className="hint-count">{(analysis?.hints.length ?? 0) + (modelProposal ? 1 : 0)} piste{(analysis?.hints.length ?? 0) + (modelProposal ? 1 : 0) === 1 ? '' : 's'}</span></div>
             <div className="suggestions-panel" data-analysis-phase={suggestionPhase}>
               <div className={`analysis-state analysis-state--${suggestionPhase}`} role="status" aria-live="polite"><span className="analysis-indicator" aria-hidden="true" /><div><strong>{suggestionTitle}</strong><span>{suggestionDetail}</span></div></div>

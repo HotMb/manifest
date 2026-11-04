@@ -1,0 +1,28 @@
+{
+  "ownedPaths": [
+    "apps/editor-web/src/main.tsx",
+    "apps/editor-web/src/manifest.css",
+    "apps/editor-web/test/launch-intent.test.ts",
+    "tests/e2e/launch-context.spec.ts",
+    "tests/e2e/arc01.spec.ts",
+    "tests/e2e/component-examples.spec.ts",
+    "tests/e2e/empty-start.spec.ts",
+    "integrations/chatgpt-desktop/plugin.json",
+    "services/api/src/mcp.ts",
+    "packages/m0-contract/src/index.ts",
+    "packages/host-adapters/test/adapter.test.ts",
+    "docs/spec/contracts/examples/snapshot-empty.json",
+    "DESIGN.md",
+    "UX-CONTRACT.md",
+    "package.json",
+    "docs/evidence/HOTFIX-01"
+  ],
+  "acceptance": [
+    "Quand le chat fournit userRequest et assistantProposal, la demande explicite de l’utilisateur préremplit le champ et pilote l’analyse après 1 500 ms ; une proposition d’assistant n’est utilisée qu’en absence de userRequest explicite, cas couvert par un test distinct.",
+    "L’ouverture sans demande n’invente aucun brief ni composant : un projet initial vide affiche un canevas blanc. Les brouillons existants réellement enregistrés restent préservés.",
+    "À 736×704 px, l’atelier intégré tient dans la hauteur disponible sans défilement de page ; les trois zones restent visibles et les panneaux/canevas défilent à l’intérieur lorsque leur contenu dépasse.",
+    "Sous 560 px de largeur, Manifest reste borné au viewport et permet de passer au clavier ou au pointeur entre Décrire, Aperçu et Suggestions sans empiler les zones en une longue page.",
+    "Les règles de DESIGN.md et UX-CONTRACT.md décrivent les seuils réellement éprouvés : trois panneaux compacts dès 560 px, panneaux commutables sous ce seuil, et niveaux typographiques lisibles dans le format intégré.",
+    "Les tests automatisés dans la CI couvrent les cas de lancement, le Snapshot neutre, les brouillons existants, les dimensions 736×704 et 390×844, le non-défilement de page, le défilement interne et la navigation clavier, sans appel API réel."
+  ]
+}

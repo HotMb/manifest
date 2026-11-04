@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productName": "Manifest",
-  "revision": 47,
+  "revision": 55,
   "tickets": [
     {
       "id": "ARC-01",
@@ -713,7 +713,7 @@
       "dependencies": [],
       "ownedPaths": [
         "packages/catalog/",
-        "packages/m0-contract/",
+        "packages/m0-contract/package.json",
         "tests/contract/catalog/",
         "tests/fixtures/catalog/",
         "tests/e2e/catalog-composed-motion.spec.ts",
@@ -820,6 +820,47 @@
       "evidence": [],
       "blockers": [],
       "status": "todo"
+    },
+    {
+      "id": "HOTFIX-01",
+      "title": "Corriger le lancement contextuel et la hauteur de Manifest",
+      "phase": "M0",
+      "owner": "frontend",
+      "dependencies": [],
+      "ownedPaths": [
+        "apps/editor-web/src/main.tsx",
+        "apps/editor-web/src/manifest.css",
+        "apps/editor-web/test/launch-intent.test.ts",
+        "tests/e2e/launch-context.spec.ts",
+        "tests/e2e/arc01.spec.ts",
+        "tests/e2e/component-examples.spec.ts",
+        "tests/e2e/empty-start.spec.ts",
+        "integrations/chatgpt-desktop/plugin.json",
+        "services/api/src/mcp.ts",
+        "packages/m0-contract/src/index.ts",
+        "packages/host-adapters/test/adapter.test.ts",
+        "docs/spec/contracts/examples/snapshot-empty.json",
+        "DESIGN.md",
+        "UX-CONTRACT.md",
+        "package.json",
+        "docs/evidence/HOTFIX-01"
+      ],
+      "acceptance": [
+        "Quand le chat fournit userRequest et assistantProposal, la demande explicite de l’utilisateur préremplit le champ et pilote l’analyse après 1 500 ms ; une proposition d’assistant n’est utilisée qu’en absence de userRequest explicite, cas couvert par un test distinct.",
+        "L’ouverture sans demande n’invente aucun brief ni composant : un projet initial vide affiche un canevas blanc. Les brouillons existants réellement enregistrés restent préservés.",
+        "À 736×704 px, l’atelier intégré tient dans la hauteur disponible sans défilement de page ; les trois zones restent visibles et les panneaux/canevas défilent à l’intérieur lorsque leur contenu dépasse.",
+        "Sous 560 px de largeur, Manifest reste borné au viewport et permet de passer au clavier ou au pointeur entre Décrire, Aperçu et Suggestions sans empiler les zones en une longue page.",
+        "Les règles de DESIGN.md et UX-CONTRACT.md décrivent les seuils réellement éprouvés : trois panneaux compacts dès 560 px, panneaux commutables sous ce seuil, et niveaux typographiques lisibles dans le format intégré.",
+        "Les tests automatisés dans la CI couvrent les cas de lancement, le Snapshot neutre, les brouillons existants, les dimensions 736×704 et 390×844, le non-défilement de page, le défilement interne et la navigation clavier, sans appel API réel."
+      ],
+      "evidence": [
+        "docs/evidence/HOTFIX-01/implementation.md",
+        "docs/evidence/HOTFIX-01/review.md"
+      ],
+      "blockers": [],
+      "status": "done",
+      "branch": "work/hotfix-01",
+      "reviewer": "qa"
     }
   ],
   "history": [
@@ -1417,6 +1458,100 @@
       ],
       "source": "docs/delivery/changes/REV-47-gen-03-evidence-path.json",
       "reason": "Déclarer le dossier d’évidence du correctif API afin que les tests simulés et les limites constatées soient reviewables sans changer le statut ni lever la dépendance GEN-02."
+    },
+    {
+      "revision": 48,
+      "ticketId": "HOTFIX-01",
+      "from": "absent",
+      "to": "ready",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:28:07.243Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-48-hotfix-01-launch-viewport.json",
+      "reason": "Corriger le brief initial prioritaire et le défilement long observés dans le véritable lancement intégré de Manifest."
+    },
+    {
+      "revision": 49,
+      "ticketId": "HOTFIX-01",
+      "from": "ready",
+      "to": "in_progress",
+      "actor": "frontend",
+      "at": "2026-11-04T17:28:11.255Z"
+    },
+    {
+      "revision": 50,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:32:49.375Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-50-gen02-release-launch-context-ownership.json",
+      "reason": "Séparer le périmètre catalogue encore audité du contrat de lancement et du Snapshot initial neutre, repris par HOTFIX-01."
+    },
+    {
+      "revision": 51,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:32:52.747Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-51-hotfix-01-seed-contract.json",
+      "reason": "Le lancement vide est rejeté par le contrat et le Snapshot initial injecte encore un contexte visuel d’exemple ; inclure ces fichiers et leurs preuves dans HOTFIX-01."
+    },
+    {
+      "revision": 52,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:47:18.014Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-52-hotfix-test-seed-ownership.json",
+      "reason": "Le Snapshot neutre révèle des tests historiques qui remplacent des métadonnées immuables au lieu de simuler un brouillon existant; le correctif enregistre le helper et branche son test à la CI."
+    },
+    {
+      "revision": 53,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T18:06:10.676Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-53-hotfix-responsive-design-and-regression-tests.json",
+      "reason": "La revue E2E et les revues distinctes révèlent les anciens attendus mobile, une lisibilité insuffisante, et des preuves manquantes de scroll interne et du fallback assistant; aligner tests et contrat."
+    },
+    {
+      "revision": 54,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "frontend",
+      "at": "2026-11-04T19:03:01.078Z"
+    },
+    {
+      "revision": 55,
+      "ticketId": "HOTFIX-01",
+      "from": "review",
+      "to": "done",
+      "actor": "qa",
+      "at": "2026-11-04T19:03:25.299Z"
     }
   ]
 }

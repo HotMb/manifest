@@ -1,6 +1,6 @@
 # Manifest — tableau de livraison
 
-Vue générée depuis tickets.json, révision 47. GitHub Issues est un miroir ; les preuves restent dans Git.
+Vue générée depuis tickets.json, révision 55. GitHub Issues est un miroir ; les preuves restent dans Git.
 
 | Ticket | Phase | Responsable | État | Dépendances |
 |---|---|---|---|---|
@@ -35,3 +35,4 @@ Vue générée depuis tickets.json, révision 47. GitHub Issues est un miroir ; 
 | GEN-03 — Choix du modèle sans implicite et transparence de l’état IA | M1 | backend | todo | GEN-02 |
 | GEN-04 — Aperçu réactif de pages composées | M1 | frontend | todo | GEN-01, GEN-02, GEN-03 |
 | GEN-05 — Étendre les mouvements compris depuis le langage libre | M2 | backend | todo | GEN-02, GEN-03, GEN-04 |
+| HOTFIX-01 — Corriger le lancement contextuel et la hauteur de Manifest | M0 | frontend | done | — |

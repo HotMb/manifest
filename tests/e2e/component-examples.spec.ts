@@ -65,16 +65,28 @@ test('les exemples sont utilisables au clavier et respectent le mouvement rédui
   await expect(page.getByRole('region', { name: 'Exemple : Fondu à l’entrée', exact: true })).toHaveCount(0);
 });
 
-test('le champ et la liste restent dans la même surface aux trois largeurs', async ({ page }) => {
+test('le catalogue reste dans la même surface et devient un panneau sélectionnable sur téléphone', async ({ page }) => {
   await page.goto('/');
-  for (const width of [1440, 900, 375]) {
+  for (const width of [1440, 900, 736]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect(page.locator('.description-panel')).toBeVisible();
     await expect(page.locator('.canvas-region')).toBeVisible();
     await expect(page.locator('.inspector')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Panneaux de l’atelier' })).toBeHidden();
     await expect(page.getByRole('searchbox', { name: searchLabel, exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   }
+  await page.setViewportSize({ width: 375, height: 844 });
+  await expect(page.getByRole('navigation', { name: 'Panneaux de l’atelier' })).toBeVisible();
+  await expect(page.locator('.description-panel')).toBeVisible();
+  await expect(page.locator('.inspector')).toBeHidden();
+  await page.getByRole('button', { name: 'Suggestions', exact: true }).click();
+  await expect(page.getByRole('searchbox', { name: searchLabel, exact: true })).toBeVisible();
+  await expect(page.locator('.description-panel')).toBeHidden();
+  await expect(page.locator('.canvas-region')).toBeHidden();
+  await page.getByRole('searchbox', { name: searchLabel, exact: true }).fill('menu');
+  await expect(page.getByRole('heading', { name: 'Menu de navigation', exact: true })).toBeVisible();
+
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByLabel('Fond de la page', { exact: true }).fill('#000000');
   await page.getByRole('searchbox', { name: searchLabel, exact: true }).fill('fondu');

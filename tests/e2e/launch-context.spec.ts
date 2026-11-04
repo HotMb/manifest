@@ -82,6 +82,8 @@ async function emit(page: Page, context: EditorLaunchContext) {
 }
 
 test('le chat préremplit la demande et affiche un fond noir annulable sans modifier la base', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-04T12:00:00.000Z') });
+  await page.clock.pauseAt(new Date('2026-11-04T12:01:00.000Z'));
   await installLaunchTransport(page, blackLaunch);
   await expect(page.getByRole('textbox', { name: 'Description de la page', exact: true })).toHaveValue(blackLaunch.userRequest!);
   await expect(page.locator('.launch-status')).toContainText('fond demandé');
@@ -93,7 +95,7 @@ test('le chat préremplit la demande et affiche un fond noir annulable sans modi
   expect(before.project.snapshot.pages[0].composition.content).toEqual([]);
   expect(before.commits).toBe(0);
   // Cross the autosave debounce: a preview must not save itself.
-  await page.waitForTimeout(1100);
+  await page.clock.runFor(1100);
   expect(await state(page)).toEqual(before);
   const screenshots = fileURLToPath(new URL('../../.team/screenshots/launch-context/', import.meta.url));
   mkdirSync(screenshots, { recursive: true });
@@ -104,8 +106,139 @@ test('le chat préremplit la demande et affiche un fond noir annulable sans modi
   expect(await state(page)).toEqual(before);
 });
 
+test('la demande userRequest prime sur une proposition d’assistant différente', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-04T12:00:00.000Z') });
+  await page.clock.pauseAt(new Date('2026-11-04T12:01:00.000Z'));
+  const userRequest = 'Crée un tableau de bord de ventes avec des nuages animés et deux graphiques.';
+  const assistantProposal = 'Hero\nTitre : Page fixe inventée';
+  await installLaunchTransport(page, {
+    id: 'launch-priority', projectId: 'project-m0', baseDraftVersion: 0,
+    userRequest, assistantProposal,
+  });
+  const input = page.getByRole('textbox', { name: 'Description de la page', exact: true });
+  await expect(input).toHaveValue(userRequest);
+  await expect(page.getByRole('region', { name: 'Canevas vide', exact: true })).toBeVisible();
+  await page.clock.runFor(1499);
+  await expect(page.locator('.manifest-clouds')).toHaveCount(0);
+  await page.clock.runFor(1);
+  await expect(page.locator('.manifest-clouds')).toBeVisible();
+  await expect(page.locator('.manifest-chart')).toHaveCount(2);
+  await expect(page.getByRole('heading', { name: 'Page fixe inventée', exact: true })).toHaveCount(0);
+});
+
+test('une proposition déjà formulée sert de repli si le chat ne transmet pas userRequest', async ({ page }) => {
+  const assistantProposal = 'Une page de présentation avec un fondu doux.';
+  await installLaunchTransport(page, {
+    id: 'launch-assistant-fallback', projectId: 'project-m0', baseDraftVersion: 0, assistantProposal,
+  });
+  await expect(page.getByRole('textbox', { name: 'Description de la page', exact: true })).toHaveValue(assistantProposal);
+  await expect(page.getByRole('region', { name: 'Canevas vide', exact: true })).toBeVisible();
+});
+
+test('le format intégré tient dans un viewport ChatGPT étroit sans page longue', async ({ page }) => {
+  await installLaunchTransport(page, { id: 'launch-empty', projectId: 'project-m0', baseDraftVersion: 0 });
+  await page.setViewportSize({ width: 736, height: 704 });
+  for (const selector of ['.description-panel', '.canvas-region', '.inspector']) await expect(page.locator(selector)).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Canevas vide', exact: true })).toBeVisible();
+  await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  const scrollContainers = await page.evaluate(() => {
+    const description = document.querySelector<HTMLElement>('.description-panel')!;
+    const suggestions = document.querySelector<HTMLElement>('.inspector')!;
+    const canvas = document.querySelector<HTMLElement>('.canvas-stage')!;
+    return {
+      descriptionOverflow: getComputedStyle(description).overflowY,
+      suggestionsOverflow: getComputedStyle(suggestions).overflowY,
+      descriptionCanScroll: description.scrollHeight > description.clientHeight,
+      suggestionsCanScroll: suggestions.scrollHeight > suggestions.clientHeight,
+      canvasOverflow: getComputedStyle(canvas).overflowY,
+    };
+  });
+  expect(scrollContainers.descriptionOverflow).toBe('auto');
+  expect(scrollContainers.suggestionsOverflow).toBe('auto');
+  expect(scrollContainers.descriptionCanScroll).toBe(true);
+  expect(scrollContainers.suggestionsCanScroll).toBe(true);
+  expect(scrollContainers.canvasOverflow).toBe('auto');
+  const screenshots = fileURLToPath(new URL('../../docs/evidence/HOTFIX-01/', import.meta.url));
+  mkdirSync(screenshots, { recursive: true });
+  await page.screenshot({ path: `${screenshots}viewport-736x704.png`, animations: 'disabled' });
+  await page.locator('.description-panel').evaluate((element: HTMLElement) => { element.scrollTop = element.scrollHeight; });
+  await expect.poll(() => page.locator('.description-panel').evaluate((element: HTMLElement) => element.scrollTop)).toBeGreaterThan(0);
+  await page.locator('.description-panel').evaluate((element: HTMLElement) => { element.scrollTop = 0; });
+  await expect.poll(() => page.locator('.description-panel').evaluate((element: HTMLElement) => element.scrollTop)).toBe(0);
+  const desktopMetrics = await page.evaluate(() => ({
+    innerHeight: window.innerHeight,
+    bodyHeight: document.body.scrollHeight,
+    innerWidth: window.innerWidth,
+    bodyWidth: document.body.scrollWidth,
+    shellHeight: document.querySelector('.app-shell')!.getBoundingClientRect().height,
+    rootOverflow: getComputedStyle(document.documentElement).overflow,
+    bodyOverflow: getComputedStyle(document.body).overflow,
+  }));
+  expect(desktopMetrics.bodyHeight).toBeLessThanOrEqual(desktopMetrics.innerHeight + 1);
+  expect(desktopMetrics.bodyWidth).toBeLessThanOrEqual(desktopMetrics.innerWidth + 1);
+  expect(desktopMetrics.shellHeight).toBeLessThanOrEqual(desktopMetrics.innerHeight + 1);
+  expect(desktopMetrics.rootOverflow).toBe('hidden');
+  expect(desktopMetrics.bodyOverflow).toBe('hidden');
+  await page.mouse.move(8, 8);
+  await page.mouse.wheel(0, 1000);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+  const description = page.getByRole('textbox', { name: 'Description de la page', exact: true });
+  await description.fill('Un tableau de bord de ventes avec des nuages et deux graphiques.');
+  await expect(page.getByRole('main', { name: 'Aperçu du candidat local', exact: true })).toBeVisible({ timeout: 6000 });
+  const frame = page.locator('.canvas-frame');
+  await expect.poll(() => frame.evaluate((element: HTMLElement) => element.scrollHeight > element.clientHeight)).toBe(true);
+  expect(await frame.evaluate((element: HTMLElement) => getComputedStyle(element).overflowY)).toBe('auto');
+  await frame.evaluate((element: HTMLElement) => { element.scrollTop = element.scrollHeight; });
+  await expect.poll(() => frame.evaluate((element: HTMLElement) => element.scrollTop)).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await description.fill('');
+  await expect(page.getByRole('region', { name: 'Canevas vide', exact: true })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const nav = page.getByRole('navigation', { name: 'Panneaux de l’atelier' });
+  await expect(nav).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Décrire', exact: true })).toBeVisible();
+  await expect(page.locator('.description-panel')).toBeVisible();
+  await page.getByRole('button', { name: 'Aperçu', exact: true }).click();
+  await expect(page.locator('.canvas-region')).toBeVisible();
+  await expect(page.locator('.description-panel')).toBeHidden();
+  await page.screenshot({ path: `${screenshots}mobile-preview-390x844.png`, animations: 'disabled' });
+  const suggestionsTab = page.getByRole('button', { name: 'Suggestions', exact: true });
+  await suggestionsTab.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.inspector')).toBeVisible();
+  await expect(page.locator('.canvas-region')).toBeHidden();
+  await expect(suggestionsTab).toBeFocused();
+  await page.getByRole('button', { name: 'Décrire', exact: true }).focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('.description-panel')).toBeVisible();
+  await expect(page.locator('.inspector')).toBeHidden();
+  const mobileMetrics = await page.evaluate(() => ({
+    innerHeight: window.innerHeight,
+    bodyHeight: document.body.scrollHeight,
+    innerWidth: window.innerWidth,
+    bodyWidth: document.body.scrollWidth,
+    shellHeight: document.querySelector('.app-shell')!.getBoundingClientRect().height,
+    rootOverflow: getComputedStyle(document.documentElement).overflow,
+    bodyOverflow: getComputedStyle(document.body).overflow,
+  }));
+  expect(mobileMetrics.bodyHeight).toBeLessThanOrEqual(mobileMetrics.innerHeight + 1);
+  expect(mobileMetrics.bodyWidth).toBeLessThanOrEqual(mobileMetrics.innerWidth + 1);
+  expect(mobileMetrics.shellHeight).toBeLessThanOrEqual(mobileMetrics.innerHeight + 1);
+  expect(mobileMetrics.rootOverflow).toBe('hidden');
+  expect(mobileMetrics.bodyOverflow).toBe('hidden');
+  await page.mouse.move(8, 8);
+  await page.mouse.wheel(0, 1000);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+});
+
 test('conserver le fond sauvegarde le choix et préserve le contenu de la page existante', async ({ page }) => {
-  await installLaunchTransport(page, { ...blackLaunch, assistantProposal: 'Une page sur fond noir avec son contenu conservé.' }, { existingHero: true });
+  await installLaunchTransport(page, {
+    ...blackLaunch,
+    userRequest: 'Une page sur fond noir avec son contenu conservé.',
+    assistantProposal: 'Cette proposition différente ne doit pas écraser la demande utilisateur.',
+  }, { existingHero: true });
   await expect(page.getByRole('textbox', { name: 'Description de la page', exact: true })).toHaveValue('Une page sur fond noir avec son contenu conservé.');
   await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await expect(page.getByRole('heading', { name: 'Un contenu déjà conservé', exact: true })).toBeVisible();
@@ -181,6 +314,8 @@ test('une nouvelle saisie remplace le fond reçu et relance le debounce local à
 });
 
 test('la génération automatique attend la fin de l’aperçu temporaire puis modifie le canevas après la pause', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-04T12:00:00.000Z') });
+  await page.clock.pauseAt(new Date('2026-11-04T12:01:00.000Z'));
   await installLaunchTransport(page, blackLaunch, { configuredModel: true, autoModel: true, existingHero: true });
   await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await page.locator('.model-provider-disclosure > summary').click();
@@ -188,11 +323,13 @@ test('la génération automatique attend la fin de l’aperçu temporaire puis m
   await expect(page.getByRole('checkbox', { name: 'Analyse automatique du modèle', exact: true })).toHaveCount(0);
   await expect(page.getByText('après 1,5 s de pause', { exact: false })).toBeVisible();
   // A host-provided background candidate temporarily owns the preview, so generation waits.
-  await page.waitForTimeout(1800);
+  await page.clock.runFor(1800);
   expect((await state(page)).modelCalls).toBe(0);
   expect((await state(page)).commits).toBe(0);
   await expect(page.locator('.canvas-frame')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
   await page.getByRole('button', { name: 'Ignorer le fond', exact: true }).click();
+  await page.clock.runFor(1500);
+  await expect.poll(async () => (await state(page)).modelCalls).toBe(1);
   await expect(page.locator('.site-hero--fade')).toHaveCount(1, { timeout: 5000 });
   expect((await state(page)).modelCalls).toBe(1);
   expect((await state(page)).commits).toBe(0);

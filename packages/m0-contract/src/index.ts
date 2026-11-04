@@ -173,7 +173,7 @@ export async function hashSnapshot(snapshot: Snapshot): Promise<string> {
 export function initialProject(): M0Project {
   const snapshot: unknown = structuredClone(fixture);
   validateSnapshot(snapshot);
-  return { projectId: PROJECT_ID, draftVersion: 0, contentHash: '7fdc68168ddf28cd3c8addcc275fb4b84d6f52948dcdd4918a5ca85fad8c0606', snapshot };
+  return { projectId: PROJECT_ID, draftVersion: 0, contentHash: 'd493f1f44422634d91ccddd1ac12d88e7a94df96b572b19c6d87250177261c12', snapshot };
 }
 
 export function applyOperations(snapshot: Snapshot, operations: M0Operation[]): Snapshot {

@@ -538,6 +538,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round
 .canvas-bottom > span { color: var(--editor-secondary); font-size: 11px; }
 .canvas-bottom .proposal-actions { flex-wrap: wrap; }
 .canvas-frame { min-height: 480px; }
+.workspace-mobile-nav { display: none; }
 @media (max-width: 1200px) {
   .workspace { grid-template-columns: 250px minmax(0, 1fr) 250px; }
 }
@@ -556,17 +557,18 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round
   .page-meta > .live-label { display: inline; }
 }
 
-/* The desktop atelier fits the host window; only its panels and canvas scroll. */
-@media (min-width: 768px) {
+/* Manifest is a single host-sized workspace. Only its panels and canvas scroll. */
+@media (min-width: 560px) {
   html, body, #root { width: 100%; height: 100%; min-height: 0; overflow: hidden; }
   .app-shell { width: 100%; height: 100dvh; min-height: 0; overflow: hidden; }
   .topbar, .statusbar { flex: 0 0 auto; }
+  .startup { width: 100%; height: 100dvh; min-height: 0; overflow: auto; }
   .workbench-content { display: flex; flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden; }
   .workbench-content > * { display: flex; flex: 1 1 0; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
   .workspace {
     display: grid;
     flex: 1 1 0;
-    grid-template-columns: clamp(190px, 22vw, 276px) minmax(0, 1fr) clamp(190px, 22vw, 276px);
+    grid-template-columns: clamp(150px, 24vw, 230px) minmax(0, 1fr) clamp(155px, 25vw, 235px);
     grid-template-rows: minmax(0, 1fr);
     width: 100%;
     height: 0;
@@ -574,9 +576,131 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round
     margin: 0;
     overflow: hidden;
   }
+  .workspace-mobile-nav { display: none; }
   .description-panel, .inspector { min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
   .inspector { grid-column: auto; border-top: 0; }
   .canvas-region { height: 100%; min-height: 0; overflow: hidden; }
   .workspace-toolbar, .canvas-ruler, .canvas-bottom { flex: 0 0 auto; }
   .canvas-stage { flex: 1 1 0; height: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+  .canvas-frame { width: 100%; height: 100%; min-height: 0; overflow: auto; }
+  .canvas-frame--mobile { height: auto; min-height: 100%; }
+}
+
+/* Embedded ChatGPT cards can be narrower than a laptop viewport. Keep all
+   three parts of the desktop workbench visible instead of stacking a long page. */
+@media (min-width: 560px) and (max-width: 767px) {
+  .topbar { min-height: 48px; height: 48px; flex-wrap: nowrap; gap: 8px; padding-inline: 10px; }
+  .app-identity { flex: 0 0 auto; gap: 6px; }
+  .app-identity strong { font-size: 16px; }
+  .workbench-mark, .workbench-mark svg { width: 20px; height: 20px; }
+  .topbar-actions { gap: 5px; }
+  .topbar-actions .button { min-height: 30px; padding: 5px 7px; font-size: 9px; }
+  .report-button { font-size: 0 !important; width: 32px; padding: 6px !important; }
+  .workspace { grid-template-columns: clamp(145px, 24vw, 185px) minmax(0, 1fr) clamp(145px, 24vw, 185px); }
+  .description-panel, .inspector { overflow-y: auto; }
+  .description-panel > .panel-heading, .inspector > .panel-heading { display: flex; min-height: 44px; padding: 9px 10px; }
+  .panel-heading h2 { font-size: 12px; }
+  .description-body, .suggestions-panel { padding: 10px; }
+  .description-body > p { font-size: 12px; }
+  .description-composer { margin-top: 9px; }
+  .description-composer textarea { min-height: 92px; max-height: 140px; padding: 8px; font-size: 12px; }
+  .intent-status { gap: 6px; margin-top: 8px; }
+  .intent-status__icon, .intent-status__icon svg { width: 14px; height: 14px; }
+  .intent-status strong { font-size: 11px; }
+  .intent-status small { font-size: 11px; line-height: 1.45; }
+  .analysis-preference { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 3px; margin-top: 9px; font-size: 11px; }
+  .analysis-preference > span { flex: 1 1 auto; min-width: 0; font-size: 11px; line-height: 1.4; }
+  .analysis-preference label { font-size: 11px; }
+  .description-help { font-size: 11px !important; line-height: 1.5; }
+  .description-examples button { font-size: 11px !important; }
+  .analyze-button { min-height: 32px; margin-top: 8px; padding: 6px; font-size: 11px; }
+  .model-provider-disclosure { margin-top: 9px; padding-top: 7px; }
+  .model-provider-disclosure > summary { font-size: 11px; }
+  .analysis-state strong { font-size: 11px; }
+  .analysis-state span:not(.analysis-indicator) { font-size: 11px; line-height: 1.45; }
+  .hint-card h3 { font-size: 12px; }
+  .hint-card p, .component-examples > label, .example-card > p, .example-toggle, .examples-count, .example-card h4 { font-size: 11px; }
+  .description-examples { margin-top: 10px; }
+  .description-examples button { padding: 5px 0; }
+  .workspace-toolbar { min-height: 42px; padding: 5px 7px; gap: 4px; }
+  .page-meta { gap: 4px; }
+  .page-meta strong { font-size: 10px; }
+  .page-meta > .live-label { padding: 2px 4px; font-size: 8px; }
+  .segmented button { min-width: 25px; min-height: 25px; padding: 4px; }
+  .segmented button > span { display: none; }
+  .history-controls .button { min-height: 25px; padding: 3px; font-size: 10px; }
+  .canvas-ruler { flex-basis: 28px; height: 28px; min-height: 28px; margin: 6px 6px 0; padding-inline: 6px; }
+  .canvas-stage { padding: 0 6px 6px; }
+  .canvas-bottom { min-height: 30px; padding: 0 6px 5px; gap: 4px; }
+  .canvas-bottom p, .canvas-bottom .text-button { font-size: 9px; }
+  .statusbar { min-height: 28px; padding: 5px 9px; gap: 6px; font-size: 9px; }
+  .statusbar > .save-state { font-size: 9px; }
+  .component-examples { padding: 10px; }
+  .component-examples h3 { margin-bottom: 8px; font-size: 11px; }
+  .component-examples > label, .example-card > p, .example-toggle, .examples-count, .example-card h4 { font-size: 11px; }
+  .example-card { padding: 8px 0; }
+  .example-demo { padding: 8px; }
+}
+
+/* On a phone, keep one viewport and switch the visible work area in place. */
+@media (max-width: 559px) {
+  html, body, #root { width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+  .app-shell { display: flex; width: 100%; height: 100dvh; min-height: 0; overflow: hidden; }
+  .topbar { flex: 0 0 52px; min-height: 52px; height: 52px; flex-wrap: nowrap; gap: 7px; padding: 0 10px; }
+  .app-identity { flex: 0 0 auto; gap: 6px; }
+  .app-identity strong { font-size: 16px; }
+  .workbench-mark, .workbench-mark svg { width: 20px; height: 20px; }
+  .topbar-actions { gap: 4px; }
+  .topbar-actions .button { min-height: 30px; padding: 5px 7px; font-size: 9px; }
+  .report-button { width: 32px; padding: 6px !important; font-size: 0 !important; }
+  .workbench-content { display: flex; flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden; }
+  .workbench-content > * { display: flex; flex: 1 1 0; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+  .workspace { display: grid; flex: 1 1 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: 38px minmax(0, 1fr); width: 100%; height: 0; min-height: 0; margin: 0; overflow: hidden; }
+  .workspace-mobile-nav { display: grid; grid-row: 1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px 8px; border-bottom: 1px solid var(--editor-border); background: #111315; }
+  .workspace-mobile-nav button { min-width: 0; min-height: 29px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #a5afb7; font: 11px var(--editor-font); }
+  .workspace-mobile-nav button[aria-pressed="true"] { border-color: #31434a; background: #1b272b; color: var(--editor-primary); }
+  .description-panel, .canvas-region, .inspector { display: none; grid-column: 1; grid-row: 2; min-width: 0; min-height: 0; }
+  .workspace[data-mobile-panel="describe"] .description-panel,
+  .workspace[data-mobile-panel="preview"] .canvas-region,
+  .workspace[data-mobile-panel="suggestions"] .inspector { display: flex; }
+  .description-panel, .inspector { flex-direction: column; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+  .description-panel { border: 0; }
+  .inspector { border: 0; }
+  .description-panel > .panel-heading, .inspector > .panel-heading { display: flex; flex: 0 0 auto; min-height: 44px; padding: 9px 12px; }
+  .description-body, .suggestions-panel { padding: 12px; }
+  .description-body > p { font-size: 12px; }
+  .description-composer { margin-top: 10px; }
+  .description-composer textarea { min-height: 115px; max-height: 180px; font-size: 12px; }
+  .description-examples { margin-top: 12px; }
+  .description-footer { padding: 8px 12px; }
+  .page-controls { padding-bottom: 12px; }
+  .canvas-region { display: none; flex-direction: column; height: 100%; overflow: hidden; border: 0; }
+  .workspace[data-mobile-panel="preview"] .canvas-region { display: flex; }
+  .workspace-toolbar { flex: 0 0 auto; min-height: 44px; flex-wrap: nowrap; gap: 5px; padding: 5px 8px; }
+  .page-meta { gap: 5px; }
+  .page-meta strong { font-size: 11px; }
+  .page-meta > .live-label { display: none; }
+  .segmented { margin-left: auto; }
+  .segmented button { min-width: 27px; min-height: 27px; padding: 4px; }
+  .segmented button > span { display: none; }
+  .history-controls { margin-left: 0; padding-left: 2px; }
+  .history-controls .button { min-height: 27px; padding: 4px; font-size: 9px; }
+  .canvas-ruler { flex: 0 0 30px; height: 30px; min-height: 30px; margin: 7px 8px 0; padding-inline: 7px; }
+  .canvas-stage { display: flex; flex: 1 1 0; height: 0; min-height: 0; overflow: auto; padding: 0 8px 8px; }
+  .canvas-frame { flex: 0 0 100%; width: 100%; height: 100%; min-height: 0; overflow: auto; }
+  .canvas-frame--mobile { flex-basis: 375px; width: 375px; max-width: 100%; height: auto; min-height: 100%; }
+  .canvas-bottom { flex: 0 0 auto; min-height: 32px; padding: 0 8px 6px; gap: 5px; }
+  .canvas-bottom p { max-width: 58%; font-size: 9px; line-height: 1.35; }
+  .canvas-bottom .proposal-actions { gap: 4px; }
+  .canvas-bottom .button { min-height: 28px; padding: 4px 6px; font-size: 9px; }
+  .inspector { grid-column: 1; }
+  .suggestions-panel { display: block; overflow-y: auto; }
+  .hint-list { flex-direction: column; }
+  .hint-card { width: 100%; }
+  .component-examples { flex: 0 0 auto; padding: 12px; }
+  .statusbar { flex: 0 0 auto; min-height: 35px; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 10px; font-size: 9px; }
+  .statusbar > .save-state { flex-basis: 100%; max-width: 100%; font-size: 9px; }
+  .statusbar > span:nth-child(2) { margin: 0; }
+  .footer-version { margin-left: auto; }
+  .startup { height: 100dvh; min-height: 0; overflow: auto; padding: 20px; }
 }
