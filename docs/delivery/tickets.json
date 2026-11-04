@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productName": "Manifest",
-  "revision": 36,
+  "revision": 39,
   "tickets": [
     {
       "id": "ARC-01",
@@ -708,9 +708,13 @@
         "tests/contract/catalog/",
         "tests/fixtures/catalog/",
         "tests/e2e/catalog-composed-motion.spec.ts",
+        "tests/e2e/editor-workspace-resolution.spec.ts",
         "playwright.catalog.config.ts",
         "docs/spec/CATALOGUE.md",
-        "docs/evidence/GEN-02"
+        "docs/evidence/GEN-02",
+        "apps/editor-web/package.json",
+        "apps/editor-web/index.html",
+        "package-lock.json"
       ],
       "acceptance": [
         "Un arbre de page typé et versionné accepte uniquement des composants, propriétés, slots et mouvements du catalogue local ; profondeur, taille, paramètres de mouvement et budget sont bornés. Aucun JSX, HTML, CSS ou JavaScript libre produit par le modèle n'est exécuté.",
@@ -718,7 +722,8 @@
         "Chaque entrée contient une version exacte, source, empreinte, licence et attribution, dépendances locales, propriétés validées, compatibilité, coût mesuré et statut. Une référence refusée ou absente ne peut pas être recommandée comme intégrable.",
         "Chaque bibliothèque vue en référence est inventoriée et classée comme runtime, composant source, moteur d'animation, pipeline d'assets ou service/outillage ; l'installation locale est limitée aux entrées retenues après vérification officielle de licence, versions, compatibilité, sécurité, accessibilité et coût, avec lockfile reproductible.",
         "Le mouvement composé est éprouvé dans Chromium comme animation effectivement exécutable, puis neutralisé par prefers-reduced-motion hors aperçu explicitement activé.",
-        "La version de catalogue identifie sans ambiguïté les capacités qu'elle contient ; une évolution ne réutilise pas silencieusement une version déjà publiée, et la compatibilité des snapshots locaux antérieurs est prouvée ou explicitement bornée avant export."
+        "La version de catalogue identifie sans ambiguïté les capacités qu'elle contient ; une évolution ne réutilise pas silencieusement une version déjà publiée, et la compatibilité des snapshots locaux antérieurs est prouvée ou explicitement bornée avant export.",
+        "L'application editor-web déclare explicitement le package catalogue local comme dépendance workspace à sa version exacte ; le smoke du serveur de développement et le build résolvent le renderer et son CSS sans overlay Vite d'import, et la console navigateur ne contient aucune erreur de résolution de module."
       ],
       "evidence": [],
       "blockers": [],
@@ -1236,6 +1241,49 @@
       ],
       "source": "docs/delivery/changes/REV-36-gen-02-isolated-browser-config.json",
       "reason": "Rendre la preuve Chromium autonome et reproductible"
+    },
+    {
+      "revision": 37,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:38:56.562Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-37-gen02-workspace-link.json",
+      "reason": "Le navigateur local montre un échec réel de résolution du package catalogue ; les manifestes editor-web ne déclarent pas cette dépendance directe."
+    },
+    {
+      "revision": 38,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:42:11.533Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-38-gen02-workspace-smoke-path.json",
+      "reason": "Ajouter le smoke navigateur du package editor-web et versionner son fichier de test dans les chemins autorisés du ticket."
+    },
+    {
+      "revision": 39,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:49:04.022Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-39-gen02-smoke-entrypoints.json",
+      "reason": "La correction de fumée ajoute une icône intégrée au document HTML ; déclarer index.html dans les chemins contrôlés du ticket."
     }
   ]
 }
