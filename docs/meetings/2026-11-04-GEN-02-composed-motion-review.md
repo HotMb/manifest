@@ -7,7 +7,7 @@
 | Tâche / ticket | GEN-02 — Catalogue local de composition versionné, tranche de mouvement composé |
 | Date et mode | 4 novembre 2026, revue asynchrone avec compte rendu dans Git |
 | Branche / version du suivi | `work/arc-01`, registre révision 39 ; correctifs smoke poussés dans la PR #27 |
-| HEAD distant connu | `dfc6723f3f62a382e42d5ec08dc7970133288372`; GitHub Actions Quality #80 en cours au moment de cette mise à jour |
+| HEAD distant connu | `a651f4c2a032ef4d27b7a00c4576dc793ca27022`; GitHub Actions Quality #82 réussie |
 | Environnement | Windows, Node, build Vite, Chrome/Chromium local, runner GitHub Actions |
 | Responsable | `/root`, orchestrateur |
 | Preuves | [Implémentation partielle](../evidence/GEN-02/implementation.md), [revue QA](../evidence/GEN-02/review.md), [contrat du catalogue](../spec/CATALOGUE.md), PR #27 brouillon |
@@ -19,7 +19,7 @@
 | `/root/gen02_motion_primitives` | Backend, propriétaire des fichiers catalogue | Ajout de `composed@2.0.0`, tests de contrat et test Chromium des keyframes, mouvement réduit et opt-in du canevas ; mise à jour de l’évidence. | N’a ni modifié les tickets ni committé/poussé GEN-02. Aucun appel modèle réel. |
 | `/root/gen01_qa` | QA indépendant | Deux revues successives : a demandé la preuve navigateur, la clarification de version et les métadonnées ; a confirmé que le test couvre maintenant aussi échelle et rotation. Verdict global `REVISE`, aucun finding P0/P1 de sécurité. | Revue de code et d’artefacts locaux, pas du fournisseur ni de l’hôte ChatGPT Desktop. |
 | `/root/gen01_qa` | QA indépendant, suivi smoke | Confirme la dépendance workspace exacte `0.3.0`, le favicon SVG statique sans ressources externes, la suffisance du smoke et l’absence de finding P0/P1. A demandé le build post-correctif et la synchronisation de l’évidence ; les deux ont été faits avant le push. | N’a pas réévalué la licence, le hash ou les coûts, toujours ouverts. |
-| `/root` | Orchestrateur / responsable de livraison | A identifié et corrigé un mauvais chemin de fixture Python, étendu GEN-02 par le CLI jusqu’à la révision 39, réparé le lien workspace editor-web et le favicon 404, ajouté le smoke et sa capture, relancé la suite complète et le build, puis poussé le tout. | La CI du commit poussé reste à confirmer ; licence, hash source, coûts et audit des bibliothèques restent ouverts. |
+| `/root` | Orchestrateur / responsable de livraison | A identifié et corrigé un mauvais chemin de fixture Python, étendu GEN-02 par le CLI jusqu’à la révision 39, réparé le lien workspace editor-web et le favicon 404, ajouté le smoke et sa capture, relancé la suite complète et le build, puis poussé le tout. | CI passée sur le HEAD indiqué ; licence, hash source, coûts et audit des bibliothèques restent ouverts. |
 
 ## Résultat observé
 
@@ -47,7 +47,8 @@ Cette tranche ne fait pas encore comprendre au modèle une description libre com
 | Revue indépendante | `/root/gen01_qa` | E2E approuvé, ticket global `REVISE` |
 | Contrats Python sur le poste local | `python scripts/check_contracts.py` | Non démarré, faute du module `jsonschema` |
 | GitHub Actions `b10a2f0` | Quality #78 | Réussie sur le commit GEN-02 antérieur, validation des contrats incluse |
-| GitHub Actions `dfc6723` | Quality #80 | En cours au moment de la mise à jour de ce compte rendu ; vérifier le résultat avant merge |
+| GitHub Actions `dfc6723` | Quality #80 | Réussie sur le commit applicatif poussé |
+| GitHub Actions `a651f4c` | Quality #82 | Réussie ; inclut le compte rendu synchronisé et le correctif editor-web |
 | Fournisseur / ChatGPT Desktop | Non exécuté | Non démontré ; ARC-01 reste bloqué |
 
 Le premier run CI sur `8873a70` avait échoué car `check_contracts.py` cherchait `snapshot_catalog.json`, alors que le fixture s’appelle `snapshot-catalog.json`. Le correctif `cd9098f` a normalisé le chemin ; la CI complète Quality #78 sur `b10a2f0` passe également. Le poste local ne peut pas rejouer Python tant que `jsonschema` manque.
@@ -66,7 +67,7 @@ Le premier run CI sur `8873a70` avait échoué car `check_contracts.py` cherchai
 
 | Action | Responsable | Suivi |
 |---|---|---|
-| Maintenir GEN-02 en `in_progress`; ne pas soumettre ni fermer | Orchestrateur | Fait dans le registre révision 39 ; correctifs smoke inclus dans `dfc6723`, CI #80 en cours |
+| Maintenir GEN-02 en `in_progress`; ne pas soumettre ni fermer | Orchestrateur | Fait dans le registre révision 39 ; correctifs smoke dans `dfc6723`; Quality #82 réussie sur `a651f4c` |
 | Définir licence/provenance, hash reproductible et mesure de coût | Backend/catalogue | Restant dans GEN-02 avant clôture ou export |
 | Auditer une à une les dépendances proposées à partir de sources officielles | Responsable catalogue | Restant dans GEN-02 ; ne rien installer avant validation |
 | Implémenter interprétation modèle → opérations structurées, filtre de secrets et tests multi-adaptateurs | Backend | GEN-03, dépend de GEN-02 |
@@ -77,4 +78,4 @@ Le premier run CI sur `8873a70` avait échoué car `check_contracts.py` cherchai
 
 **GEN-02 : à reprendre (`REVISE`).** La composition déterministe et son rendu navigateur sont démontrés ; les métadonnées, la provenance/licence, le hash et le coût ne satisfont pas encore le ticket. Le mouvement composé peut rester dans la branche comme tranche intermédiaire, mais il ne s’agit pas de la génération générale en langage naturel demandée. GEN-03 reste inéligible tant que GEN-02 n’est pas terminé.
 
-Le registre est à la révision 39 ; `BOARD.md` a été généré depuis le registre et `npm run check` passe. Le correctif et sa preuve smoke ont été poussés dans la PR #27 au commit `dfc6723`. Quality #80 est en cours ; GEN-02 reste à `REVISE` et la PR reste en brouillon.
+Le registre est à la révision 39 ; `BOARD.md` a été généré depuis le registre et `npm run check` passe. Le correctif et sa preuve smoke ont été poussés dans la PR #27 au commit `dfc6723`. Quality #82 réussit sur `a651f4c`; GEN-02 reste à `REVISE` et la PR reste en brouillon.
