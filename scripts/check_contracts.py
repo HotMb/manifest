@@ -131,7 +131,9 @@ def check_repository(root: Path, *, allow_missing_links: bool = False) -> dict:
     Draft202012Validator.check_schema(schema)
     examples = {}
     for name, definition in (("snapshot", "Snapshot"), ("snapshot_catalog", "Snapshot"), ("command", "Command"), ("proposal", "Proposal")):
-        value = read_json(contract_dir / f"examples/{name}.json")
+        # Keep stable API/test keys while matching the repository's kebab-case fixture names.
+        filename = name.replace("_", "-")
+        value = read_json(contract_dir / f"examples/{filename}.json")
         errors = list(validator_for(schema, definition).iter_errors(value))
         if errors:
             error = errors[0]
