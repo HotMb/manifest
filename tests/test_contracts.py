@@ -29,10 +29,11 @@ class ContractCheckerTests(unittest.TestCase):
         mutate(data)
         path.write_text(json.dumps(data), encoding="utf-8")
 
-    def test_valid_contracts_and_ten_negative_fixtures(self):
+    def test_valid_contracts_and_eleven_negative_fixtures(self):
         result = checker.check_repository(self.root)
-        self.assertEqual(result["negative_fixtures_rejected"], 10)
+        self.assertEqual(result["negative_fixtures_rejected"], 11)
         self.assertEqual(result["api_operations"], 15)
+        self.assertIn("snapshot_catalog", result["examples"])
         self.assertFalse(result["application_runtime_tested"])
 
     def test_broken_example_is_rejected(self):

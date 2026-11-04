@@ -1,0 +1,24 @@
+{
+  "id": "GEN-03",
+  "title": "Génération guidée par les capacités du catalogue",
+  "phase": "M1",
+  "owner": "backend",
+  "dependencies": ["GEN-02"],
+  "ownedPaths": [
+    "packages/inference/",
+    "services/api/src/suggestion-jobs.ts",
+    "services/api/src/provider-runtime.ts",
+    "tests/contract/inference/",
+    "tests/provider-runtime.test.ts",
+    "docs/evidence/GEN-03"
+  ],
+  "acceptance": [
+    "Le contexte du modèle contient le brief original, l'opération/cible/version autorisée, le Snapshot réduit, les références exactes du catalogue compatible, les réglages protégés et le profil de design versionné ; il ne contient ni clé, ni jeton, ni secret.",
+    "La sortie du modèle est une proposition d'opérations structurées liée à des IDs/release du catalogue ; elle est strictement validée et rejetée si elle demande un bloc, une propriété, une animation ou une dépendance inconnue. Aucun fallback de fournisseur n'est silencieux.",
+    "Une interface d'adaptateur permet d'ajouter les API de modèles séparément ; les adaptateurs et les schémas de sortie OpenAI, Anthropic, Google, DeepSeek et endpoint compatible sont couverts par des mocks sans appels payants par défaut.",
+    "Les demandes nuages + graphiques sur ventes synthétiques et les changements de direction/vitesse d'animation sont couvertes par fixtures ; les ambiguïtés et fonctions non prises en charge sont expliquées plutôt que présentées comme réalisées."
+  ],
+  "evidence": [],
+  "blockers": [],
+  "status": "todo"
+}

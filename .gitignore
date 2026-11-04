@@ -4,6 +4,9 @@ __pycache__/
 *.pyc
 dist/
 coverage/
+test-results/
+playwright-report/
+premium-audit.json
 .env
 .env.*
 !.env.example

@@ -1,5 +1,50 @@
 # Organisation de l'équipe et backlog de départ
 
+Produit : **Manifest**. Les tickets sont le plan de travail de l'application Manifest ; `docs/delivery/tickets.json` est la source des statuts et des dépendances, et les Issues GitHub leur servent de miroir public.
+
+## Addendum de conception approuvé — 2 novembre 2026
+
+Le commanditaire a validé le parcours des captures : invocation depuis le chat vers une carte « Ouvrir Manifest », puis espace en trois zones (intention à gauche, aperçu dominant au centre, suggestions à droite), attente de 1,5 s, itérations visibles, version figée et rapport relu avant transmission explicite au chat. Cette validation fixe la direction produit, pas la disponibilité des commandes de l'hôte ni l'achèvement du prototype.
+
+| Capacité à livrer | Tickets existants concernés | Critère à préserver |
+|---|---|---|
+| Carte d'ouverture et fallback hôte | ARC-01, puis UX/recette | `@Manifest`/sélection explicite comme voie documentée ; tester `/manifest` sans le promettre comme commande native ; fallback conserve le même projet |
+| Trois zones et palette issue des captures | UX-01, UI-01 | séparation du shell et du thème de page, contrôle clavier/mobile, contraste mesuré ; le fond clair vide est un état initial, pas un thème imposé |
+| Catalogue et cartes de suggestion | CAT-01/02/03, UI-02 | suggérer uniquement les candidats admissibles après contrôles capacité/compatibilité/version/licence ; afficher raison/source/version, prévisualiser puis ajouter par action ; si aucun candidat ne convient, le dire plutôt que d'en inventer |
+| Réactivité et provenance | UI-03, UI-04, AI-01/02 | 1 500 ms hors IME, dernière prévisualisation stable pendant la génération, obsolescence correcte et origine capturée par le job/proposal |
+| Version et transmission du rapport | REV-01, UI-02/04, API/MCP et TEST-01 à détailler | rapport lié à une révision/hash, avec preuve d'éligibilité capturée et hash JCS déterministe ; relu avant envoi, provenance fidèle, reçu d'envoi confirmé ou fallback explicite |
+
+## Addendum de produit — 4 novembre 2026
+
+Le commanditaire confirme que l'analyse doit démarrer automatiquement après 1 500 ms de pause à chaque lancement ou modification du brief, sans case opt-in. Un modèle distant n'est appelé que si l'utilisateur a configuré et choisi ce fournisseur/modèle ; sinon seules les règles locales indiquées comme telles sont utilisées. Une proposition se prévisualise dans le canevas sans être sauvegardée implicitement. La demande de nuages, graphiques de vente synthétiques et changements d'animation devient le premier cas vertical du catalogue : les capacités doivent être des composants locaux versionnés et validés, pas du code arbitraire exécuté depuis le modèle.
+
+Cette révision est suivie par les tickets GEN-01 à GEN-04 ajoutés via les commandes versionnées du registre. GEN-01 et GEN-02 peuvent avancer indépendamment du blocage de preuve ChatGPT Desktop dans ARC-01 ; ils ne valent pas preuve de l'hôte et ne clôturent pas ARC-01/02.
+
+Les critères du registre machine ont été précisés en révision 6 sans modifier les statuts ni les dépendances. ARC-01 reste le seul ticket actif. Le nouveau parcours local vide -> ajout explicite -> édition/enregistrement est qualifié séparément de l'ouverture/authentification réelle dans ChatGPT Desktop. UI-02 précise la recherche catalogue, le rendu/animation, les licences, l'insertion accessible et les références de rapport ; il demeure non éligible jusqu'à UI-01 et CAT-02.
+
+### Correction de fidélité au démarrage — audit du 3 novembre 2026
+
+La comparaison du prototype ouvert avec la maquette a révélé un écart de contrat, pas seulement de CSS : l'écran Figma commence avec une composition vide, tandis que le validateur M0 et sa fixture démarrent toujours avec un Hero rempli. Le JSON Schema canonique accepte déjà `composition.content: []`; le sous-ensemble sémantique M0 et plusieurs helpers l'interdisent.
+
+La correction est bornée à zéro ou un Hero M0 dans le même Snapshot : un projet réellement neuf ouvre un canevas blanc; `insert_block`/`remove_block` sont atomiques, la destination racine est explicite (`slot: "content"`, `parentBlockId: null`, `beforeBlockId: null`), une proposition reste une projection jusqu'à « Conserver », et l'undo/redo préserve l'identité du bloc. La fixture Hero et les projets déjà enregistrés restent compatibles. Une fixture vide distincte couvre le nouveau démarrage. Il est interdit de cacher le Hero dans le rendu tout en le conservant dans le document ou le rapport.
+
+Ce changement ne livre pas l'annuaire multi-cartes de l'exemple Figma. Les membres, la fiche au survol, les propositions de bibliothèque avec versions/licences et l'animation stagger restent sous les tickets catalogue/UI M1. Les règles locales ne sont pas une réponse LLM ; la capture de suggestions utilisée pour le contrôle visuel ne fait aucun appel fournisseur.
+
+Le critère local ARC-01 est désormais vide -> ajout du Hero M0 -> modification/enregistrement dans le navigateur ; la reprise d'un ancien brouillon Hero doit aussi rester intacte. La preuve ChatGPT Desktop, l'authentification, les capacités du bridge et le poll hôte restent des critères séparés et bloquants pour la clôture. Le travail shell seul ne ferme pas ARC-01.
+
+### Clarification du flux à deux entrées — 3 novembre 2026
+
+La maquette détaillée par le commanditaire établit deux tâches parallèles dans le même éditeur, avec une source de vérité documentaire unique :
+
+| Zone | Rôle | Comportement et données |
+|---|---|---|
+| Entrée principale à gauche | Décrire/créer/modifier la page, sa logique, son mouvement et ses contraintes | À l'ouverture, le contexte d'hôte explicitement transmis (projet/page ciblé et dernier message déjà envoyé) peut préremplir une suggestion éditable. L'utilisateur choisit nouveau projet/page ou modification si la cible n'est pas univoque. Le debounce de 1 500 ms s'applique uniquement à cette intention ; la réponse modèle reste une proposition vérifiée et réversible. |
+| Recherche à droite | Trouver un élément oublié ou une piste visuelle (ex. « menu ») | Recherche locale dans le catalogue versionné, sans appel IA. Les cartes montrent l'aperçu et l'animation, la raison, le slot/position, bibliothèque, version, licence et compatibilité. Prévisualiser n'écrit pas ; ajouter par drag/drop ou action accessible met à jour le Snapshot et affiche sous l'entrée principale un jeton de référence lisible/stable, inclus dans le contexte IA et le rapport sans modifier le texte libre. |
+| Aperçu au centre | Montrer exactement la page issue du Snapshot et la projection en cours | Le canevas neuf est blanc. Une proposition IA se prévisualise selon la causalité ; les composants du catalogue sont ajoutés à la bonne position. Aucun Hero, menu ou annuaire n'est maquetté comme résultat si son contenu n'existe pas dans le Snapshot/catalogue. |
+| `/validate` dans l'entrée principale | Finaliser et remettre le contexte au modèle hôte | Fige la composition/brief, calcule le rapport lié à une révision/hash, le transmet via la capacité déclarée de l'hôte puis cède la main après accusé. En cas d'absence/échec, garde l'éditeur et le rapport accessibles en copie/téléchargement. Ne présume pas que `/validate` est une commande native ChatGPT. |
+
+Portes de livraison correspondantes : contexte d'ouverture/retour dans ARC-01 et API-01, choix nouveau/existant et intention dans UI-03/AI-02, recherche/prévisualisation/insertion et jetons de référence visibles dans UI-02/CAT-01/02/03, DOM-02/UI-04, AI-02, REV-01 et TEST-01. La révision 7 du registre précise les critères ARC-01, UI-02, UI-03, CAT-02, AI-02, REV-01 et TEST-01 ; leurs Issues GitHub restent des miroirs ouverts. Le sous-ensemble M0 zéro/un Hero n'est qu'une qualification ; il n'est pas le catalogue final ni une promesse que le modèle prendra toujours le même type de composant.
+
 ## Rôles et responsabilité
 
 Le nombre de personnes dépend de la disponibilité et des compétences. Les responsabilités suivantes doivent avoir un propriétaire nommé ; une personne peut en cumuler plusieurs. Aucun effectif, coût ou délai n'est présenté comme estimé sans revue de l'équipe.
@@ -10,7 +55,7 @@ Le nombre de personnes dépend de la disponibilité et des compétences. Les res
 | Tech lead | domaine, contrats, migrations et intégration | compatibilité des modules et arbitrages |
 | Frontend éditeur | Puck contrôlé, inspecteur, causalité et accessibilité | expérience complète dans la vue |
 | Backend / IA / MCP | auth, commandes, jobs, adaptateurs et budgets | invariants serveur et intégration hôte |
-| Designer + frontend catalogue | primitives, blocs, profil et licences | qualité des compositions et des sources |
+| Designer + frontend catalogue | primitives, blocs, méthode de revue et licences | qualité contextualisée des compositions et des sources |
 | Export / plateforme | builds isolés, packaging, déploiement et restauration | artefacts reproductibles et exploitation |
 | QA / automatisation | fixtures, parcours, tests d'erreur et comparaison | preuves de passage des jalons |
 
@@ -62,9 +107,9 @@ Propriétaire : catalogue. Dépendance : ARC-03. RQ-04/05/14. Livrer Section/Sta
 
 Propriétaire : designer/catalogue. Dépendances : CAT-01, UX-01. RQ-04/08/14. Implémenter les dix blocs de CATALOGUE.md et les préréglages d'animation admis. Chaque bloc inclut états, mobile, clavier, contenu long, mouvement réduit et preuve de licence. Restaurant/portfolio/produit ne doivent pas dépendre d'un unique layout figé. AT-14/15/20.
 
-### CAT-03 — Release immuable et profil Unslop
+### CAT-03 — Release immuable et revue de qualité du design
 
-Propriétaire : catalogue + tech lead. Dépendances : CAT-02. RQ-08/14. Produire manifests avec hashes sources/assets/lockfile, profil et notices. Tester qu'une mise à jour du catalogue ne change pas une ancienne révision. Les règles esthétiques peuvent être adaptées, les locks sont respectés et les exceptions documentées. Aucun contenu tierce partie n'est admis sur la seule base de sa popularité.
+Propriétaire : catalogue + tech lead. Dépendances : CAT-02. RQ-08/14. Produire manifests avec hashes sources/assets/lockfile, licences, attributions et notices. Tester qu'une mise à jour du catalogue ne change pas une ancienne révision. La revue inspirée de la méthode Unslop reste contextualisée ; elle ne stocke aucun thème ni profil de style obligatoire. Les locks sont respectés et les exceptions documentées. Aucun contenu tierce partie n'est admis sur la seule base de sa popularité.
 
 ## Tickets M1 — éditeur
 
@@ -106,9 +151,9 @@ Propriétaire : backend/plateforme. Dépendance : API-01. RQ-02/06/13. Queue dur
 
 Propriétaire : backend IA. Dépendances : JOB-01, CAT-01. RQ-03/07. SDK officiel, sortie structurée et validation domaine, erreurs/usage normalisés. Critères : schéma incompatible refusé ; refus/timeout/quota traités ; réparation bornée ; résultat partiel non appliqué ; clés absentes de toutes sorties. Tests mocks par défaut ; essai réel volontaire et plafonné en intégration.
 
-### AI-02 — Contexte, cibles et profil
+### AI-02 — Contexte, cibles et revue de design
 
-Propriétaire : backend IA + designer. Dépendances : AI-01, CAT-03. RQ-08/12. Construire un contexte réduit avec page/sélection/locks/opérations autorisées et profil. Critères : instruction hostile dans un texte ne donne aucun accès ; demande locale ne modifie pas le thème global ; demande ambiguë propose des variantes. Conserver des briefs de référence et vérifier plusieurs cas, pas un seul prompt heureux.
+Propriétaire : backend IA + designer. Dépendances : AI-01, CAT-03. RQ-08/12. Construire un contexte réduit avec page/sélection/locks/opérations autorisées, le modèle sélectionné et des indications de critique dérivées du brief, pas un profil de style fixe. Critères : instruction hostile dans un texte ne donne aucun accès ; demande locale ne modifie pas le thème global ; demande ambiguë propose des variantes. Conserver des briefs de référence et vérifier plusieurs cas, pas un seul prompt heureux. `ui/update-model-context` ne remplace pas l'appel API réactif ; `ui/message` reste une transmission explicite au modèle hôte.
 
 ### SEC-01 — Autorisations et contrôle d'usage
 
@@ -144,7 +189,7 @@ Propriétaire : QA + produit. Commence après ARC-03 ; se termine après tous ti
 
 | ID | Sujet | Condition de démarrage / acceptation |
 |---|---|---|
-| MOD-02 | Anthropic et Gemini | adaptateur commun stabilisé ; suite de conformité commune passée pour chaque modèle admis |
+| MOD-02 | Fournisseurs ou modèles supplémentaires | contrat GEN-03 stabilisé ; adaptateur dédié et suite de conformité commune avant admission |
 | HOST-02 | Claude et commande Claude Code | M1 éprouvé ; même projet et mêmes contrôles sans nouveau domaine métier |
 | REV-02 | branches avancées | snapshots/reçus robustes ; branche/merge explicites, pas de fusion opaque |
 | CAT-04 | animations enrichies | mesure par bloc, fallback et mouvement réduit |

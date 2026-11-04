@@ -1,0 +1,16 @@
+{
+  "ownedPaths": [
+    "packages/catalog/",
+    "packages/m0-contract/",
+    "tests/contract/catalog/",
+    "tests/fixtures/catalog/",
+    "tests/e2e/catalog-composed-motion.spec.ts",
+    "tests/e2e/editor-workspace-resolution.spec.ts",
+    "playwright.catalog.config.ts",
+    "docs/spec/CATALOGUE.md",
+    "docs/evidence/GEN-02",
+    "apps/editor-web/package.json",
+    "apps/editor-web/index.html",
+    "package-lock.json"
+  ]
+}

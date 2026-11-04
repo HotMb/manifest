@@ -28,6 +28,8 @@ flowchart LR
 
 Le poste et les hôtes n'accèdent jamais aux clés des fournisseurs. Le modèle ne dispose pas d'un accès direct à la base, au réseau interne ou au système de fichiers : il produit des propositions structurées que le domaine valide.
 
+L'éditeur est une seule surface React à trois zones persistantes, sans navigation entre étapes ni écran séparé de réglage de bloc. `IntentComposer` transmet le brief du créateur après le debounce au fournisseur explicitement sélectionné ; `CatalogSearch` interroge les releases locales/admises sans déclencher l'IA. Une carte catalogue connaît son `catalogItemId`, son `releaseId/hash`, son origine/licence, ses slots et capacités. Son aperçu au survol n'écrit pas dans le document ; « Ajouter » ou le glisser-déposer produit une opération canonique sur le Snapshot et une référence structurée visible sous le champ principal. Cette pièce jointe rejoint le contexte des prochaines propositions et le rapport sans muter le texte libre. Aucun code de référence ou composant ne peut être ajouté sans provenance.
+
 ## Modules et propriétaires
 
 | Module proposé | Propriétaire fonctionnel | Entrées/sorties | Interdit |
@@ -70,7 +72,42 @@ Ordre correct : **Vue -> Hôte `ui/initialize`**, réponse de capacités/context
 
 Le bridge `tools/call` appelle les opérations de lecture, sauvegarde, génération et export. Les outils de poll et de mutation réservés à la vue utilisent la visibilité app lorsque prise en charge. Le résumé envoyé au modèle hôte reste compact ; le document complet et les événements techniques restent dans les données réservées à la vue. Les attributs de visibilité et annotations ne remplacent jamais l'autorisation serveur.
 
-`ui/update-model-context` sert à communiquer page/révision/sélection lors d'un changement utile ou d'une validation, pas à lancer l'inférence. `ui/message` reste une action explicite « Transmettre au chat », jamais un événement pour chaque frappe ou poll.
+Le bootstrap consomme uniquement le contexte documenté reçu pendant `ui/initialize` ou les arguments explicites de l'outil. `LaunchContext` porte `operation` (`create_project`, `create_page`, `modify_page`), la cible et sa version de base quand elles existent, `assistantProposal` (texte de la proposition de l'assistant) et éventuellement `initialCandidate` (Snapshot candidat ou opérations structurées, avec cible et `baseDraftVersion`). `create_project` ne fournit pas d'identifiant de projet et part d'une base vide ; `create_page` exige un projet existant, sans page cible, et charge son Snapshot ; `modify_page` exige le projet, la page et la version de brouillon attendue. Une proposition structurée sur une base existante est refusée comme périmée si sa cible/version diffère du Snapshot relu. Le modèle hôte ne lit pas le compositeur natif non envoyé. Un handoff textuel sans candidat structurel préremplit l'intention ; l'analyse locale démarre après une pause de 1 500 ms, et l'API distante seulement si un fournisseur et un modèle ont été configurés et choisis explicitement. « Proposer maintenant » peut avancer immédiatement. Une proposition invalide ou incompatible est montrée comme telle et n'est jamais appliquée silencieusement.
+
+### Génération guidée par le catalogue
+
+```mermaid
+flowchart LR
+  T[Brief libre] --> D[Debounce 1 500 ms · IME sûr]
+  D --> I[Résolution d'intention et contraintes]
+  I --> R[Recherche des releases locales admissibles]
+  R --> P[API du fournisseur choisi]
+  P --> O[Opérations structurées + raisons + limites]
+  O --> V[Validation stricte domaine/catalogue]
+  V --> S[Projection temporaire du Snapshot]
+  S --> UI[Rendu React des composants locaux]
+  UI --> C[Conserver ou ignorer]
+```
+
+L'entrée reste du langage libre ; le modèle reçoit le brief intact, la cible/version et seulement les références de catalogue compatibles avec le Snapshot. Il choisit des identifiants et propriétés typés. Le serveur valide chaque operation, chaque propriété et chaque version avant que le même arbre puisse être rendu dans l'aperçu ou le rapport. Aucun code produit pendant la frappe n'est interprété ni installé. Les bibliothèques retenues sont vendues avec la version et le lockfile de l'application ; une version de catalogue n'évolue pas silencieusement avec un paquet externe.
+
+La demande de nuages et de graphiques est un cas vertical de validation : les nuages sont une brique locale versionnée, le graphique reçoit un jeu de données synthétique explicitement étiqueté tant qu'aucun connecteur autorisé n'existe. La release 0.3 comprend des presets de mouvement bornés ; le cadrage GEN-02 les fait évoluer vers des primitives déclaratives combinables (opacité, déplacement X/Y, échelle, rotation et flou, avec durée, délai, easing et répétition bornés). GEN-03 demande au modèle choisi de traduire le langage naturel en ces capacités sans exiger leur nom technique. Le modèle ne retourne jamais de code libre à exécuter. Cette architecture vise une grande variété de mouvements web 2D, pas toute animation imaginable : une demande hors capacités installées déclenche une alternative et une demande d'examen de bibliothèque plutôt qu'une fausse réussite. Les tableaux de ventes réelles ne sont jamais inventés : il faut transmettre au modèle hôte la spécification de connexion sans secret puis configurer un connecteur séparé.
+
+Unslop est une méthode de revue du rendu, pas un profil esthétique versionné. Manifest en étudie le processus : tirer une direction du produit et du brief, inspecter l'aperçu réel, proposer des corrections structurées puis recontrôler le rendu. La synthèse d'Unslop dans `docs/design/UNSLOP-METHOD-ANALYSIS.md` guide cette critique sans imposer palette, typographie ou style général. Les préférences de marque et verrous du projet sont prioritaires. Toute adaptation garde l'attribution et la licence requises.
+
+Après chaque pause de 1 500 ms, `IntentComposer` envoie l'intention modifiée au job d'inférence du serveur. Celui-ci appelle l'API du fournisseur et modèle explicitement sélectionnés, retourne des opérations structurées, puis le renderer montre leur projection temporaire ; les retours périmés sont ignorés. Une clé API éventuelle reste côté serveur. Dans ChatGPT, cela nécessite la configuration séparée de l'API du fournisseur : l'abonnement ou la session du modèle hôte ne donne pas au MCP App un canal d'inférence caché.
+
+`ui/update-model-context` met à jour le contexte du modèle hôte mais ne lance pas une inférence. `ui/message` envoie un message de suivi à la conversation ; Manifest ne l'utilise pas par frappe ou polling. `/validate` fige le rapport lié à une révision et le transmet au modèle hôte par cette action explicite ; si l'hôte ne le permet pas ou échoue, le rapport reste visible et propose copie/téléchargement. Sources : [mise à jour de contexte MCP Apps](https://apps.extensions.modelcontextprotocol.io/api/interfaces/app.McpUiUpdateModelContextRequest.html) et [UI ChatGPT / `sendFollowUpMessage`](https://developers.openai.com/plugins/build/chatgpt-ui).
+
+### Rapport et transmission
+
+« Préparer le rapport » fige ou sélectionne une révision explicite, puis produit un `manifest.design-report.v1` associé à son `revisionId`, `snapshotHash` et `catalogLock`. Le rapport conserve distinctement le texte de proposition de l'assistant hôte et le brief édité, puis contient la spécification structurée, la composition/pages/routes, le thème, les interactions et paramètres d'animation, les règles responsive, les références et licences d'assets, les dépendances versionnées, l'accessibilité/mouvement réduit, les instructions d'intégration des données, les hypothèses, les capacités non prises en charge et la preuve d'éligibilité capturée au moment de la validation.
+
+La provenance d'une proposition (source locale ou API, fournisseur/modèle, job, génération et version source) est copiée du résultat immuable. Elle ne provient jamais du sélecteur courant de la barre. La règle `upToDate` du rapport réutilise le prédicat d'éligibilité de l'aperçu ; une sélection de modèle ne vaut pas preuve d'analyse. La preuve historique enregistre les contrôles de session, intention, version, modèle et synchronisation, ou « non applicable » pour une révision manuelle. `reportHash` est le SHA-256 de la sérialisation JSON canonique JCS/RFC 8785 du rapport, sans le champ hash ni l'état volatil de transmission.
+
+Le rapport comprend le texte de proposition hôte, le brief de l'utilisateur, la spécification structurée, les références de catalogue retenues (IDs et releases), le Snapshot, la révision et leurs hashes. Les `dataIntegrationSpecs` résident dans le Snapshot en brouillon et sont modifiées par l'opération domaine `set_data_integration_spec` dans une commande `apply_ops`, puis copiées depuis le Snapshot de la révision approuvée ; elles ne sont pas ajoutées après coup au rapport. Elles décrivent uniquement les sources/références non secrètes autorisées, jeux de données, schémas utiles, liaisons de champs vers les graphiques, transformations/filtres, stratégie de rafraîchissement, mode d'aperçu (`synthetic`/`connected`) et prérequis d'accès. Elles n'emportent ni lignes de données sensibles ni credential. `/validate` constitue l'action explicite de gel et de remise ; l'hôte reçoit le rapport afin que son modèle puisse construire l'intégration. Cela ne crée pas un accès à la source : il faut un connecteur autorisé ou une configuration explicite dans l'application générée. La transmission se termine sur reçu de l'hôte. L'export complet reste un artefact référencé. Si l'hôte ne fournit pas cette capacité, l'interface offre copie/téléchargement et marque clairement la transmission comme indisponible.
+
+À l'ouverture, le plugin expose une carte « Ouvrir Manifest » depuis le chat. L'invocation fiable documentée est la sélection/mention de l'application ; `/manifest` et `/validate` sont des instructions utilisateur possibles, pas des commandes natives promises sans qualification de l'hôte.
 
 ### Transport des suggestions M1
 
@@ -95,7 +132,7 @@ Le serveur détient le brouillon confirmé. Le client détient ses modifications
 
 Avant une génération, les modifications manuelles sont sauvegardées ou le démarrage attend une résolution. Une génération ne modifie pas elle-même le brouillon. Quand une proposition vérifiée arrive, l'aperçu peut l'afficher automatiquement. « Conserver » applique atomiquement ses opérations au brouillon. Modifier directement un bloc issu de la proposition conserve la proposition et le réglage manuel dans **une seule commande atomique**. Une proposition déjà obsolète demande une nouvelle proposition ou un choix explicite de récupération ; elle n'est pas promue implicitement.
 
-« Approuver et exporter » applique au besoin la proposition affichée puis fige une révision dans une même transaction de domaine. L'export travaille ensuite uniquement sur cette révision, pas sur le brouillon qui continue d'évoluer.
+« Valider la version » peut appliquer la proposition éligible affichée et créer la révision dans une transaction de domaine. La préparation/transmission du rapport et l'export sont des actions distinctes associées à ce `revisionId`. Chaque job d'export travaille uniquement sur la révision initiale, pas sur le brouillon qui continue d'évoluer.
 
 ## Concurrence
 

@@ -1,4 +1,4 @@
-# Travail dans Design Workbench
+# Travail dans Manifest
 
 ## Mission et contexte
 
@@ -12,13 +12,17 @@ Un seul propriétaire par ticket et par fichier modifié. Avant toute délégati
 
 ## Pilotage vérifiable
 
-docs/delivery/tickets.json est la source des états ; GitHub Issues en est un miroir lié par URL. Consulter npm run team:next avant de prendre un ticket. Mutations par les commandes team avec --expected-revision ; ne pas modifier le JSON à la main pour contourner une dépendance ou la limite WIP. Fournir des preuves sous docs/evidence/ avant review puis done ; le reviewer est différent du propriétaire. Les gardes du script ne vérifient pas la vérité d'une preuve : l'orchestrateur et la QA doivent la lire. Mettre à jour BOARD.md par npm run team:board dans le même commit et expliquer l'état dans docs/STATUS.md.
+docs/delivery/tickets.json est la source des états ; GitHub Issues en est un miroir lié par URL. Consulter npm run team:next avant de prendre un ticket. Mutations par les commandes team avec --expected-revision ; seul l'orchestrateur peut ajouter ou réviser un ticket, via `team:add` / `team:revise`, un motif explicite et un patch conservé sous docs/delivery/changes/. Ne jamais modifier le JSON à la main pour contourner une dépendance ou la limite WIP. Fournir des preuves sous docs/evidence/ avant review puis done ; le reviewer est différent du propriétaire. Les gardes du script ne vérifient pas la vérité d'une preuve : l'orchestrateur et la QA doivent la lire. Mettre à jour BOARD.md par npm run team:board dans le même commit et expliquer l'état dans docs/STATUS.md.
 
 ARC-01 et ARC-02 exigent des preuves dans le vrai hôte et l'environnement d'identité. Le bootstrap du dépôt ne les termine pas. N'inventer ni un PASS ni un accès indisponible. Si un ticket est bloqué, noter la condition exacte et avancer seulement sur un autre ticket éligible. Reprendre en bornant chaque session à trois tickets intégrés ou un blocage nécessitant l'utilisateur, puis laisser une passation.
 
+## Réunion après chaque tâche
+
+Avant d'annoncer une tâche terminée, tenir la revue d'équipe définie dans docs/meetings/README.md. Recueillir les contributions réelles du propriétaire, d'un reviewer distinct et du designer si une UI est concernée. L'orchestrateur publie un compte rendu versionné : résultat démontré, tests, limites, dettes attribuées, décisions, verdict et prochaine action. Une tâche bloquée ou à reprendre a aussi sa revue. Ne pas inventer de présence ni d'accord. La synthèse est communiquée dans ce chat ; aucune invitation calendrier n'est créée sans demande. Les dettes retenues vont dans docs/TECH-DEBT.md avec propriétaire, condition de levée et jalon. La preuve de revue sous docs/evidence/ renvoie au compte rendu avant le passage done.
+
 ## Architecture et vérification
 
-Conserver un seul Snapshot et contrôleur ; commandes atomiques et propositions réversibles. Clés uniquement backend. Les tests par défaut n'appellent pas d'API payante. Ne pas publier l'application, envoyer un message à autrui ou déclencher un appel fournisseur facturable sans autorisation correspondante. La création et le push de ce dépôt privé sont autorisés ; une mise en production ne l'est pas.
+Conserver un seul Snapshot et contrôleur ; commandes atomiques et propositions réversibles. Clés uniquement backend. Les tests par défaut n'appellent pas d'API payante. Ne pas publier l'application, envoyer un message à autrui ou déclencher un appel fournisseur facturable sans autorisation correspondante. Le dépôt GitHub public `HotMb/manifest` est le dépôt de référence. Les packages et clés internes peuvent encore porter l'espace de noms historique `design-workbench` : ne les renommer que dans un ticket explicite avec migration compatible. Une mise en production n'est pas autorisée par cette consigne.
 
 Pour toute UI, lire DESIGN.md et UX-CONTRACT.md, utiliser frontend-design et frontend-design-premium si disponibles. Le designer possède les choix durables ; le frontend les traduit en contrôles partagés. Vérifier clavier, états d'erreur, mouvements réduits et vrais viewports de l'hôte.
 

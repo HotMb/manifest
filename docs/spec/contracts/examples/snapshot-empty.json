@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "projectTitle": "Nouveau projet",
+  "pages": [
+    {
+      "id": "page-home",
+      "title": "Accueil",
+      "route": "/",
+      "composition": {
+        "content": [],
+        "root": {
+          "props": {
+            "lang": "fr"
+          }
+        }
+      }
+    }
+  ],
+  "theme": {
+    "tokens": {
+      "color.background": {
+        "kind": "color",
+        "value": "#ffffff"
+      },
+      "color.text": {
+        "kind": "color",
+        "value": "#1c2533"
+      },
+      "color.accent": {
+        "kind": "color",
+        "value": "#666666"
+      }
+    }
+  },
+  "assetRefs": [],
+  "catalogLock": {
+    "releaseId": "catalog-m1-example",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "target": "react"
+  },
+  "locks": [],
+  "designBrief": {
+    "product": "Interface à concevoir",
+    "character": [
+      "à définir"
+    ],
+    "world": "À définir selon la demande",
+    "moments": [],
+    "signature": "",
+    "brandConstraints": []
+  }
+}

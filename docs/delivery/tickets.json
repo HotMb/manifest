@@ -1,13 +1,17 @@
 {
   "schemaVersion": 1,
-  "revision": 0,
+  "productName": "Manifest",
+  "revision": 55,
   "tickets": [
     {
       "id": "ARC-01",
       "title": "Qualifier le parcours embarqué",
       "phase": "M0",
       "owner": "frontend",
-      "dependencies": [],
+      "dependencies": [
+        "GEN-03",
+        "GEN-04"
+      ],
       "ownedPaths": [
         "apps/mcp-view/",
         "apps/editor-web/",
@@ -15,17 +19,23 @@
         "docs/evidence/ARC-01"
       ],
       "acceptance": [
-        "Un éditeur minimal avec un bloc s'ouvre dans le vrai ChatGPT, se rafraîchit et permet une modification.",
-        "Le bridge officiel initialise Vue vers Hôte, réalise une lecture authentifiée et refuse un jeton invalide.",
-        "Clavier, dimensions étroites et poll court sont éprouvés ; les capacités fichier, stockage et iframe sont consignées avec fallback navigateur.",
-        "Un enregistrement et une matrice de capacités datée sans secrets sont livrés ; aucun plugin public ni catalogue complet n'est publié."
+        "En navigateur, un nouveau Snapshot M0 est réellement vide ; le brief décrit une page et ses animations, puis l'aperçu s'actualise après le debounce à partir d'une proposition structurée valide. Les brouillons existants restent préservés.",
+        "Après livraison de GEN-03 et GEN-04, dans ChatGPT Desktop, ouvrir Manifest depuis la conversation et qualifier l'identité, la lecture, l'écriture, l'actualisation et les capacités de l'hôte. Depuis le champ Manifest, une demande d'animation doit lancer l'adaptateur API sélectionné après 1 500 ms et modifier réellement l'aperçu ; la preuve note clairement que l'inférence live utilise l'API configurée, pas une inférence cachée du modèle hôte.",
+        "Valider la page dans l'interface et vérifier que `/validate` envoie le rapport complet et sa révision à la conversation ChatGPT par la capacité explicite de suivi disponible. Vérifier l'accusé ou relever l'erreur ; vérifier également le fallback de copie/téléchargement. Aucun texte non envoyé du compositeur ChatGPT n'est lu.",
+        "Clavier, dimensions de l'hôte, polling/rafraîchissement, annulation et mouvement réduit sont éprouvés. Les capacités d'identité, fichier, stockage et iframe sont consignées avec fallback navigateur.",
+        "Une preuve datée et une matrice de capacités sans secrets couvrent le flux réel d'ouverture, de génération live, d'aperçu et de transmission du rapport. ARC-01 ne passe pas done sur la seule base d'un mock, d'une capture locale ou d'un test en navigateur autonome."
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/evidence/ARC-01/implementation.md",
+        "docs/evidence/ARC-01/implementation-2026-11-03.md"
+      ],
       "blockers": [
         "Preuve réelle ChatGPT et compte de test autorisé non encore obtenus.",
         "Configuration d'identité et jetons d'essai à préparer sans secrets dans le dépôt."
       ],
-      "status": "ready"
+      "status": "blocked",
+      "branch": "work/arc-01",
+      "reason": "Retarder la qualification du parcours hôte jusqu'à ce que la génération par API après debounce et l'aperçu direct des animations soient livrés, puis éprouver le même flux complet dans ChatGPT Desktop."
     },
     {
       "id": "ARC-02",
@@ -102,9 +112,9 @@
         "docs/evidence/DOM-01"
       ],
       "acceptance": [
-        "Sérialisation et validation structurelle plus catalogue contrôlent IDs, slots, routes, tokens, assets, profondeur et limites.",
-        "Les fixtures valides passent ; bloc inconnu, doublon imbriqué, cycle de déplacement et référence hors projet sont refusés.",
-        "Le domaine ne dépend ni du réseau, ni de React, ni d'un SDK fournisseur."
+        "Le Snapshot valide `dataIntegrationSpecs[]` avec schéma strict : identifiants, source/référence non secrète, dataset, types de champs, mappings de graphiques, transformations/filtres, rafraîchissement, previewMode et référence de connecteur admise.",
+        "Les fixtures synthétiques et connectées autorisées passent ; une source inconnue, un mapping invalide, un secret/credential ou une ligne sensible brute sont refusés.",
+        "La validation structurelle et catalogue contrôle aussi IDs, slots, routes, tokens, assets, profondeur et limites ; bloc inconnu, doublon imbriqué, cycle et référence hors projet sont refusés. Le domaine ne dépend ni du réseau, ni de React, ni d’un SDK fournisseur."
       ],
       "evidence": [],
       "blockers": [],
@@ -125,9 +135,9 @@
         "docs/evidence/DOM-02"
       ],
       "acceptance": [
-        "Les quatre actions de CONTRACTS.md sont implémentées dans une transaction complète.",
+        "Les quatre commandes transactionnelles de CONTRACTS.md restent appliquées atomiquement ; `apply_ops` inclut `set_data_integration_spec` comme opération de domaine versionnée.",
         "Un retry identique retourne le même reçu ; une clé réutilisée pour un autre corps provoque un conflit.",
-        "Deux écritures sur une même version ne donnent qu'un gagnant ; locks, version du brouillon et head sont contrôlés atomiquement.",
+        "Deux écritures sur une même version ne donnent qu’un gagnant ; une modification de spécification incrémente draftVersion et les vérifications de lock/version/head se font dans la transaction sans lot partiel.",
         "Reçu et nouvelle version sont écrits ensemble ; AT-05/06/09/10 sont prouvés sans lot partiel."
       ],
       "evidence": [],
@@ -195,7 +205,7 @@
         "docs/evidence/CAT-02"
       ],
       "acceptance": [
-        "Les dix blocs et préréglages d'animation admis de CATALOGUE.md sont implémentés.",
+        "Les dix blocs et préréglages d'animation admis de CATALOGUE.md sont implémentés ; Navigation comprend un menu accessible au clavier et à toucher, avec animation et variante mouvement réduit.",
         "Chaque bloc couvre mobile, clavier, contenu long, états, mouvement réduit et preuve de licence.",
         "Les briefs restaurant, portfolio et produit ne dépendent pas d'un layout unique ; AT-14/15/20 sont prouvés."
       ],
@@ -205,7 +215,7 @@
     },
     {
       "id": "CAT-03",
-      "title": "Release immuable et profil Unslop",
+      "title": "Release immuable et revue de qualité du design",
       "phase": "M1",
       "owner": "designer",
       "dependencies": [
@@ -215,12 +225,14 @@
         "packages/catalog/releases/",
         "packages/catalog/policy/",
         "tests/contract/catalog/",
+        "docs/design/UNSLOP-METHOD-ANALYSIS.md",
         "docs/evidence/CAT-03"
       ],
       "acceptance": [
-        "Les manifests comprennent empreintes sources, assets et lockfile, profil versionné, attribution et notices.",
+        "Les manifests comprennent les empreintes des sources, assets et lockfile, les licences, crédits et notices de chaque release admise.",
         "Une mise à jour du catalogue ne modifie pas une ancienne révision.",
-        "Les règles esthétiques restent adaptables et respectent locks et exceptions documentées ; les contenus tiers sont vérifiés avant admission."
+        "La qualité de design s'appuie sur une revue contextualisée du rendu selon la méthode documentée dans UNSLOP-METHOD-ANALYSIS.md ; le catalogue ne stocke ni profil esthétique universel ni palette imposée. Les préférences utilisateur, les contraintes de marque et les verrous restent prioritaires.",
+        "Les règles applicables aux contenus tiers et bibliothèques sont vérifiées avant admission ; la popularité seule n'est pas un motif d'inclusion."
       ],
       "evidence": [],
       "blockers": [],
@@ -243,8 +255,8 @@
       ],
       "acceptance": [
         "Le mapping DESIGN.md vers styles, contrôles partagés, états et scroll est unique.",
-        "La sélection de l'éditeur est distincte du thème de page ; focus visible et menus clavier sont opérationnels.",
-        "Les popups ouverts et l'écran étroit sont vérifiés sans dupliquer les valeurs normatives."
+        "Le shell est une surface unique à trois zones, sans parcours Décrire/Composer/Transmettre ni écran séparé de réglage de bloc ; le contexte distingue nouveau projet, nouvelle page et modification de page. Focus visible et menus clavier sont opérationnels.",
+        "Les popups ouverts et l’écran étroit sont vérifiés sans dupliquer les valeurs normatives."
       ],
       "evidence": [],
       "blockers": [],
@@ -268,9 +280,9 @@
         "docs/evidence/UI-01"
       ],
       "acceptance": [
-        "La composition Puck est branchée au contrôleur ; sélection, champs et viewport mobile sont opérants.",
-        "Un rechargement restitue le document confirmé et changer une propriété change le rendu.",
-        "Déplacer un bloc conserve les IDs ; la sélection de l'éditeur n'apparaît pas dans l'export."
+        "La composition Puck contrôlée charge la bonne base pour create_project, create_page ou modify_page dans l’espace de travail unique ; sélection et propriétés contextuelles sont opérantes sans écran séparé de réglage de bloc.",
+        "Créer une page dans un projet relit d’abord son Snapshot ; modifier une page cible son ID et sa baseDraftVersion. Un candidat reste distinct du brouillon confirmé jusqu’à conservation explicite.",
+        "Un rechargement restitue le document confirmé ; changer une propriété change le rendu. Déplacer un bloc conserve les IDs et la sélection éditeur n’apparaît pas dans l’export."
       ],
       "evidence": [],
       "blockers": [],
@@ -292,9 +304,9 @@
         "docs/evidence/UI-02"
       ],
       "acceptance": [
-        "Recherche et filtres du catalogue ne déclenchent pas d'IA ; navigation des pages et comparaison des candidats fonctionnent.",
-        "Vide, sans résultat, erreur et alternative tactile au survol sont testés.",
-        "L'ajout vise le bon slot et la bonne position ; une cible incompatible est expliquée sans insertion silencieuse."
+        "Un champ de recherche distinct de l’intention de page filtre localement les releases admises par composant, animation et usage (ex. « menu ») ; recherche et filtres ne déclenchent aucun appel modèle.",
+        "Chaque candidat montre un rendu réel, son animation, son emplacement, sa bibliothèque/source, sa version, sa licence et sa compatibilité. Le survol joue une démonstration dans la carte sans modifier le canevas ; le clavier et le tactile ont un équivalent. Les états chargement, vide, sans résultat et erreur sont testés ; aucune carte ou provenance fictive n’est admise.",
+        "Prévisualiser ne modifie pas le document. Ajouter par glisser-déposer ou action clavier/tactile équivalente applique au bon slot et à la bonne position, puis affiche un jeton lisible/identifiant sous l’intention et inscrit l’ID, la release et la configuration dans le brief et le rapport. Le texte libre n’est pas réécrit. Une cible incompatible est expliquée sans insertion silencieuse."
       ],
       "evidence": [],
       "blockers": [],
@@ -318,9 +330,9 @@
         "docs/evidence/UI-03"
       ],
       "acceptance": [
-        "Temporisation, IME, arrêt, reprise et causalité fonctionnent sans requête par frappe et avec input utilisable.",
-        "Les événements dupliqués/hors ordre et les anciens résultats n'altèrent pas l'état courant.",
-        "Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
+        "Le LaunchContext a un schéma runtime strict et des fixtures qui valident operation et ses cibles : create_project sans cible, create_page avec projectId/baseDraftVersion, modify_page avec projectId/pageId/baseDraftVersion ; il transmet la proposition ChatGPT et, facultativement, un candidat structuré lié à sa cible/baseDraftVersion. Les Snapshots existants sont relus avant aperçu ; les champs/version manquants ou incohérents sont refusés ; aucun texte non envoyé du compositeur natif n’est lu.",
+        "Un handoff textuel seul préremplit le brief. À chaque lancement ou modification, une pause de 1,5 s déclenche le fournisseur explicitement choisi si configuré, automatiquement et sans opt-in ; sans fournisseur, l'analyse locale bornée reste automatique. « Proposer maintenant » est une action facultative immédiate ; aucune requête ne part à chaque frappe et la recherche du catalogue reste indépendante.",
+        "Arrêt, IME, causalité, événements dupliqués/hors ordre et résultats périmés sont gérés sans altérer le brouillon conservé. Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
       ],
       "evidence": [],
       "blockers": [],
@@ -445,7 +457,7 @@
     },
     {
       "id": "AI-02",
-      "title": "Contexte, cibles et profil",
+      "title": "Contexte, cibles et revue de design",
       "phase": "M1",
       "owner": "backend",
       "dependencies": [
@@ -456,12 +468,15 @@
         "packages/inference/context/",
         "packages/inference/policy/",
         "tests/fixtures/briefs/",
-        "docs/evidence/AI-02"
+        "docs/evidence/AI-02",
+        "docs/design/UNSLOP-METHOD-ANALYSIS.md"
       ],
       "acceptance": [
-        "Le contexte réduit comprend page, sélection, locks, opérations autorisées et profil versionné.",
-        "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global.",
-        "Une intention ambiguë propose des variantes ; plusieurs briefs de référence sont vérifiés."
+        "Le contexte réduit comprend l'opération create_project/create_page/modify_page, la cible et baseDraftVersion, la proposition de l'assistant et le candidat initial seulement s'ils sont explicitement fournis, le Snapshot/version, la sélection, les verrous, les opérations permises, les références exactes du catalogue, l'intention de données non secrète, ainsi que le fournisseur et le modèle sélectionnés. Il n'inclut pas de profil de style fixe.",
+        "La direction de design proposée est déduite du produit, du brief, de l'aperçu actuel et des préférences de marque. La méthode Unslop documentée sert à organiser une critique concrète du rendu ; elle ne fixe ni thème ni résultat visuel universel et conserve son attribution.",
+        "Une instruction hostile dans le contenu ne donne aucun accès ; une demande locale ne change pas le thème global. Aucune clé, aucun jeton et aucun secret n'entre dans le contexte. Une connexion réelle exige une capacité/connecteur autorisé séparément.",
+        "Le modèle reçoit les spécifications de données versionnées avec le Snapshot et les utilise pour relier sources/champs et graphiques sans inventer de connexion réelle. Une intention ambiguë propose des variantes ; les références catalogue enrichissent la demande sans altérer le texte saisi ; plusieurs briefs de référence sont vérifiés.",
+        "Une mise à jour `ui/update-model-context` seule ne déclenche pas de génération. Dans ChatGPT, le transfert au modèle hôte utilise une action explicite et visible telle que `/validate`, tandis que le parcours réactif appelle l'adaptateur API sélectionné côté serveur."
       ],
       "evidence": [],
       "blockers": [],
@@ -534,7 +549,7 @@
       "acceptance": [
         "Révisions hors snapshots, parent immuable et comparaison sont implémentés.",
         "Restaurer crée une nouvelle révision et conserve le head précédent ; éditer ne modifie pas les snapshots historiques.",
-        "L'export vise l'état exact approuvé ; AT-10/13 passent."
+        "Le rapport immuable est dérivé du Snapshot exact de la révision approuvée et conserve la proposition ChatGPT, les références catalogue/releases/sources/licences et `dataIntegrationSpecs[]` versionnées. /validate transmet schéma, liaisons, filtres/transformation, rafraîchissement, mode synthétique/connecté et prérequis d’accès sans credentials ni lignes sensibles, après accusé hôte ou avec fallback ; l’export vise l’état approuvé exact ; AT-10/13 passent."
       ],
       "evidence": [],
       "blockers": [],
@@ -654,12 +669,889 @@
       "acceptance": [
         "Les fixtures et tests préparatoires sont construits par les tickets dès ARC-03 ; TEST-01 en rassemble les preuves et clôt la recette après toutes ses dépendances.",
         "Tous les tickets M1 sont clos avec preuves avant de terminer cette recette.",
-        "Le parcours complet dans ChatGPT et l'archive reconstruite sont exécutés ; chaque scénario AT-01 à AT-25 passe ou présente un écart explicitement accepté.",
+        "Le parcours couvre les trois opérations : nouveau projet, nouvelle page dans un projet chargé, modification d’une page ciblée avec contrôle de baseDraftVersion ; il vérifie proposition assistant explicite, préremplissage du texte et analyse automatique après 1 500 ms, appel distant seulement pour un modèle configuré/choisi, candidat modifiable et absence de lecture non envoyée/remplacement silencieux. Il couvre la surface unique, le debounce et le rendu de piste après pause, recherche indépendante, démonstration au survol et équivalents clavier/tactile, menu animé, insertion, référence visible/rapport, et /validate avec reçu ou fallback. Une intention de données éditée est versionnée dans le Snapshot et recopiée depuis la révision approuvée vers le rapport sans secret ; une connexion réelle est affirmée seulement si un connecteur autorisé existe. Le parcours ChatGPT et l’archive reconstruite sont exécutés, AT-01 à AT-25 passent ou chaque écart est accepté explicitement.",
         "Le registre des limites, versions, résultats et décision produit est livré ; un PASS de modèle ou build seul ne vaut pas cette preuve."
       ],
       "evidence": [],
       "blockers": [],
       "status": "todo"
+    },
+    {
+      "id": "GEN-01",
+      "title": "Boucle de conception réactive",
+      "phase": "M0",
+      "owner": "frontend",
+      "dependencies": [],
+      "ownedPaths": [
+        "apps/editor-web/src/",
+        "apps/editor-web/test/",
+        "tests/e2e/intent/",
+        "tests/e2e/empty-start.spec.ts",
+        "docs/evidence/GEN-01"
+      ],
+      "acceptance": [
+        "À chaque lancement ou modification d'un brief non vide, l'analyse démarre seule après 1 500 ms sans frappe ; chaque nouvelle saisie redémarre le délai, l'IME suspend le minuteur et invalide les résultats antérieurs.",
+        "Si un fournisseur et un modèle sont configurés, seul le modèle explicitement choisi reçoit le Snapshot confirmé et le brief après le debounce ; la proposition structurée validée s'affiche automatiquement comme candidat temporaire, sans enregistrer le brouillon.",
+        "Sans modèle sélectionné, les règles locales s'exécutent automatiquement et affichent directement dans le canevas les pistes qu'elles savent représenter : couleurs, indications de contenu reconnues, Hero M0, recette catalogue ventes + nuages + graphiques synthétiques, mouvements vers le haut ou le bas, vitesse et combinaisons fondu + déplacement. Les demandes hors capacités locales sont indiquées avec leurs limites et une alternative, sans résultat inventé.",
+        "Le réglage système prefers-reduced-motion est respecté par défaut. L'utilisateur peut activer les animations uniquement dans le canevas de prévisualisation ; l'état n'est pas sauvegardé et ne modifie pas les préférences du système.",
+        "Des tests à horloge contrôlée couvrent le lancement initial, le redémarrage après frappe, le seuil de 1 499/1 500 ms, l'IME, l'invalidation des résultats périmés, le candidat catalogue, les directions haut/bas, les retouches de vitesse, la réduction de mouvement par défaut et l'activation locale des animations. Les tests n'appellent pas d'API facturable."
+      ],
+      "evidence": [
+        "docs/evidence/GEN-01/implementation.md",
+        "docs/evidence/GEN-01/review.md"
+      ],
+      "blockers": [],
+      "status": "done",
+      "branch": "work/gen-01",
+      "reviewer": "qa"
+    },
+    {
+      "id": "GEN-02",
+      "title": "Catalogue local de composition versionné",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [],
+      "ownedPaths": [
+        "packages/catalog/",
+        "packages/m0-contract/package.json",
+        "tests/contract/catalog/",
+        "tests/fixtures/catalog/",
+        "tests/e2e/catalog-composed-motion.spec.ts",
+        "tests/e2e/editor-workspace-resolution.spec.ts",
+        "playwright.catalog.config.ts",
+        "docs/spec/CATALOGUE.md",
+        "docs/evidence/GEN-02",
+        "apps/editor-web/package.json",
+        "apps/editor-web/index.html",
+        "package-lock.json"
+      ],
+      "acceptance": [
+        "Un arbre de page typé et versionné accepte uniquement des composants, propriétés, slots et mouvements du catalogue local ; profondeur, taille, paramètres de mouvement et budget sont bornés. Aucun JSX, HTML, CSS ou JavaScript libre produit par le modèle n'est exécuté.",
+        "La release de départ expose les primitives nécessaires à une page de tableau de bord, un fond de nuages animé, des graphiques de ventes sur données synthétiques explicitement étiquetées, un menu, ainsi que des mouvements paramétrables et combinables : opacité, translation X/Y, échelle, rotation, flou et fondu avec montée/descente. Durée, délai, easing, répétition et amplitude ont des bornes et un comportement prefers-reduced-motion sûr.",
+        "Chaque entrée contient une version exacte, source, empreinte, licence et attribution, dépendances locales, propriétés validées, compatibilité, coût mesuré et statut. Une référence refusée ou absente ne peut pas être recommandée comme intégrable.",
+        "Chaque bibliothèque vue en référence est inventoriée et classée comme runtime, composant source, moteur d'animation, pipeline d'assets ou service/outillage ; l'installation locale est limitée aux entrées retenues après vérification officielle de licence, versions, compatibilité, sécurité, accessibilité et coût, avec lockfile reproductible.",
+        "Le mouvement composé est éprouvé dans Chromium comme animation effectivement exécutable, puis neutralisé par prefers-reduced-motion hors aperçu explicitement activé.",
+        "La version de catalogue identifie sans ambiguïté les capacités qu'elle contient ; une évolution ne réutilise pas silencieusement une version déjà publiée, et la compatibilité des snapshots locaux antérieurs est prouvée ou explicitement bornée avant export.",
+        "L'application editor-web déclare explicitement le package catalogue local comme dépendance workspace à sa version exacte ; le smoke du serveur de développement et le build résolvent le renderer et son CSS sans overlay Vite d'import, et la console navigateur ne contient aucune erreur de résolution de module."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "in_progress",
+      "branch": "work/gen-02"
+    },
+    {
+      "id": "GEN-03",
+      "title": "Choix du modèle sans implicite et transparence de l’état IA",
+      "phase": "M1",
+      "owner": "backend",
+      "dependencies": [
+        "GEN-02"
+      ],
+      "ownedPaths": [
+        "apps/editor-web/src/main.tsx",
+        "apps/editor-web/src/model-selection.ts",
+        "apps/editor-web/src/model-provider-panel.tsx",
+        "apps/editor-web/src/manifest.css",
+        "apps/editor-web/test/model-selection.test.ts",
+        "tests/e2e/empty-start.spec.ts",
+        "docs/STATUS.md",
+        "docs/evidence/GEN-03"
+      ],
+      "acceptance": [
+        "L’auto-sélection ne choisit une cible que si un seul fournisseur et un seul modèle sont configurés. Si le fournisseur a plusieurs modèles, le choix du modèle est obligatoire avant qu’un job IA puisse démarrer ; le contrôle reste utilisable dans cet état.",
+        "Le brief indique près du champ si l’API du fournisseur sera appelée après la pause, si aucune API n’est configurée, si plusieurs modèles doivent être choisis ou si le registre est indisponible. La facturation API distincte de ChatGPT est visible sans ouvrir les réglages détaillés ; l’état indisponible offre un retry ciblé du registre.",
+        "Le test navigateur vérifie qu’aucun job ne démarre avant le choix explicite parmi plusieurs modèles, puis qu’un job part après le debounce de 1 500 ms. Les appels utilisés pour les tests restent simulés.",
+        "Le Snapshot continue d’accepter une référence designPolicy héritée pour lecture, mais les nouveaux projets n’en contiennent pas et aucune référence n’est envoyée au modèle. Unslop reste une méthode de revue contextualisée, sans profil fixe."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "GEN-04",
+      "title": "Aperçu réactif de pages composées",
+      "phase": "M1",
+      "owner": "frontend",
+      "dependencies": [
+        "GEN-01",
+        "GEN-02",
+        "GEN-03"
+      ],
+      "ownedPaths": [
+        "apps/editor-web/src/",
+        "tests/e2e/intent/",
+        "tests/visual/catalog/",
+        "docs/evidence/GEN-04"
+      ],
+      "acceptance": [
+        "Le canevas central rend le même arbre validé que le rapport/export ; une proposition à jour issue du job déclenché au debounce devient visible sans clic, tandis que le brouillon conservé reste intact jusqu'à confirmation.",
+        "Un brief de tableau de bord ventes peut afficher fond animé, graphiques synthétiques et sections du catalogue ; une modification de direction, d'animation ou de vitesse actualise l'aperçu après la pause, sur dimensions desktop et mobile.",
+        "Le panneau droit filtre localement les composants/animations admis ; aperçu au survol et équivalent clavier/tactile ne mutent pas la page. L'insertion choisie ajoute une référence exacte sous le brief et au rapport.",
+        "Le moteur de suggestions s'appuie sur les éléments de qualité étudiés dans la méthode Unslop : direction dérivée du produit et du brief, inspection du rendu réel, corrections par étapes et contrôle après rendu. Il ne force ni palette ni style général ; marque, préférences, verrous et mouvement réduit du projet prévalent. L'attribution de la source est conservée.",
+        "Toute demande hors capacités installées affiche la limite et les alternatives disponibles ; la génération n'affirme pas pouvoir réaliser une animation qui n'existe ni dans les primitives admises ni dans les bibliothèques auditées."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "GEN-05",
+      "title": "Étendre les mouvements compris depuis le langage libre",
+      "phase": "M2",
+      "owner": "backend",
+      "dependencies": [
+        "GEN-02",
+        "GEN-03",
+        "GEN-04"
+      ],
+      "ownedPaths": [
+        "packages/catalog/",
+        "packages/inference/",
+        "tests/contract/motion/",
+        "tests/visual/motion/",
+        "docs/evidence/GEN-05"
+      ],
+      "acceptance": [
+        "Les descriptions libres usuelles de mouvement sont traduites en recettes structurées versionnées, couvrant au minimum fondu, glissement directionnel, échelle, flou, ressort, décalage progressif, survol/focus et déclenchement au défilement ; durée, délai, amplitude, rythme et intensité restent paramétrables dans des limites explicites.",
+        "Les recettes sont rendues uniquement par des composants ou bibliothèques locales admis par une release reproductible ; la provenance, la licence, la version, les dépendances et le coût sont vérifiés avant admission. Le modèle sélectionne et paramètre des capacités admises, sans produire de JavaScript, CSS ou paquet exécutable arbitraire.",
+        "Après 1 500 ms sans saisie, le mouvement décrit et ses retouches actualisent le même aperçu sans action manuelle. Toute capacité indisponible est signalée avec une alternative ; aucun mouvement inexistant n’est présenté comme rendu.",
+        "Le mouvement réduit est honoré dans l’éditeur et l’export. Des fixtures et tests couvrent chacune des intentions minimales, les limites de paramètres, les changements successifs, les cibles hover/focus/scroll, ainsi que le refus des mouvements et dépendances non admis."
+      ],
+      "evidence": [],
+      "blockers": [],
+      "status": "todo"
+    },
+    {
+      "id": "HOTFIX-01",
+      "title": "Corriger le lancement contextuel et la hauteur de Manifest",
+      "phase": "M0",
+      "owner": "frontend",
+      "dependencies": [],
+      "ownedPaths": [
+        "apps/editor-web/src/main.tsx",
+        "apps/editor-web/src/manifest.css",
+        "apps/editor-web/test/launch-intent.test.ts",
+        "tests/e2e/launch-context.spec.ts",
+        "tests/e2e/arc01.spec.ts",
+        "tests/e2e/component-examples.spec.ts",
+        "tests/e2e/empty-start.spec.ts",
+        "integrations/chatgpt-desktop/plugin.json",
+        "services/api/src/mcp.ts",
+        "packages/m0-contract/src/index.ts",
+        "packages/host-adapters/test/adapter.test.ts",
+        "docs/spec/contracts/examples/snapshot-empty.json",
+        "DESIGN.md",
+        "UX-CONTRACT.md",
+        "package.json",
+        "docs/evidence/HOTFIX-01"
+      ],
+      "acceptance": [
+        "Quand le chat fournit userRequest et assistantProposal, la demande explicite de l’utilisateur préremplit le champ et pilote l’analyse après 1 500 ms ; une proposition d’assistant n’est utilisée qu’en absence de userRequest explicite, cas couvert par un test distinct.",
+        "L’ouverture sans demande n’invente aucun brief ni composant : un projet initial vide affiche un canevas blanc. Les brouillons existants réellement enregistrés restent préservés.",
+        "À 736×704 px, l’atelier intégré tient dans la hauteur disponible sans défilement de page ; les trois zones restent visibles et les panneaux/canevas défilent à l’intérieur lorsque leur contenu dépasse.",
+        "Sous 560 px de largeur, Manifest reste borné au viewport et permet de passer au clavier ou au pointeur entre Décrire, Aperçu et Suggestions sans empiler les zones en une longue page.",
+        "Les règles de DESIGN.md et UX-CONTRACT.md décrivent les seuils réellement éprouvés : trois panneaux compacts dès 560 px, panneaux commutables sous ce seuil, et niveaux typographiques lisibles dans le format intégré.",
+        "Les tests automatisés dans la CI couvrent les cas de lancement, le Snapshot neutre, les brouillons existants, les dimensions 736×704 et 390×844, le non-défilement de page, le défilement interne et la navigation clavier, sans appel API réel."
+      ],
+      "evidence": [
+        "docs/evidence/HOTFIX-01/implementation.md",
+        "docs/evidence/HOTFIX-01/review.md"
+      ],
+      "blockers": [],
+      "status": "done",
+      "branch": "work/hotfix-01",
+      "reviewer": "qa"
+    }
+  ],
+  "history": [
+    {
+      "revision": 1,
+      "ticketId": "ARC-01",
+      "from": "ready",
+      "to": "in_progress",
+      "actor": "frontend",
+      "at": "2026-11-01T17:09:36.198Z"
+    },
+    {
+      "revision": 2,
+      "ticketId": "ARC-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "frontend",
+      "at": "2026-11-01T21:30:39.880Z"
+    },
+    {
+      "revision": 3,
+      "ticketId": "ARC-01",
+      "from": "review",
+      "to": "blocked",
+      "actor": "orchestrator",
+      "at": "2026-11-01T21:30:40.041Z",
+      "reason": "Prototype local relu et testé ; connexion dans le vrai hôte et identité réelle à qualifier avant ARC-02."
+    },
+    {
+      "revision": 4,
+      "ticketId": "ARC-01",
+      "from": "blocked",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T00:20:37.049Z",
+      "reason": "Le commanditaire confirme que Manifest s’ouvre dans ChatGPT Desktop, mais que le rendu ne correspond pas à la maquette Figma validée. Reprendre l’alignement de l’écran M0 et réévaluer le rendu ; la preuve d’identité et le reste de la qualification hôte demeurent à établir."
+    },
+    {
+      "revision": 5,
+      "ticketId": "ARC-01",
+      "from": "todo",
+      "to": "in_progress",
+      "actor": "frontend",
+      "at": "2026-11-03T00:20:50.001Z"
+    },
+    {
+      "revision": 6,
+      "ticketId": "ARC-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-03T01:09:15Z",
+      "action": "criteria_updated",
+      "reason": "Précise le canevas M0 réellement vide, l'intention principale et le contexte hôte explicite ; détaille le champ de recherche catalogue indépendant et ses références en UI-02. Aucun changement de statut ni de dépendance."
+    },
+    {
+      "revision": 7,
+      "ticketId": "UI-02",
+      "relatedTicketIds": [
+        "UI-03",
+        "CAT-02",
+        "AI-02",
+        "REV-01",
+        "TEST-01"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T01:09:15Z",
+      "action": "criteria_updated",
+      "reason": "Ajoute le jeton de référence visible sous l'intention, la portée des références dans l'IA et le rapport, le contexte nouveau/existant explicite, le menu accessible et la recette /validate aux tickets UI-02, UI-03, CAT-02, AI-02, REV-01 et TEST-01. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 8,
+      "ticketId": "ARC-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "frontend",
+      "at": "2026-11-03T05:31:10.512Z"
+    },
+    {
+      "revision": 9,
+      "ticketId": "ARC-01",
+      "from": "review",
+      "to": "blocked",
+      "actor": "orchestrator",
+      "at": "2026-11-03T05:31:18.677Z",
+      "reason": "Le sous-ensemble local est relu et testé, mais ARC-01 exige encore une exécution dans ChatGPT Desktop avec preuve du bridge, identité OAuth, rafraîchissement, capacités d’hôte et parcours réel. Sans cette preuve, ARC-02 ne peut pas démarrer."
+    },
+    {
+      "revision": 10,
+      "ticketId": "UX-01",
+      "relatedTicketIds": [
+        "UI-01",
+        "UI-02",
+        "UI-03",
+        "AI-02",
+        "REV-01",
+        "TEST-01"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:42:58.245Z",
+      "action": "criteria_updated",
+      "reason": "Aligne l’espace unique sans page de réglage, le handoff de la proposition ChatGPT en nouveau/existant, les aperçus catalogue accessibles et la spécification de connexion aux données transmise dans le rapport. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 11,
+      "ticketId": "UI-03",
+      "relatedTicketIds": [
+        "UX-01",
+        "UI-01",
+        "UI-02",
+        "AI-02",
+        "REV-01",
+        "TEST-01"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:48:22.567Z",
+      "action": "criteria_updated",
+      "reason": "Précise les trois opérations de lancement, la cible et la version du candidat, le déclenchement uniquement après activation et la source de vérité versionnée des intentions de données. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 12,
+      "ticketId": "DOM-01",
+      "relatedTicketIds": [
+        "DOM-02",
+        "AI-02"
+      ],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:49:25.782Z",
+      "action": "criteria_updated",
+      "reason": "Attribue explicitement la validation et la mutation atomique des spécifications de données au domaine, puis leur lecture contextuelle à AI-02. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 13,
+      "ticketId": "UI-03",
+      "relatedTicketIds": [],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:50:16.211Z",
+      "action": "criteria_updated",
+      "reason": "Lie le LaunchContext normatif à un schéma runtime strict et à des fixtures vérifiables dans UI-03. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 14,
+      "ticketId": "UI-03",
+      "relatedTicketIds": [],
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T14:52:21.057Z",
+      "action": "criteria_updated",
+      "reason": "Rend obligatoire la version de base également lors de la création d’une page dans un projet existant. Aucun statut ni aucune dépendance ne change."
+    },
+    {
+      "revision": 15,
+      "ticketId": "GEN-01",
+      "from": "absent",
+      "to": "ready",
+      "actor": "orchestrator",
+      "at": "2026-11-03T23:48:26.497Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-15-gen-01.json",
+      "reason": "Débloquer le comportement réactif automatique M0"
+    },
+    {
+      "revision": 16,
+      "ticketId": "GEN-02",
+      "from": "absent",
+      "to": "ready",
+      "actor": "orchestrator",
+      "at": "2026-11-03T23:48:28.855Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-16-gen-02.json",
+      "reason": "Planifier le catalogue local composé avec règles d’admission"
+    },
+    {
+      "revision": 17,
+      "ticketId": "GEN-03",
+      "from": "absent",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T23:48:30.249Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-17-gen-03.json",
+      "reason": "Rendre le contexte et les propositions sensibles au catalogue"
+    },
+    {
+      "revision": 18,
+      "ticketId": "GEN-04",
+      "from": "absent",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T23:48:31.498Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-18-gen-04.json",
+      "reason": "Relier les blocs composés à l’aperçu et aux suggestions"
+    },
+    {
+      "revision": 19,
+      "ticketId": "UI-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-03T23:48:32.847Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-19-ui-03.json",
+      "reason": "Corriger la contradiction qui rendait le debounce optionnel"
+    },
+    {
+      "revision": 20,
+      "ticketId": "GEN-01",
+      "from": "ready",
+      "to": "in_progress",
+      "actor": "frontend",
+      "at": "2026-11-03T23:48:54.823Z"
+    },
+    {
+      "revision": 21,
+      "ticketId": "GEN-02",
+      "from": "ready",
+      "to": "in_progress",
+      "actor": "backend",
+      "at": "2026-11-03T23:48:56.045Z"
+    },
+    {
+      "revision": 22,
+      "ticketId": "GEN-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-03T23:58:18.315Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-22-gen-01-preview.json",
+      "reason": "Préciser que les pistes locales doivent modifier l’aperçu temporaire sans sauvegarde"
+    },
+    {
+      "revision": 23,
+      "ticketId": "TEST-01",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T00:01:09.432Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-23-test-01-auto.json",
+      "reason": "Aligner la recette transverse sur le debounce automatique et la provenance du fournisseur"
+    },
+    {
+      "revision": 24,
+      "ticketId": "GEN-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T00:36:44.460Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-24-gen-01-catalog-aware.json",
+      "reason": "Aligner GEN-01 sur le debounce automatique et le candidat catalogue effectivement livrés."
+    },
+    {
+      "revision": 25,
+      "ticketId": "GEN-05",
+      "from": "absent",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T00:43:41.116Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-25-gen-05-motion-range.json",
+      "reason": "Rendre explicite le prochain lot nécessaire pour élargir les animations en langage libre au-delà des presets initiaux."
+    },
+    {
+      "revision": 26,
+      "ticketId": "GEN-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T01:39:23.158Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-26-gen-01-compose-motion.json",
+      "reason": "Préciser la couverture locale des mouvements combinés et sa limite catalogue."
+    },
+    {
+      "revision": 27,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T01:39:31.044Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-27-gen-02-compose-motion.json",
+      "reason": "Versionner la prise en charge des mouvements fade+slide dans le catalogue."
+    },
+    {
+      "revision": 28,
+      "ticketId": "GEN-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T02:03:20.035Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-28-gen-01-motion-accessibility.json",
+      "reason": "Documenter haut/bas et aperçu réduit-motion"
+    },
+    {
+      "revision": 29,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T02:03:27.758Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-29-gen-02-parametric-motion.json",
+      "reason": "Étendre le cadrage aux primitives de mouvement paramétrables"
+    },
+    {
+      "revision": 30,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T02:03:37.257Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-30-gen-03-natural-motion.json",
+      "reason": "Aligner la génération naturelle avec le catalogue et Unslop"
+    },
+    {
+      "revision": 31,
+      "ticketId": "GEN-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T02:14:00.005Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-31-gen-01-e2e-ownership.json",
+      "reason": "Aligner la propriété de fichiers sur l’E2E debounce"
+    },
+    {
+      "revision": 32,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T02:18:09.488Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-32-gen-03-redact-provider-secrets.json",
+      "reason": "Ajouter le contrôle local des secrets avant transfert fournisseur"
+    },
+    {
+      "revision": 33,
+      "ticketId": "GEN-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "frontend",
+      "at": "2026-11-04T02:37:23.302Z"
+    },
+    {
+      "revision": 34,
+      "ticketId": "GEN-01",
+      "from": "review",
+      "to": "done",
+      "actor": "qa",
+      "at": "2026-11-04T02:42:05.266Z"
+    },
+    {
+      "revision": 35,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:10:10.604Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-35-gen-02-browser-proof.json",
+      "reason": "Ajout des preuves navigateur et de compatibilité de release"
+    },
+    {
+      "revision": 36,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:15:51.689Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-36-gen-02-isolated-browser-config.json",
+      "reason": "Rendre la preuve Chromium autonome et reproductible"
+    },
+    {
+      "revision": 37,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:38:56.562Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-37-gen02-workspace-link.json",
+      "reason": "Le navigateur local montre un échec réel de résolution du package catalogue ; les manifestes editor-web ne déclarent pas cette dépendance directe."
+    },
+    {
+      "revision": 38,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:42:11.533Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-38-gen02-workspace-smoke-path.json",
+      "reason": "Ajouter le smoke navigateur du package editor-web et versionner son fichier de test dans les chemins autorisés du ticket."
+    },
+    {
+      "revision": 39,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T03:49:04.022Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-39-gen02-smoke-entrypoints.json",
+      "reason": "La correction de fumée ajoute une icône intégrée au document HTML ; déclarer index.html dans les chemins contrôlés du ticket."
+    },
+    {
+      "revision": 40,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:40:51.500Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-40-gen-03-host-model-and-design-method.json",
+      "reason": "Préciser l'appel réel au modèle après debounce, la limite d'inférence du bridge ChatGPT et remplacer le profil fixe par une méthode de revue inspirée d'Unslop."
+    },
+    {
+      "revision": 41,
+      "ticketId": "GEN-04",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:41:13.077Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-41-gen-04-live-preview-design-method.json",
+      "reason": "Aligner l'aperçu live sur la méthode de conception inspirée d'Unslop, sans profil esthétique imposé."
+    },
+    {
+      "revision": 42,
+      "ticketId": "CAT-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:42:12.238Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-42-cat-03-no-fixed-style-profile.json",
+      "reason": "Remplacer le profil esthétique fixe par une revue contextualisée inspirée de la méthode Unslop, avec licences et attribution."
+    },
+    {
+      "revision": 43,
+      "ticketId": "AI-02",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:42:18.149Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-43-ai-02-context-no-profile.json",
+      "reason": "Aligner le contexte d'inférence sur le modèle API choisi et la méthode de design, sans versionner un style universel."
+    },
+    {
+      "revision": 44,
+      "ticketId": "ARC-01",
+      "from": "blocked",
+      "to": "blocked",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:43:09.125Z",
+      "action": "criteria_updated",
+      "fields": [
+        "dependencies",
+        "acceptance",
+        "reason"
+      ],
+      "source": "docs/delivery/changes/REV-44-arc-01-after-reactive-core.json",
+      "reason": "Le commanditaire veut qualifier ARC-01 dans ChatGPT Desktop après livraison du moteur LLM live et de la modification réelle de l'aperçu."
+    },
+    {
+      "revision": 45,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T12:59:41.421Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-45-gen-03-select-single-provider-automatically.json",
+      "reason": "Documenter la sélection automatique du fournisseur unique, l’absence d’appel sans fournisseur et l’exclusion du profil hérité"
+    },
+    {
+      "revision": 46,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T13:09:59.075Z",
+      "action": "criteria_updated",
+      "fields": [
+        "title",
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-46-gen-03-explicit-model-choice-and-status.json",
+      "reason": "Ne jamais choisir silencieusement un modèle parmi plusieurs et rendre l’usage API facturable visible avant l’analyse automatique"
+    },
+    {
+      "revision": 47,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-04T13:31:16.811Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-47-gen-03-evidence-path.json",
+      "reason": "Déclarer le dossier d’évidence du correctif API afin que les tests simulés et les limites constatées soient reviewables sans changer le statut ni lever la dépendance GEN-02."
+    },
+    {
+      "revision": 48,
+      "ticketId": "HOTFIX-01",
+      "from": "absent",
+      "to": "ready",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:28:07.243Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-48-hotfix-01-launch-viewport.json",
+      "reason": "Corriger le brief initial prioritaire et le défilement long observés dans le véritable lancement intégré de Manifest."
+    },
+    {
+      "revision": 49,
+      "ticketId": "HOTFIX-01",
+      "from": "ready",
+      "to": "in_progress",
+      "actor": "frontend",
+      "at": "2026-11-04T17:28:11.255Z"
+    },
+    {
+      "revision": 50,
+      "ticketId": "GEN-02",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:32:49.375Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-50-gen02-release-launch-context-ownership.json",
+      "reason": "Séparer le périmètre catalogue encore audité du contrat de lancement et du Snapshot initial neutre, repris par HOTFIX-01."
+    },
+    {
+      "revision": 51,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:32:52.747Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-51-hotfix-01-seed-contract.json",
+      "reason": "Le lancement vide est rejeté par le contrat et le Snapshot initial injecte encore un contexte visuel d’exemple ; inclure ces fichiers et leurs preuves dans HOTFIX-01."
+    },
+    {
+      "revision": 52,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T17:47:18.014Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-52-hotfix-test-seed-ownership.json",
+      "reason": "Le Snapshot neutre révèle des tests historiques qui remplacent des métadonnées immuables au lieu de simuler un brouillon existant; le correctif enregistre le helper et branche son test à la CI."
+    },
+    {
+      "revision": 53,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-04T18:06:10.676Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-53-hotfix-responsive-design-and-regression-tests.json",
+      "reason": "La revue E2E et les revues distinctes révèlent les anciens attendus mobile, une lisibilité insuffisante, et des preuves manquantes de scroll interne et du fallback assistant; aligner tests et contrat."
+    },
+    {
+      "revision": 54,
+      "ticketId": "HOTFIX-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "frontend",
+      "at": "2026-11-04T19:03:01.078Z"
+    },
+    {
+      "revision": 55,
+      "ticketId": "HOTFIX-01",
+      "from": "review",
+      "to": "done",
+      "actor": "qa",
+      "at": "2026-11-04T19:03:25.299Z"
     }
   ]
 }

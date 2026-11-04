@@ -1,0 +1,9 @@
+{
+  "ownedPaths": [
+    "apps/editor-web/src/",
+    "apps/editor-web/test/",
+    "tests/e2e/intent/",
+    "tests/e2e/empty-start.spec.ts",
+    "docs/evidence/GEN-01"
+  ]
+}

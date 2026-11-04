@@ -1,0 +1,12 @@
+{
+  "ownedPaths": [
+    "apps/editor-web/src/main.tsx",
+    "apps/editor-web/src/model-selection.ts",
+    "apps/editor-web/src/model-provider-panel.tsx",
+    "apps/editor-web/src/manifest.css",
+    "apps/editor-web/test/model-selection.test.ts",
+    "tests/e2e/empty-start.spec.ts",
+    "docs/STATUS.md",
+    "docs/evidence/GEN-03"
+  ]
+}

@@ -4,17 +4,19 @@
 
 Permettre à un créateur de composer une interface web avec une IA, de voir et corriger ses choix avant de générer le projet. Premier utilisateur : le commanditaire sur ses projets réels. Évolutions possibles : développeurs, designers techniques et petites équipes. La demande commerciale n'est pas considérée comme validée.
 
-L'outil est un atelier de composition utilisable dans ChatGPT, puis Claude, avec un cœur autonome. Il ne lit pas le champ natif de l'assistant : l'utilisateur écrit dans le champ de l'éditeur. Les suggestions utilisent les API des fournisseurs sélectionnés ; l'abonnement de l'assistant n'est pas supposé financer ces appels.
+L'outil est un atelier de composition utilisable dans ChatGPT, puis Claude, avec un cœur autonome. Au lancement, l'hôte peut transmettre explicitement la proposition de réponse de l'assistant comme graine de la page, ainsi que l'opération visée : nouveau projet, nouvelle page dans un projet existant, ou modification d'une page existante. Manifest ne lit jamais le compositeur natif ni un texte non envoyé. L'intention de page et la recherche de composants sont deux entrées distinctes. Les suggestions de conception utilisent l'API du fournisseur sélectionné ; la recherche de catalogue reste locale et l'abonnement de l'assistant n'est pas supposé financer les appels API.
 
 ## Parcours de référence
 
-1. Ouvrir un projet dans l'éditeur embarqué ; retrouver page, thème et version.
-2. Choisir un modèle disponible et activer l'analyse automatique, avec limite d'usage visible.
-3. Écrire une intention. Après 900 ms d'inactivité, obtenir une proposition complète et vérifiée ; le délai de génération reste variable.
-4. Voir la proposition dans la page sans clic « Envoyer ». Explorer des alternatives lorsqu'une demande est ambiguë.
-5. Modifier des propriétés ou la composition directement ; annuler et refaire.
-6. Conserver le design dans le brouillon, puis approuver une révision.
-7. Exporter cette révision, exécuter le projet et retrouver la même composition et les interactions annoncées.
+1. Dans le chat de projet, sélectionner `@Manifest` ou l'application, puis ouvrir la carte « Ouvrir Manifest ». Le handoff explicite identifie l'opération `create_project`, `create_page` ou `modify_page`, la cible et sa version de base quand elle existe, la proposition de l'assistant et, si disponible, un candidat de page structuré. `/manifest` reste une commande native à qualifier selon l'hôte.
+2. `create_project` part d'un Snapshot vide ; un candidat structuré est projeté comme une première page éditable. `create_page` charge le Snapshot du projet choisi et prévisualise une page neuve comme candidate non conservée. `modify_page` charge le Snapshot et la page ciblée, puis prévisualise la proposition comme un changement fondé sur `baseDraftVersion`. Si l'hôte ne transmet qu'un texte, il préremplit le champ principal ; après 1,5 s de pause, Manifest lance automatiquement l'analyse locale ou, si configuré, l'API du fournisseur et du modèle explicitement choisi. Aucune proposition n'est une approbation ni un remplacement silencieux.
+3. Tout le travail se fait dans un seul espace : champ principal à gauche pour décrire la page, sa logique, ses animations et ses données ; aperçu dominant au centre ; recherche locale de composants/animations à droite. Pas d'étapes qui naviguent vers d'autres pages ni de page séparée de réglage d'un bloc ; les réglages sont contextuels à la sélection dans le canevas.
+4. Choisir explicitement un fournisseur et un modèle pour activer la génération distante. Le champ principal déclenche l'analyse après 1,5 seconde d'inactivité hors IME, sans case d'activation ; le modèle, le coût/usage applicable et l'état restent visibles. Sans API configurée, seules les pistes locales prises en charge sont proposées et cette limite est affichée. La recherche du catalogue ne redémarre pas cette génération.
+5. Chercher par exemple « menu », puis comparer des composants qui affichent leur rendu, animation, emplacement admissible, source, version, licence et compatibilité. Prévisualiser, puis insérer à l'endroit voulu par glisser-déposer ou par une action clavier/tactile équivalente.
+6. L'insertion affiche sous le champ principal une référence lisible et son identifiant stable (ID de catalogue, bibliothèque, release et configuration). Cette pièce jointe enrichit le contexte des propositions et suit le projet jusque dans le rapport, sans réécrire le texte de l'utilisateur.
+7. Modifier la description ou les propriétés, observer l'aperçu réagir, puis conserver/annuler les changements. Une proposition nouvelle ne remplace pas silencieusement le dernier état conservé.
+8. Taper `/validate` dans le champ principal pour figer la composition visible et produire le rapport. Celui-ci inclut les consignes d'intégration de données : source/référence non secrète, schéma, correspondance avec les graphiques, transformations et rafraîchissement souhaités, ainsi que le statut données fictives/réelles. Si l'hôte confirme l'envoi, Manifest transmet le rapport à ChatGPT afin qu'il comprenne l'application et l'intégration à construire ; si l'hôte ne le permet pas, le rapport reste ouvert avec copie/téléchargement. `/validate` reste une commande Manifest, pas une commande native promise à l'hôte.
+9. Le modèle hôte utilise le rapport pour générer l'application complète ; l'export Manifest reste une étape séparée et vérifiable.
 
 La prévisualisation automatique n'est pas une approbation. Une nouvelle proposition ne détruit pas le dernier brouillon conservé. La sélection d'une proposition et ses modifications restent réversibles.
 
@@ -23,13 +25,13 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 | ID | Exigence | M1 / suite |
 |---|---|---|
 | RQ-01 | Ouvrir l'éditeur dans ChatGPT avec un utilisateur autorisé | M0/M1 |
-| RQ-02 | Saisie propre, pause configurable, arrêt, action manuelle équivalente | M1 |
-| RQ-03 | Aperçu automatique de propositions valides sans envoyer de message au chat | M1 |
+| RQ-02 | Saisie réactive automatique après pause de 1 500 ms, respect IME et action « Proposer maintenant » immédiate | M0/M1 |
+| RQ-03 | Aperçu automatique des propositions valides sans envoyer un message au chat à chaque frappe | M1 |
 | RQ-04 | Modifier composition, thème, texte, images et animations locales | M1 |
 | RQ-05 | Liberté de composition par primitives et blocs ; propriétés contrôlées | M1 |
 | RQ-06 | Annulation, conservation et récupération après erreur | M1 |
-| RQ-07 | API du modèle choisi ; absence de changement silencieux de fournisseur | M1 + M2 |
-| RQ-08 | Design guidé par un profil inspiré d'Unslop, adaptable et versionné | M1 |
+| RQ-07 | Après le debounce, génération par l'API du fournisseur/modèle choisi, sans changement silencieux ; le modèle hôte est utilisé seulement par une transmission explicite | M1 |
+| RQ-08 | Direction et critique du design adaptées au produit et au brief, éclairées par l'étude de la méthode Unslop ; pas de profil esthétique universel | M1 |
 | RQ-09 | Pages, routes, thème commun et mises en page mobile | M1 |
 | RQ-10 | Révisions immuables approuvées et restauration ; branches | M1 ; branches M2 |
 | RQ-11 | Export React exécutable depuis une révision figée | M1 |
@@ -38,11 +40,19 @@ La prévisualisation automatique n'est pas une approbation. Une nouvelle proposi
 | RQ-14 | Catalogue et ressources avec licences, versions et alternatives | M1 |
 | RQ-15 | Connexion Claude ; lancement depuis Claude Code vers navigateur | M2 |
 | RQ-16 | Extensions 3D, effets spécialisés et exports supplémentaires | M3 |
+| RQ-17 | Préparer un rapport reproductible lié à une révision et le transmettre explicitement au chat actif | M1 |
+| RQ-18 | Afficher pour chaque suggestion la raison, l'état, la bibliothèque, la version et la compatibilité utile | M1 |
+| RQ-19 | Séparer l'intention de page de la recherche non IA de composants/animations ; garder leurs références dans le brief et le rapport | M1 |
+| RQ-20 | Distinguer nouveau projet, nouvelle page dans un projet existant et modification d'une page ciblée ; appliquer la proposition comme candidat éditable sur la bonne base/version | M1 |
+| RQ-21 | Afficher les références de catalogue ajoutées comme pièces jointes structurées sous l'intention, les inclure dans le contexte des propositions et dans le rapport sans modifier le texte libre | M1 |
+| RQ-22 | Recevoir la proposition de ChatGPT par handoff explicite et ouvrir un candidat de page modifiable sans lire le compositeur natif non envoyé | M1 |
+| RQ-23 | Transmettre dans le rapport une spécification de connexion des données compréhensible par ChatGPT, sans secrets ni affirmation de connexion non autorisée | M1 |
+| RQ-24 | Conserver l'intention d'intégration des données dans le Snapshot versionné afin que le rapport corresponde exactement à la révision approuvée | M1 |
 
 ## Périmètre M1
 
 - Un propriétaire par projet ; aucune collaboration simultanée promise. Contrôle de concurrence obligatoire entre onglets.
-- OpenAI comme premier adaptateur. Anthropic et Gemini restent des livraisons M2, avec contrats communs préparés en M1.
+- Un contrat d’adaptateur commun ; les API OpenAI, Anthropic, Google, DeepSeek et les endpoints compatibles sont qualifiés ticket par ticket. « N’importe quel modèle » signifie un fournisseur explicitement pris en charge ou un adaptateur compatible configuré, jamais une API supposée universelle ni une bascule silencieuse.
 - Dix blocs et primitives de composition : voir CATALOGUE.md. Plusieurs pages simples, routes uniques, thème commun.
 - Images possédées ou utilisables, texte, navigation, FAQ, liens et formulaire avec validation locale. Les envois serveur non configurés restent explicitement désactivés dans l'export.
 - Animation légère et amélioration progressive ; contenu lisible avec mouvement réduit et sans moteur d'animation.
@@ -63,12 +73,18 @@ M1 produit du React. Les interfaces de document et de catalogue déclarent leurs
 
 | Sujet | Défaut proposé | Réglage |
 |---|---|---|
-| Pause avant analyse IA | 900 ms, entre 500 et 2 000 ms | Préférence utilisateur |
+| Pause avant analyse IA | 1 500 ms, hors composition IME | Valeur M1 ; ajuster seulement après mesure et décision produit |
 | Sauvegarde du brouillon | 1 s après modification, une écriture en vol | Désactivation autorisée, état explicite |
-| Analyse automatique | Désactivée jusqu'à activation dans la session | Arrêt immédiat et mode manuel |
+| Analyse automatique | Toujours active après pause de 1 500 ms ; API distante seulement pour le fournisseur/modèle explicitement configuré | Annulation des jobs périmés, indicateur d'usage et fallback local clairement borné |
 | Proposition ambiguë | Jusqu'à trois alternatives, jamais trois fournisseurs implicites | Choix utilisateur |
 | Révision approuvée | Action explicite, pas une conséquence de l'autosave | Invariant |
 | Langue interface | Français ; architecture localisable | Anglais ensuite |
+
+## Rapport de transmission
+
+Le rapport est un instantané versionné, lié à `revisionId`, empreinte du Snapshot et release du catalogue. Il conserve séparément la proposition d'assistant reçue et la description éditée par l'utilisateur, puis accompagne la spécification structurée : pages et routes, composants/propriétés, thème, interactions, animations, règles responsive, références et attribution des assets, exigences d'accessibilité et de mouvement réduit, modèle/job à l'origine des suggestions, spécification d'intégration des données, preuve d'éligibilité capturée, hypothèses et éléments non pris en charge. Les `dataIntegrationSpecs` proviennent du Snapshot exact de la révision approuvée, avec source, schéma, liaisons métrique/dimension vers les graphiques, filtres/agrégations, rafraîchissement, mode d'aperçu synthétique/connecté et prérequis d'autorisation. Elles n'incluent ni lignes brutes sensibles, ni clés, ni jetons d'authentification, ni secrets. Une connexion réelle dépend d'un connecteur autorisé par l'hôte ou d'une configuration sûre dans l'application générée. Son empreinte est calculée sur une sérialisation JSON canonique reproductible, hors état de transmission.
+
+Le modèle affiché au moment de la transmission ne remplace pas la provenance du job qui a produit le candidat. Le rapport réutilise les mêmes règles d'éligibilité que l'aperçu afin qu'un candidat obsolète ne soit jamais présenté comme actuel. L'envoi passe par la capacité de transmission de l'hôte ; si elle est absente, le produit le dit et propose un export/copie sans prétendre que le chat a reçu le rapport.
 
 ## Validation de la valeur
 

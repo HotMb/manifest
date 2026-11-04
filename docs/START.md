@@ -21,7 +21,33 @@ npm run check
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-Sous macOS/Linux, remplacer le chemin Python par `.venv/bin/python`. Les tests concernent l'outillage et les contrats ; l'application n'a pas encore de commande de démarrage.
+Sous macOS/Linux, remplacer le chemin Python par `.venv/bin/python`. Ces commandes contrôlent l'outillage et les contrats ; les vérifications du prototype se lancent séparément ci-dessous.
+
+## Démonstration locale M0
+
+```sh
+npm ci
+npm run dev
+```
+
+Ouvrir `http://127.0.0.1:5173`. L'éditeur permet de modifier le Hero et les trois couleurs, d'annuler/rétablir et d'enregistrer un brouillon local. Le libellé distingue ce diagnostic du serveur. Aucune suggestion IA ni aucun export de code n'est simulé. Ne pas utiliser ce prototype pour des données importantes : la persistance du produit n'est pas encore livrée.
+
+```sh
+npm run typecheck
+npm run build
+npm run test:m0
+npm run test:e2e
+```
+
+Le build doit précéder les tests M0 : une vérification lit réellement l'HTML construit à travers le serveur MCP. Les tests navigateur emploient Chrome installé localement ; la CI installe Chromium. Si Chrome n'est pas disponible, installer un navigateur Playwright et adapter le canal de test au poste, sans masquer les échecs.
+
+Pour préparer la qualification dans un hôte MCP local, construire la vue puis configurer le client avec le lancement direct suivant depuis la racine du dépôt :
+
+```sh
+node --import tsx services/api/src/main.ts --stdio
+```
+
+Voir [le contrat du serveur M0](../services/api/README.md) pour HTTP et les limites d'authentification. Aucun serveur M0 n'est inscrit automatiquement dans les paramètres globaux de l'utilisateur. Une connexion du vrai client et la grille M0 doivent être éprouvées avant clôture ARC-01 ; le seul lancement du processus ne le prouve pas. Ne pas exposer le transport de développement sur Internet.
 
 ## Ouvrir l'équipe
 

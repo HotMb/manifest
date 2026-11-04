@@ -1,0 +1,19 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["apps/editor-web/src", "packages/host-adapters/src"],
+  "locale": "fr-FR",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Form", "Scrollbar", "Toast", "CRUD"],
+  "requiredCommands": ["typecheck", "build", "unit", "e2e"],
+  "ownership": { "Select/Listbox": "native" },
+  "commands": {
+    "typecheck": "npm run typecheck",
+    "build": "npm run build",
+    "unit": "npm run test:m0",
+    "e2e": "npm run test:e2e"
+  },
+  "evidence": {
+    "crudFullFlow": "tests/e2e/arc01.spec.ts",
+    "failurePaths": "packages/host-adapters/test/adapter.test.ts"
+  }
+}

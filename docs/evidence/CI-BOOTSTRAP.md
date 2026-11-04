@@ -1,10 +1,10 @@
 # Premier passage CI du bootstrap
 
-Date : 1er novembre 2026. Dépôt : [HotMb/design-workbench](https://github.com/HotMb/design-workbench), privé.
+Date : 1er novembre 2026. Dépôt : [HotMb/manifest](https://github.com/HotMb/manifest), privé.
 
 Commit contrôlé : `746cde87f2f1d2db0bece54fa00425441a765fd9`.
 
-Workflow : [Quality — exécution 41328430311](https://github.com/HotMb/design-workbench/actions/runs/41328430311). Job `contracts-and-orchestration`, ID `124913182065` : **completed / success**, observé via l'API GitHub. Environnement Linux, Node 24 et Python 3.13 définis par le workflow.
+Workflow : [Quality — exécution 41328430311](https://github.com/HotMb/manifest/actions/runs/41328430311). Job `contracts-and-orchestration`, ID `124913182065` : **completed / success**, observé via l'API GitHub. Environnement Linux, Node 24 et Python 3.13 définis par le workflow.
 
 Résultats relevés dans les étapes et journaux :
 

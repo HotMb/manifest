@@ -1,0 +1,10 @@
+{
+  "name": "@design-workbench/m0-contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@design-workbench/catalog": "0.3.0"
+  },
+  "exports": "./src/index.ts"
+}

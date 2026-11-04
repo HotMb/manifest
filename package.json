@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Atelier de design web assisté par IA — développement par tickets",
-  "engines": { "node": ">=24 <25" },
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test tests/*.test.mjs && npm run test:catalog",
+    "test:catalog": "tsx --test tests/contract/catalog/catalog.test.ts",
     "check": "node scripts/board.mjs check",
     "team:status": "node scripts/board.mjs status",
     "team:next": "node scripts/board.mjs next",
@@ -15,8 +18,46 @@
     "team:done": "node scripts/board.mjs done",
     "team:block": "node scripts/board.mjs block",
     "team:reopen": "node scripts/board.mjs reopen",
+    "team:revise": "node scripts/board.mjs revise",
+    "team:add": "node scripts/board.mjs add",
     "team:board": "node scripts/board.mjs render",
     "team:brief": "node scripts/start-team.mjs --print",
-    "team:start": "node scripts/start-team.mjs"
+    "team:start": "node scripts/start-team.mjs",
+    "package:desktop-plugin": "npm run build && node integrations/chatgpt-desktop/build.mjs",
+    "smoke:desktop-plugin": "node integrations/chatgpt-desktop/smoke.mjs",
+    "test:m0": "tsx --test tests/m0-backend.test.ts tests/m0-bundle.test.ts tests/suggestion-jobs.test.ts tests/provider-runtime.test.ts packages/host-adapters/test/adapter.test.ts apps/editor-web/test/launch-intent.test.ts",
+    "test:providers": "tsx --test tests/model-providers.test.ts tests/provider-simulator.test.ts tests/provider-orchestrator.test.ts tests/provider-http-adapter.test.ts apps/editor-web/test/model-selection.test.ts",
+    "build": "npm run build --workspace @design-workbench/editor-web",
+    "dev": "npm run dev --workspace @design-workbench/editor-web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test:e2e": "playwright test"
+  },
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@modelcontextprotocol/ext-apps": "1.1.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "zod": "4.6.7",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "@puckeditor/core": "0.24.0"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "tsx": "4.23.15",
+    "vite": "8.3.5",
+    "vite-plugin-singlefile": "2.3.4",
+    "@playwright/test": "1.64.1",
+    "esbuild": "0.28.2",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@fontsource/instrument-sans": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0"
   }
 }

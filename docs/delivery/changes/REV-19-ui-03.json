@@ -1,0 +1,7 @@
+{
+  "acceptance": [
+    "Le LaunchContext a un schéma runtime strict et des fixtures qui valident operation et ses cibles : create_project sans cible, create_page avec projectId/baseDraftVersion, modify_page avec projectId/pageId/baseDraftVersion ; il transmet la proposition ChatGPT et, facultativement, un candidat structuré lié à sa cible/baseDraftVersion. Les Snapshots existants sont relus avant aperçu ; les champs/version manquants ou incohérents sont refusés ; aucun texte non envoyé du compositeur natif n’est lu.",
+    "Un handoff textuel seul préremplit le brief. À chaque lancement ou modification, une pause de 1,5 s déclenche le fournisseur explicitement choisi si configuré, automatiquement et sans opt-in ; sans fournisseur, l'analyse locale bornée reste automatique. « Proposer maintenant » est une action facultative immédiate ; aucune requête ne part à chaque frappe et la recherche du catalogue reste indépendante.",
+    "Arrêt, IME, causalité, événements dupliqués/hors ordre et résultats périmés sont gérés sans altérer le brouillon conservé. Une reconnexion récupère le résultat sans nouvel appel fournisseur ; AT-01/02/03/07/08 passent avec horloge contrôlée puis vrai hôte."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "manifest-local": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${PLUGIN_ROOT}/server/services/api/dist/main.mjs", "--stdio"],
+      "cwd": "${PLUGIN_ROOT}"
+    }
+  }
+}

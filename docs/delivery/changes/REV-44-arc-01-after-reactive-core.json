@@ -1,0 +1,11 @@
+{
+  "dependencies": ["GEN-03", "GEN-04"],
+  "acceptance": [
+    "En navigateur, un nouveau Snapshot M0 est réellement vide ; le brief décrit une page et ses animations, puis l'aperçu s'actualise après le debounce à partir d'une proposition structurée valide. Les brouillons existants restent préservés.",
+    "Après livraison de GEN-03 et GEN-04, dans ChatGPT Desktop, ouvrir Manifest depuis la conversation et qualifier l'identité, la lecture, l'écriture, l'actualisation et les capacités de l'hôte. Depuis le champ Manifest, une demande d'animation doit lancer l'adaptateur API sélectionné après 1 500 ms et modifier réellement l'aperçu ; la preuve note clairement que l'inférence live utilise l'API configurée, pas une inférence cachée du modèle hôte.",
+    "Valider la page dans l'interface et vérifier que `/validate` envoie le rapport complet et sa révision à la conversation ChatGPT par la capacité explicite de suivi disponible. Vérifier l'accusé ou relever l'erreur ; vérifier également le fallback de copie/téléchargement. Aucun texte non envoyé du compositeur ChatGPT n'est lu.",
+    "Clavier, dimensions de l'hôte, polling/rafraîchissement, annulation et mouvement réduit sont éprouvés. Les capacités d'identité, fichier, stockage et iframe sont consignées avec fallback navigateur.",
+    "Une preuve datée et une matrice de capacités sans secrets couvrent le flux réel d'ouverture, de génération live, d'aperçu et de transmission du rapport. ARC-01 ne passe pas done sur la seule base d'un mock, d'une capture locale ou d'un test en navigateur autonome."
+  ],
+  "reason": "Retarder la qualification du parcours hôte jusqu'à ce que la génération par API après debounce et l'aperçu direct des animations soient livrés, puis éprouver le même flux complet dans ChatGPT Desktop."
+}

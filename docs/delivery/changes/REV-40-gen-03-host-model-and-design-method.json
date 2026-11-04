@@ -1,0 +1,24 @@
+{
+  "title": "Appel modèle réactif et propositions guidées par le catalogue",
+  "ownedPaths": [
+    "packages/inference/",
+    "services/api/src/suggestion-jobs.ts",
+    "services/api/src/provider-runtime.ts",
+    "tests/contract/inference/",
+    "tests/provider-runtime.test.ts",
+    "docs/evidence/GEN-03",
+    "docs/design/UNSLOP-METHOD-ANALYSIS.md",
+    "docs/spec/ARCHITECTURE.md",
+    "docs/spec/PRODUCT.md",
+    "docs/spec/DECISIONS-SOURCES.md"
+  ],
+  "acceptance": [
+    "Après chaque pause de saisie de 1 500 ms, Manifest crée un job d'inférence auprès du fournisseur et du modèle explicitement sélectionnés. Le contexte inclut le brief complet, la cible et sa version, le Snapshot réduit, les capacités exactes du catalogue compatibles, les contraintes de marque et la direction visuelle de la page.",
+    "L'inférence réactive passe par l'adaptateur API du fournisseur, côté serveur : la clé ne quitte jamais le serveur, le fournisseur n'est jamais remplacé silencieusement, les appels sont soumis aux limites d'usage configurées et chaque proposition expose sa provenance. Une nouvelle saisie annule ou supersède le job précédent ; une réponse ancienne ne peut pas remplacer l'aperçu courant.",
+    "Dans ChatGPT, `ui/update-model-context` met à jour le contexte mais ne lance pas l'inférence. `ui/message` envoie un message de suivi dans la conversation ; il est réservé à une action explicite telle que `/validate`, pas à chaque frappe. Pour l'aperçu live dans ChatGPT, l'utilisateur configure l'API du fournisseur choisi ; l'API OpenAI est distincte de l'abonnement ou de la session du modèle ChatGPT. Le rapport validé est transmis au modèle hôte par le mécanisme disponible, avec repli copie/téléchargement.",
+    "Le modèle interprète le langage naturel sans exiger un nom technique et compose les capacités de catalogue pour créer ou modifier les éléments et animations demandés. Il retourne des opérations structurées et un bref motif. Les tests couvrent des briefs variés dont nuages, graphiques et données synthétiques, directions de mouvement, durée et vitesse ; une requête hors capacité est expliquée avec une alternative et n'est jamais présentée comme réalisée.",
+    "Le serveur vérifie strictement les IDs, versions, propriétés, cibles et contraintes des opérations avant toute projection ; aucun JSX, HTML, CSS ou JavaScript arbitraire n'est exécuté. Les secrets sont détectés avant transfert, exclus du contexte et des journaux, ou l'appel est suspendu pour demander leur retrait.",
+    "Les adaptateurs réels sont implémentés pour les fournisseurs déclarés pris en charge (OpenAI, Anthropic, Google, DeepSeek et endpoint compatible) et leur contrat commun est couvert par des mocks. Les tests automatiques n'appellent jamais un service facturable ; l'essai réel est explicite, rapporte fournisseur/modèle/coût estimé et demande les identifiants API correspondants.",
+    "L'analyse d'Unslop est une méthode de revue du rendu, pas un profil visuel fixe à appliquer ou versionner. Le modèle choisit une direction propre au brief et au produit, examine l'aperçu et propose des corrections ordonnées ; les contraintes et la marque déclarées par l'utilisateur restent prioritaires. Toute adaptation conserve l'attribution CC BY 4.0."
+  ]
+}

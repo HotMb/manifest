@@ -1,0 +1,23 @@
+{
+  "id": "GEN-05",
+  "title": "Étendre les mouvements compris depuis le langage libre",
+  "phase": "M2",
+  "owner": "backend",
+  "dependencies": ["GEN-02", "GEN-03", "GEN-04"],
+  "ownedPaths": [
+    "packages/catalog/",
+    "packages/inference/",
+    "tests/contract/motion/",
+    "tests/visual/motion/",
+    "docs/evidence/GEN-05"
+  ],
+  "acceptance": [
+    "Les descriptions libres usuelles de mouvement sont traduites en recettes structurées versionnées, couvrant au minimum fondu, glissement directionnel, échelle, flou, ressort, décalage progressif, survol/focus et déclenchement au défilement ; durée, délai, amplitude, rythme et intensité restent paramétrables dans des limites explicites.",
+    "Les recettes sont rendues uniquement par des composants ou bibliothèques locales admis par une release reproductible ; la provenance, la licence, la version, les dépendances et le coût sont vérifiés avant admission. Le modèle sélectionne et paramètre des capacités admises, sans produire de JavaScript, CSS ou paquet exécutable arbitraire.",
+    "Après 1 500 ms sans saisie, le mouvement décrit et ses retouches actualisent le même aperçu sans action manuelle. Toute capacité indisponible est signalée avec une alternative ; aucun mouvement inexistant n’est présenté comme rendu.",
+    "Le mouvement réduit est honoré dans l’éditeur et l’export. Des fixtures et tests couvrent chacune des intentions minimales, les limites de paramètres, les changements successifs, les cibles hover/focus/scroll, ainsi que le refus des mouvements et dépendances non admis."
+  ],
+  "evidence": [],
+  "blockers": [],
+  "status": "todo"
+}

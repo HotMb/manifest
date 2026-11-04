@@ -1,0 +1,22 @@
+{
+  "title": "Activation automatique du fournisseur unique configuré",
+  "ownedPaths": [
+    "apps/editor-web/src/main.tsx",
+    "apps/editor-web/src/model-selection.ts",
+    "apps/editor-web/test/model-selection.test.ts",
+    "tests/e2e/empty-start.spec.ts",
+    "packages/m0-contract/src/index.ts",
+    "packages/m0-contract/src/provider-http-adapter.ts",
+    "tests/provider-http-adapter.test.ts",
+    "tests/m0-backend.test.ts",
+    "docs/spec/contracts/",
+    "docs/spec/CATALOGUE.md",
+    "docs/spec/CONTRACTS.md"
+  ],
+  "acceptance": [
+    "Après une pause de 1 500 ms, le modèle API configuré produit la proposition qui pilote l'aperçu. Si un seul fournisseur est configuré, Manifest le sélectionne automatiquement ; s'il n'y en a aucun, l'interface dit clairement qu'aucun modèle n'est appelé, et plusieurs fournisseurs demandent un choix explicite.",
+    "Le test navigateur vérifie l'appel du job après exactement 1 500 ms sans sélection manuelle, puis prouve qu'une intention récente empêche un résultat ancien de remplacer l'aperçu. Les tests d'adaptateur vérifient la requête API structurée avec fausses réponses et sans appel payant.",
+    "Le profil de design n'est ni stocké dans les nouveaux Snapshots ni ajouté au prompt modèle. Un champ designPolicy d'un ancien brouillon reste lisible pour compatibilité, mais est supprimé de la projection transmise au modèle ; Unslop reste une méthode de revue contextualisée.",
+    "Le texte de l'interface distingue l'API fournisseur d'une inférence du modèle hôte ChatGPT et signale qu'une API configurée peut être facturée séparément. Le rapport /validate demeure la seule transmission explicite au modèle de la conversation."
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-02",
+  "checks": [
+    {
+      "name": "Le fond de page remplit aussi le cadre sous le Hero",
+      "pass": true,
+      "detail": {
+        "hero": "rgb(23, 32, 38)",
+        "frame": "rgb(23, 32, 38)"
+      }
+    },
+    {
+      "name": "Le rapport en attente ne confond plus zéro résultat et analyse périmée",
+      "pass": true,
+      "detail": {
+        "source": "local-rules",
+        "status": "typing",
+        "upToDate": false,
+        "model": null,
+        "recognized": null
+      }
+    },
+    {
+      "name": "La mention temporaire du rapport atteint le contraste de texte normal",
+      "pass": true,
+      "detail": {
+        "color": "rgb(166, 166, 160)",
+        "background": "rgb(31, 31, 31)",
+        "fontSize": "10px",
+        "ratio": 6.737219672587977
+      }
+    },
+    {
+      "name": "Une nouvelle intention invalide immédiatement les anciennes pistes",
+      "pass": true
+    },
+    {
+      "name": "Aucune analyse durant une composition IME",
+      "pass": true
+    },
+    {
+      "name": "Une piste apparaît après fin IME et pause",
+      "pass": true
+    },
+    {
+      "name": "Suspendre la lecture empêche de nouvelles pistes automatiques",
+      "pass": true
+    },
+    {
+      "name": "L’analyse manuelle fonctionne lorsque la lecture automatique est suspendue",
+      "pass": true
+    }
+  ]
+}
