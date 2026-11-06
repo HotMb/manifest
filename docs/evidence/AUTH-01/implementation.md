@@ -5,6 +5,8 @@ Branche locale : `work/auth-01`
 Base examinée : `63a63ac`
 Révision du suivi au moment de la revue : 63
 Révision du suivi après clôture : 65
+Commit applicatif : `0b702a4`
+Pull request : [#28 — AUTH-01](https://github.com/HotMb/manifest/pull/28), empilée sur la PR #27
 
 ## Résultat livré
 
