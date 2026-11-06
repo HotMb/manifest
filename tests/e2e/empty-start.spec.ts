@@ -349,6 +349,7 @@ test('une proposition modèle simulée prévisualise puis conserve une insertion
     export function createBrowserTransport() { return {
       kind: 'mcp', read: async () => structuredClone(project), close: async () => {},
       readProviderRegistry: async () => ({ schemaVersion: 1, providers: [{ id:'openai', label:'Fournisseur simulé de test', protocol:'openai-responses', status:'configured', supportsBYOK:false, secretConfigured:true, models:[{id:'test-hero',label:'Modèle simulé de test',providerId:'openai',capabilities:['structured-output']}]}] }),
+      getChatGPTAuthStatus: async () => ({ status:'connected', usageMode:'chatgpt-plan' }),
       startSuggestion: async (request) => {
         const block = createHeroBlock(); block.props.title = 'Une insertion du simulateur';
         proposal = { id:'proposal-test',jobId:'job-test',generationId:'generation-test',status:'ready',editorSessionId:request.editorSessionId,intentEpoch:request.intentEpoch,baseDraftVersion:project.draftVersion,explanation:'Insertion déterministe du transport de test, sans appel de modèle.',operations:[{op:'insert_block',pageId:project.snapshot.pages[0].id,parentBlockId:null,slot:'content',beforeBlockId:null,block}] };
@@ -401,6 +402,7 @@ test('le modèle attend exactement 1 500 ms et un résultat ancien ne remplace p
     export function createBrowserTransport() { return {
       kind:'mcp', read:async()=>structuredClone(project), close:async()=>{},
       readProviderRegistry:async()=>({schemaVersion:1,providers:[{id:'openai',label:'Fournisseur simulé',protocol:'openai-responses',status:'configured',supportsBYOK:false,secretConfigured:true,models:[{id:'test-model',label:'Modèle simulé',providerId:'openai',capabilities:['structured-output']}]}]}),
+      getChatGPTAuthStatus:async()=>({status:'connected',usageMode:'chatgpt-plan'}),
       startSuggestion:async(request)=>{
         const sequence = ++starts, jobId = 'job-' + sequence, proposalId = 'proposal-' + sequence;
         const block = createHeroBlock(); block.props.title = sequence === 1 ? 'Résultat périmé' : 'Résultat actuel';
@@ -469,7 +471,7 @@ test('plusieurs modèles exigent un choix avant le debounce et le select reste u
   await page.clock.runFor(1500);
   expect(await page.evaluate(() => (window as unknown as { __manifestMultipleModelProbe: { starts: () => number } }).__manifestMultipleModelProbe.starts())).toBe(0);
   await model.selectOption('deepseek-reasoner');
-  await expect(page.locator('.intent-status')).toContainText('API DeepSeek (DeepSeek Reasoner)');
+  await expect(page.locator('.intent-status')).toContainText('envoi au modèle DeepSeek (DeepSeek Reasoner)');
   await page.clock.runFor(1499);
   expect(await page.evaluate(() => (window as unknown as { __manifestMultipleModelProbe: { starts: () => number } }).__manifestMultipleModelProbe.starts())).toBe(0);
   await page.clock.runFor(1);
@@ -483,6 +485,7 @@ test('le passage local→modèle puis modèle→local remplace chaque ancien ape
     export function createBrowserTransport() { return {
       kind:'mcp', read:async()=>structuredClone(project), close:async()=>{},
       readProviderRegistry:async()=>({schemaVersion:1,providers:[{id:'openai',label:'Fournisseur simulé',protocol:'openai-responses',status:'configured',supportsBYOK:false,secretConfigured:true,models:[{id:'test-model',label:'Modèle simulé',providerId:'openai',capabilities:['structured-output']}]}]}),
+      getChatGPTAuthStatus:async()=>({status:'connected',usageMode:'chatgpt-plan'}),
       startSuggestion:async(request)=>{
         proposal={id:'source-switch-proposal',jobId:'source-switch-job',generationId:'source-switch-generation',status:'ready',editorSessionId:request.editorSessionId,intentEpoch:request.intentEpoch,baseDraftVersion:project.draftVersion,explanation:'Candidat simulé du fournisseur.',operations:[{op:'update_theme',tokens:{'color.background':{kind:'color',value:'#f2f2e0'}}}]};
         return {jobId:proposal.jobId,state:'succeeded',proposalIds:[proposal.id]};

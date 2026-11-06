@@ -36,6 +36,7 @@ async function installLaunchTransport(page: Page, launch: EditorLaunchContext, o
       kind: 'mcp', read: async () => structuredClone(project),
       subscribeLaunchContext(listener) { listeners.add(listener); listener(structuredClone(latest)); return () => listeners.delete(listener); },
       readProviderRegistry: async () => ${Boolean(options.configuredModel)} ? ({ schemaVersion: 1, providers: [{ id:'openai', label:'Fournisseur simulé de test', protocol:'openai-responses', status:'configured', supportsBYOK:false, secretConfigured:true, models:[{id:'launch-test-model',label:'Modèle simulé de test',providerId:'openai',capabilities:['structured-output']}]}] }) : disconnectedProviderRegistry(),
+      getChatGPTAuthStatus: async () => ${Boolean(options.configuredModel)} ? ({ status:'connected', usageMode:'chatgpt-plan' }) : ({ status:'disconnected', usageMode:'none' }),
       startSuggestion: async (request) => {
         modelCalls++;
         if (!${Boolean(options.autoModel)}) throw new Error('Le modèle de test ne doit pas être appelé dans ce scénario.');

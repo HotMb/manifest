@@ -3,12 +3,12 @@ import { createRoot } from 'react-dom/client';
 import { Puck, createUsePuck, type Data } from '@puckeditor/core';
 import { renderCatalogPage } from '@design-workbench/catalog';
 import { COLOR_TOKEN_NAMES, applyOperations, createHeroBlock, disconnectedProviderRegistry, makeEditCommand, stableStringify, validateSnapshot, type ColorTokenName, type M0Operation, type M0Project, type Snapshot, type ApplyOpsCommand, type SuggestionProposal, type EditorLaunchContext } from '@design-workbench/m0-contract';
-import { createBrowserTransport, createMcpTransport, type EditorTransport } from '@design-workbench/host-adapters';
+import { createBrowserTransport, createMcpTransport, type ChatGPTAuthErrorCode, type ChatGPTAuthStatus, type EditorTransport } from '@design-workbench/host-adapters';
 import { heroConfig } from './hero.tsx';
 import { applyDesignHint, DESCRIPTION_PAUSE_MS, isAnalysisCurrent, type DesignHint, type LocalAnalysis } from './manifest-analysis.ts';
 import { launchPreviewSnapshot } from './launch-preview.ts';
 import { useLocalAnalysis } from './use-local-analysis.ts';
-import { EMPTY_MODEL_SELECTION, defaultModelSelection, modelSelectionDeclaration, selectedModel, selectProvider, selectModel, type ModelSelection } from './model-selection.ts';
+import { EMPTY_MODEL_SELECTION, defaultAllowedModelSelection, modelSelectionDeclaration, selectedModel, selectProvider, selectModel, type ModelSelection } from './model-selection.ts';
 import { ModelProviderPanel } from './model-provider-panel.tsx';
 import { ComponentExamples } from './component-examples.tsx';
 import { useModelSuggestions } from './use-model-suggestions.ts';
@@ -35,6 +35,31 @@ function message(error: unknown): string { return error instanceof Error ? error
 function errorCode(error: unknown): string | undefined { return error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined; }
 
 type LocalPreview = { analysis: LocalAnalysis; operations: M0Operation[]; snapshot: Snapshot };
+const INITIAL_CHATGPT_AUTH: ChatGPTAuthStatus = { status: 'disconnected', usageMode: 'none' };
+
+function chatGPTAuthErrorMessage(code?: ChatGPTAuthErrorCode): string {
+  switch (code) {
+    case 'unsupported_platform': return 'La connexion avec ChatGPT n’est pas disponible dans cet hôte.';
+    case 'authorization_expired': return 'Le lien d’autorisation a expiré. Relance la connexion.';
+    case 'consent_denied': return 'L’autorisation a été refusée. Aucun usage du forfait ChatGPT n’est actif.';
+    case 'invalid_callback': return 'Le retour d’autorisation n’a pas pu être vérifié. Relance la connexion.';
+    case 'invalid_token': return 'La connexion ChatGPT a expiré ou n’est plus valide. Reconnecte ton compte.';
+    case 'insufficient_scope': return 'L’autorisation ne permet pas l’usage du forfait ChatGPT. Recommence et accepte les accès demandés.';
+    case 'network_error': return 'ChatGPT n’a pas répondu. Vérifie ta connexion puis réessaie.';
+    case 'storage_error': return 'La connexion n’a pas pu être conservée sur cet appareil. Réessaie après vérification du stockage local.';
+    case 'revocation_failed': return 'La déconnexion locale est faite, mais la révocation distante a échoué. Vérifie aussi les paramètres de ChatGPT.';
+    case 'unknown': return 'La connexion n’a pas abouti. Tes descriptions et réglages sont conservés.';
+    default: return 'La connexion n’a pas abouti. Tes descriptions et réglages sont conservés.';
+  }
+}
+
+function modelUsageAllowed(selected: ReturnType<typeof selectedModel>, authStatus: ChatGPTAuthStatus) {
+  return !selected || selected.provider.protocol !== 'openai-responses' || (authStatus.status === 'connected' && authStatus.usageMode === 'chatgpt-plan');
+}
+
+function allowedDefaultSelection(registry: ReturnType<typeof disconnectedProviderRegistry>, authStatus: ChatGPTAuthStatus): ModelSelection {
+  return defaultAllowedModelSelection(registry, authStatus.status === 'connected' && authStatus.usageMode === 'chatgpt-plan');
+}
 
 function localPreviewOperations(analysis: LocalAnalysis): M0Operation[] {
   // Prefer a complete page candidate over separately recognized hints. A
@@ -116,6 +141,14 @@ function Editor() {
   const [providerRegistryLoading, setProviderRegistryLoading] = useState(true);
   const [providerRegistryUnavailable, setProviderRegistryUnavailable] = useState(false);
   const [modelSelection, setModelSelection] = useState<ModelSelection>(EMPTY_MODEL_SELECTION);
+  const [chatGPTAuthStatus, setChatGPTAuthStatus] = useState<ChatGPTAuthStatus>(INITIAL_CHATGPT_AUTH);
+  const [chatGPTAuthLoading, setChatGPTAuthLoading] = useState(true);
+  const [chatGPTAuthBusy, setChatGPTAuthBusy] = useState(false);
+  const [chatGPTAuthorizationUrl, setChatGPTAuthorizationUrl] = useState<string>();
+  const [chatGPTAuthorizationExpiresAt, setChatGPTAuthorizationExpiresAt] = useState<string>();
+  const [chatGPTAuthNotice, setChatGPTAuthNotice] = useState('');
+  const [chatGPTAuthError, setChatGPTAuthError] = useState('');
+  const [chatGPTPollEpoch, setChatGPTPollEpoch] = useState(0);
   const [reportTab, setReportTab] = useState<'report' | 'version'>('report');
   const [reportFeedback, setReportFeedback] = useState('');
   const [history, setHistory] = useState<{ past: Snapshot[]; future: Snapshot[] }>({ past: [], future: [] });
@@ -137,6 +170,7 @@ function Editor() {
   const reloadDialog = useRef<HTMLDialogElement>(null);
   const reportDialog = useRef<HTMLDialogElement>(null);
   const descriptionInput = useRef<HTMLTextAreaElement>(null);
+  const chatGPTAuthGeneration = useRef(0);
   const [launchContext, setLaunchContext] = useState<EditorLaunchContext>();
   const [launchCandidate, setLaunchCandidate] = useState<{ snapshot: Snapshot; baseSignature: string }>();
   const [launchFeedback, setLaunchFeedback] = useState('');
@@ -151,6 +185,8 @@ function Editor() {
     let disposed = false, current: EditorTransport | undefined;
     setLoading(true); setError(''); setRecoveryCode(undefined); setTransport(undefined);
     setProviderRegistry(disconnectedProviderRegistry()); setProviderRegistryLoading(true); setProviderRegistryUnavailable(false); setModelSelection(EMPTY_MODEL_SELECTION);
+    setChatGPTAuthStatus(INITIAL_CHATGPT_AUTH); setChatGPTAuthLoading(true); setChatGPTAuthBusy(false);
+    setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined); setChatGPTAuthNotice(''); setChatGPTAuthError('');
     const isEmbedded = window.parent !== window || new URLSearchParams(location.search).get('host') === 'mcp';
     (async () => {
       try {
@@ -161,13 +197,27 @@ function Editor() {
         if (disposed) return;
         setTransport(current); setConfirmed(project); setWorking(project.snapshot);
         setHistory({ past: [], future: [] }); setConflict(false); retryRef.current = undefined;
+        let authForModels = Promise.resolve(INITIAL_CHATGPT_AUTH);
+        if (current.getChatGPTAuthStatus) {
+          authForModels = current.getChatGPTAuthStatus().then((status) => {
+            if (!disposed) setChatGPTAuthStatus(status);
+            return status;
+          }).catch((failure) => {
+            if (!disposed) {
+              const code = errorCode(failure) as ChatGPTAuthErrorCode | undefined;
+              setChatGPTAuthStatus({ status: 'error', usageMode: 'none', ...(code ? { errorCode: code } : {}) });
+              setChatGPTAuthError(chatGPTAuthErrorMessage(code));
+            }
+            return { status: 'error', usageMode: 'none' } as ChatGPTAuthStatus;
+          }).finally(() => { if (!disposed) setChatGPTAuthLoading(false); });
+        } else setChatGPTAuthLoading(false);
         if (current.readProviderRegistry) {
-          void current.readProviderRegistry().then((registry) => {
+          void authForModels.then((auth) => current!.readProviderRegistry!().then((registry) => ({ auth, registry }))).then(({ auth, registry }) => {
             if (!disposed) {
               setProviderRegistry(registry);
-              // The sole configured model is unambiguous; multiple choices
-              // stay explicit. This enables model inference after the debounce.
-              setModelSelection(defaultModelSelection(registry));
+              // Auto-select only if there is exactly one configured choice
+              // across every provider; otherwise require the user to choose.
+              setModelSelection(allowedDefaultSelection(registry, auth));
             }
           }).catch(() => {
             if (!disposed) setProviderRegistryUnavailable(true);
@@ -180,6 +230,176 @@ function Editor() {
     })();
     return () => { disposed = true; void current?.close(); };
   }, [connectingEpoch]);
+
+  async function refreshProviderRegistryFor(auth: ChatGPTAuthStatus = chatGPTAuthStatus, current: EditorTransport | undefined = transport) {
+    if (!current?.readProviderRegistry) return;
+    setProviderRegistryLoading(true); setProviderRegistryUnavailable(false);
+    try {
+      const registry = await current.readProviderRegistry();
+      setProviderRegistry(registry);
+      setModelSelection((selection) => {
+        const selected = selectedModel(registry, selection);
+        return modelUsageAllowed(selected, auth) ? (selected ? selection : allowedDefaultSelection(registry, auth)) : allowedDefaultSelection(registry, auth);
+      });
+    } catch {
+      setProviderRegistryUnavailable(true);
+    } finally {
+      setProviderRegistryLoading(false);
+    }
+  }
+
+  async function startChatGPTAuth() {
+    if (!transport?.startChatGPTSignIn || chatGPTAuthBusy) return;
+    const generation = ++chatGPTAuthGeneration.current;
+    setChatGPTAuthBusy(true); setChatGPTAuthError(''); setChatGPTAuthNotice('');
+    try {
+      const result = await transport.startChatGPTSignIn();
+      if (generation !== chatGPTAuthGeneration.current) return;
+      if (result.status === 'pending') {
+        setChatGPTAuthStatus({ status: 'pending', usageMode: 'none' });
+        setChatGPTAuthorizationUrl(result.authorizationUrl);
+        setChatGPTAuthorizationExpiresAt(result.expiresAt);
+        setChatGPTAuthNotice('Autorisation en attente. Ouvre le lien dans ton navigateur, puis reviens ici.');
+        setChatGPTPollEpoch((epoch) => epoch + 1);
+      } else if (result.status === 'connected') {
+        const status = await transport.getChatGPTAuthStatus?.() ?? { status: 'connected', usageMode: 'chatgpt-plan' as const };
+        if (generation !== chatGPTAuthGeneration.current) return;
+        setChatGPTAuthStatus(status); setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined);
+        setChatGPTAuthNotice(status.usageMode === 'chatgpt-plan' ? 'ChatGPT est prêt pour les suggestions.' : 'Le compte est connecté, mais l’usage du forfait n’est pas autorisé.');
+        await refreshProviderRegistryFor(status, transport);
+      } else if (result.status === 'unsupported') {
+        setChatGPTAuthStatus({ status: 'unsupported', usageMode: 'none', ...(result.errorCode ? { errorCode: result.errorCode } : {}) });
+        setChatGPTAuthError(chatGPTAuthErrorMessage(result.errorCode));
+      } else {
+        setChatGPTAuthStatus({ status: 'error', usageMode: 'none', ...(result.errorCode ? { errorCode: result.errorCode } : {}) });
+        setChatGPTAuthError(chatGPTAuthErrorMessage(result.errorCode));
+      }
+    } catch (failure) {
+      if (generation === chatGPTAuthGeneration.current) {
+        const code = errorCode(failure) as ChatGPTAuthErrorCode | undefined;
+        setChatGPTAuthStatus({ status: 'error', usageMode: 'none', ...(code && ['unsupported_platform', 'authorization_expired', 'consent_denied', 'invalid_callback', 'invalid_token', 'insufficient_scope', 'network_error', 'storage_error', 'revocation_failed', 'unknown'].includes(code) ? { errorCode: code } : {}) });
+        setChatGPTAuthError(chatGPTAuthErrorMessage(code));
+      }
+    } finally {
+      if (generation === chatGPTAuthGeneration.current) setChatGPTAuthBusy(false);
+    }
+  }
+
+  async function cancelChatGPTAuth() {
+    if (!transport?.cancelChatGPTSignIn || chatGPTAuthBusy) return;
+    const generation = ++chatGPTAuthGeneration.current;
+    setChatGPTAuthBusy(true); setChatGPTAuthError(''); setChatGPTAuthNotice('Annulation en cours…');
+    try {
+      await transport.cancelChatGPTSignIn();
+      if (generation !== chatGPTAuthGeneration.current) return;
+      setChatGPTAuthStatus(INITIAL_CHATGPT_AUTH); setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined);
+      setChatGPTAuthNotice('Autorisation annulée. Aucun accès au forfait ChatGPT n’est actif.');
+      await refreshProviderRegistryFor(INITIAL_CHATGPT_AUTH, transport);
+    } catch {
+      if (generation === chatGPTAuthGeneration.current) {
+        setChatGPTAuthError('Manifest n’a pas pu confirmer l’annulation. Le lien reste actif ; réessaie ou termine l’autorisation dans le navigateur.');
+        setChatGPTAuthNotice('Annulation non confirmée.');
+        setChatGPTPollEpoch((epoch) => epoch + 1);
+      }
+    } finally {
+      if (generation === chatGPTAuthGeneration.current) setChatGPTAuthBusy(false);
+    }
+  }
+
+  async function disconnectChatGPTAuth() {
+    if (!transport?.disconnectChatGPT || chatGPTAuthBusy) return;
+    const generation = ++chatGPTAuthGeneration.current;
+    setChatGPTAuthBusy(true); setChatGPTAuthError(''); setChatGPTAuthNotice('Déconnexion en cours…');
+    try {
+      const result = await transport.disconnectChatGPT();
+      if (generation !== chatGPTAuthGeneration.current) return;
+      if (result.status === 'error') {
+        setChatGPTAuthError('Manifest n’a pas pu effacer les identifiants locaux. La connexion ChatGPT reste active ; réessaie la déconnexion.');
+        setChatGPTAuthNotice('Déconnexion non terminée.');
+        return;
+      }
+      setChatGPTAuthStatus(INITIAL_CHATGPT_AUTH); setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined);
+      setModelSelection((selection) => selection.providerId === 'openai' ? EMPTY_MODEL_SELECTION : selection);
+      setChatGPTAuthError(result.revocation === 'failed' ? chatGPTAuthErrorMessage('revocation_failed') : '');
+      setChatGPTAuthNotice(result.revocation === 'failed' ? 'Déconnexion locale terminée.' : 'ChatGPT est déconnecté.');
+      await refreshProviderRegistryFor(INITIAL_CHATGPT_AUTH, transport);
+    } catch (failure) {
+      if (generation === chatGPTAuthGeneration.current) {
+        const code = errorCode(failure) as ChatGPTAuthErrorCode | undefined;
+        setChatGPTAuthError(chatGPTAuthErrorMessage(code));
+        setChatGPTAuthNotice('La déconnexion n’a pas été confirmée.');
+        try {
+          const status = await transport.getChatGPTAuthStatus?.();
+          if (status && generation === chatGPTAuthGeneration.current) setChatGPTAuthStatus(status);
+        } catch { /* Keep the last confirmed state visible. */ }
+      }
+    } finally {
+      if (generation === chatGPTAuthGeneration.current) setChatGPTAuthBusy(false);
+    }
+  }
+
+  async function retryChatGPTAuthStatus() {
+    if (!transport?.getChatGPTAuthStatus || chatGPTAuthBusy) return;
+    if (chatGPTAuthStatus.status === 'pending') {
+      setChatGPTAuthError(''); setChatGPTPollEpoch((epoch) => epoch + 1); return;
+    }
+    setChatGPTAuthBusy(true); setChatGPTAuthLoading(true); setChatGPTAuthError('');
+    try {
+      const status = await transport.getChatGPTAuthStatus();
+      setChatGPTAuthStatus(status); setChatGPTAuthLoading(false);
+      if (status.status === 'connected' && status.usageMode === 'chatgpt-plan') await refreshProviderRegistryFor(status, transport);
+      else if (status.status === 'error') setChatGPTAuthError(chatGPTAuthErrorMessage(status.errorCode));
+    } catch (failure) {
+      const code = errorCode(failure) as ChatGPTAuthErrorCode | undefined;
+      setChatGPTAuthStatus({ status: 'error', usageMode: 'none' }); setChatGPTAuthError(chatGPTAuthErrorMessage(code));
+    } finally { setChatGPTAuthLoading(false); setChatGPTAuthBusy(false); }
+  }
+
+  useEffect(() => {
+    if (!transport?.getChatGPTAuthStatus || chatGPTAuthStatus.status !== 'pending') return;
+    let stopped = false, timer: ReturnType<typeof setTimeout> | undefined, failures = 0;
+    const generation = chatGPTAuthGeneration.current;
+    const deadline = chatGPTAuthorizationExpiresAt ? Date.parse(chatGPTAuthorizationExpiresAt) : Date.now() + 5 * 60_000;
+    const poll = async () => {
+      if (stopped || generation !== chatGPTAuthGeneration.current) return;
+      if (Date.now() >= deadline) {
+        setChatGPTAuthStatus({ status: 'disconnected', usageMode: 'none', errorCode: 'authorization_expired' });
+        setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined);
+        setChatGPTAuthError(chatGPTAuthErrorMessage('authorization_expired')); return;
+      }
+      try {
+        const status = await transport!.getChatGPTAuthStatus!();
+        if (stopped || generation !== chatGPTAuthGeneration.current) return;
+        failures = 0;
+        if (status.status === 'connected') {
+          setChatGPTAuthStatus(status); setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined);
+          if (status.usageMode === 'chatgpt-plan') {
+            setChatGPTAuthError(''); setChatGPTAuthNotice('ChatGPT est prêt pour les suggestions.');
+            await refreshProviderRegistryFor(status, transport);
+          } else setChatGPTAuthError(chatGPTAuthErrorMessage('insufficient_scope'));
+          return;
+        }
+        if (status.status === 'disconnected') {
+          setChatGPTAuthStatus(status); setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined);
+          setChatGPTAuthError(status.errorCode ? chatGPTAuthErrorMessage(status.errorCode) : '');
+          setChatGPTAuthNotice(status.errorCode ? '' : 'L’autorisation s’est terminée sans connexion.'); return;
+        }
+        if (status.status === 'error' || status.status === 'unsupported') {
+          setChatGPTAuthStatus(status); setChatGPTAuthorizationUrl(undefined); setChatGPTAuthorizationExpiresAt(undefined);
+          setChatGPTAuthError(chatGPTAuthErrorMessage(status.errorCode)); return;
+        }
+        timer = setTimeout(poll, 1500);
+      } catch {
+        failures += 1;
+        if (failures >= 3) {
+          setChatGPTAuthError('Manifest ne peut pas vérifier le retour pour le moment. Le lien est conservé ; tu peux réessayer la vérification.'); return;
+        }
+        timer = setTimeout(poll, Math.min(1500 * 2 ** failures, 8000));
+      }
+    };
+    timer = setTimeout(poll, 1200);
+    return () => { stopped = true; if (timer) clearTimeout(timer); };
+  }, [transport, chatGPTAuthStatus.status, chatGPTAuthorizationExpiresAt, chatGPTPollEpoch]);
 
   useEffect(() => transport?.subscribeLaunchContext?.(setLaunchContext), [transport]);
   useEffect(() => {
@@ -212,7 +432,8 @@ function Editor() {
   }, [launchContext, confirmed]);
 
   const dirty = Boolean(working && confirmed && stableStringify(working) !== stableStringify(confirmed.snapshot));
-  const activeModel = selectedModel(providerRegistry, modelSelection);
+  const selectedProviderModel = selectedModel(providerRegistry, modelSelection);
+  const activeModel = modelUsageAllowed(selectedProviderModel, chatGPTAuthStatus) ? selectedProviderModel : undefined;
   const modelSuggestion = useModelSuggestions({
     transport, project: confirmed, snapshot: working, description, providerId: activeModel?.provider.id ?? null,
     modelId: activeModel?.model.id ?? null, automatic: automaticAnalysis && !launchBusy, composing: composing || launchBusy, dirty,
@@ -567,20 +788,11 @@ function Editor() {
   }
 
   async function retryProviderRegistry() {
-    if (!transport?.readProviderRegistry) return;
-    setProviderRegistryLoading(true); setProviderRegistryUnavailable(false);
-    try {
-      const registry = await transport.readProviderRegistry();
-      setProviderRegistry(registry);
-      setModelSelection((current) => selectedModel(registry, current) ? current : defaultModelSelection(registry));
-    } catch {
-      setProviderRegistryUnavailable(true);
-    } finally {
-      setProviderRegistryLoading(false);
-    }
+    await refreshProviderRegistryFor(chatGPTAuthStatus, transport);
   }
 
   const config = useMemo(() => canvasSnapshot ? heroConfig(canvasSnapshot.theme) : undefined, [canvasSnapshot?.theme]);
+  const chatGPTAuthEnabled = Boolean(transport?.kind === 'mcp' && transport.startChatGPTSignIn && transport.getChatGPTAuthStatus && transport.cancelChatGPTSignIn && transport.disconnectChatGPT);
   const connectionLabel = transport?.kind === 'mcp' ? 'Connecté à l’hôte' : transport?.kind === 'browser-local' ? 'Diagnostic navigateur · sauvegarde locale' : 'Diagnostic navigateur · session locale';
   const saveLabel = saving ? 'Enregistrement…' : dirty ? 'Modifications non enregistrées' : transport?.kind === 'mcp' ? 'Version serveur chargée' : confirmed?.draftVersion ? 'Brouillon local enregistré' : 'Brouillon de départ';
   const reportAnalysisLabel = modelProposal ? `Proposition ${modelProposal.status} sur la version ${modelProposal.baseDraftVersion}${previewingProposal ? ' · visible dans l’aperçu' : ' · non éligible à l’aperçu courant'}.` : analysis ? `${analysis.recognized.length} indication(s) reconnue(s) par les règles locales.` : analysisPhase === 'typing' ? 'Lecture de la description en attente de la pause. Aucune analyse à jour.' : analysisPhase === 'paused' ? 'Lecture automatique suspendue.' : 'Aucune description analysée dans cette session.';
@@ -590,7 +802,9 @@ function Editor() {
   const inputStatusTitle = composing ? 'Saisie en cours' : activeModel ? ({ typing: 'Le modèle attend ta pause', syncing: 'Mise à jour du brouillon', starting: 'Demande envoyée', running: 'Le modèle compose', ready: 'Proposition prête', stale: 'Proposition à actualiser', error: 'La proposition a échoué', paused: 'Suggestions suspendues', unavailable: 'Modèle indisponible', idle: 'Prêt à analyser' } as const)[modelSuggestion.phase] : ({ typing: 'Lecture après ta pause', paused: 'Suggestions suspendues', ready: 'Pistes locales prêtes', idle: 'Prêt à analyser' } as const)[analysisPhase];
   const configuredModelCount = providerRegistry.providers.filter((provider) => provider.status === 'configured').reduce((count, provider) => count + provider.models.length, 0);
   const inputStatusDetail = activeModel
-    ? `Après 1,5 s, envoi à l’API ${activeModel.provider.label} (${activeModel.model.label}) ; facturation API distincte de ChatGPT possible.`
+    ? activeModel.provider.protocol === 'openai-responses'
+      ? `Après 1,5 s, ${activeModel.model.label} utilise l’autorisation de ton forfait ChatGPT, selon ses limites.`
+      : `Après 1,5 s, envoi au modèle ${activeModel.provider.label} (${activeModel.model.label}) ; l’API peut être facturée séparément.`
     : providerRegistryLoading
       ? 'Vérification du fournisseur configuré…'
       : providerRegistryUnavailable
@@ -639,12 +853,12 @@ function Editor() {
               <label className="sr-only" htmlFor="page-description">Description de la page</label>
               <div className="description-composer"><textarea ref={descriptionInput} id="page-description" className="description-input resize-none" value={description} onChange={(event) => updateDescription(event.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} maxLength={6000} placeholder="Décrivez la page et les composants que vous imaginez…" aria-describedby="description-help" /><div className="composer-foot"><span>{description.length.toLocaleString('fr-FR')} / 6 000</span>{description && <button className="text-button" onClick={() => { updateDescription(''); descriptionInput.current?.focus(); }}>Effacer</button>}</div></div>
               <div className="intent-status" role="status" aria-live="polite"><span className="intent-status__icon" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" /><path d="M10 6v4l2.5 1.5" /></svg></span><span><strong>{inputStatusTitle}</strong><small>{inputStatusDetail}</small></span></div>
-              <div className="analysis-preference" role="note"><span>{activeModel ? `Suggestions ${activeModel.provider.label}` : 'Suggestions locales'}</span><span>après {(DESCRIPTION_PAUSE_MS / 1000).toLocaleString('fr-FR')} s de pause</span></div>
+              <div className="analysis-preference" role="note"><span>{activeModel ? activeModel.provider.protocol === 'openai-responses' ? 'Suggestions du forfait ChatGPT' : `Suggestions ${activeModel.provider.label}` : 'Suggestions locales'}</span><span>après {(DESCRIPTION_PAUSE_MS / 1000).toLocaleString('fr-FR')} s de pause</span></div>
               <button className="button analyze-button" onClick={() => { if (activeModel && ['starting', 'running'].includes(modelSuggestion.phase)) modelSuggestion.cancelCurrent(); else { analyzeNow(); modelSuggestion.runNow(); } }} disabled={launchBusy || (['starting', 'running'].includes(modelSuggestion.phase) ? false : !description.trim() || composing)}>{activeModel && ['starting', 'running'].includes(modelSuggestion.phase) ? 'Annuler la génération' : 'Proposer maintenant'}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" /></svg></button>
               <p id="description-help" className="description-help">Après 1,5 s sans frappe, Manifest actualise l’aperçu. Sans modèle configuré, seules des pistes locales limitées et un exemple de ventes synthétiques sont disponibles. Un modèle choisi peut composer les éléments du catalogue : navigation, nuages, graphiques, fondu et glissement. Les animations absentes du catalogue ne sont pas exécutées ; Manifest indique la limite et propose une alternative.</p>
               <details className="model-provider-disclosure">
                 <summary>{activeModel ? `${activeModel.provider.label} · ${activeModel.model.label}` : 'Suggestions par modèle'}</summary>
-                <ModelProviderPanel registry={providerRegistry} selection={modelSelection} onChange={setModelSelection} loading={providerRegistryLoading} unavailable={providerRegistryUnavailable} onRetry={() => void retryProviderRegistry()} />
+                <ModelProviderPanel registry={providerRegistry} selection={modelSelection} onChange={setModelSelection} loading={providerRegistryLoading} unavailable={providerRegistryUnavailable} onRetry={() => void retryProviderRegistry()} authEnabled={chatGPTAuthEnabled} authStatus={chatGPTAuthStatus} authLoading={chatGPTAuthLoading} authBusy={chatGPTAuthBusy} authorizationUrl={chatGPTAuthorizationUrl} authNotice={chatGPTAuthNotice} authError={chatGPTAuthError} onStartAuth={() => void startChatGPTAuth()} onCancelAuth={() => void cancelChatGPTAuth()} onDisconnectAuth={() => void disconnectChatGPTAuth()} onRetryAuth={() => void retryChatGPTAuthStatus()} />
               </details>
               <div className="description-examples"><span>Une direction à explorer</span><button onClick={() => { updateDescription('Un fond clair avec un accent bleu.\nTitre : Des espaces qui nous ressemblent\nTexte : Un atelier indépendant pour imaginer vos lieux de vie.'); descriptionInput.current?.focus(); }}>Page de présentation<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button><button onClick={() => { updateDescription('Un fond sombre avec un accent vert et un fondu à l’entrée.'); descriptionInput.current?.focus(); }}>Page sombre animée<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7" /></svg></button></div>
             </div>

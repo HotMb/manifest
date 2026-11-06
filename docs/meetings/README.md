@@ -14,6 +14,8 @@ Dernières revues : [HOTFIX-01 — hauteur et lancement de Manifest — 4 novemb
 
 Dernière mise à jour de paquet : [ARC-01 — rafraîchissement du plugin privé — 3 novembre 2026](2026-11-03-ARC-01-plugin-refresh-review.md).
 
+Dernière revue AUTH-01 : [connexion locale ChatGPT, revue du code et limites de qualification — 6 novembre 2026](2026-11-06-AUTH-01-review.md).
+
 Revue de la boucle réactive : [GEN-01 — aperçu automatique après debounce — 4 novembre 2026](2026-11-04-GEN-01-reactive-preview-review.md).
 
 Revue du catalogue composable : [GEN-02 — mouvement déclaré et limites restantes — 4 novembre 2026](2026-11-04-GEN-02-composed-motion-review.md).

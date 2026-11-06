@@ -7,6 +7,7 @@ import { MemoryProjectStore } from '../services/api/src/domain.ts';
 import { ProviderRuntimeConfigError, createSuggestionRuntime } from '../services/api/src/provider-runtime.ts';
 import { createDesignerMcpServer } from '../services/api/src/mcp.ts';
 import type { ProviderFetchResponse } from '@design-workbench/m0-contract';
+import type { ChatGPTAuthManager } from '../services/api/src/chatgpt-auth/manager.ts';
 
 const ok = (payload: unknown): ProviderFetchResponse => ({ ok: true, status: 200, json: async () => payload });
 
@@ -39,6 +40,60 @@ test('la configuration hôte injecte la clé seulement dans l’adaptateur', asy
   assert.equal(JSON.stringify(runtime.getUpdates(job.jobId)).includes('temporary-test-key'), false);
   assert.equal(JSON.stringify(runtime.readProposal(done.proposalIds[0]!)).includes('temporary-test-key'), false);
   assert.equal(projectStore.read('project-m0').draftVersion, 0);
+});
+
+test('l’API OpenAI reste un choix distinct et explicite quand OAuth ChatGPT est présent', async () => {
+  const auth = {
+    getStatus: () => ({ status: 'disconnected', usageMode: 'none' }),
+    getStatusAndRefresh: async () => ({ status: 'disconnected', usageMode: 'none' }),
+    hasSavedRegistration: () => true,
+    getVisibleModels: async () => [],
+    getAccessToken: async () => { throw Object.assign(new Error('not authorized'), { code: 'authorization_expired' }); },
+  } as unknown as ChatGPTAuthManager;
+  const runtime = createSuggestionRuntime(new MemoryProjectStore(heroProject()), {
+    MANIFEST_PROVIDER: 'openai', MANIFEST_MODEL: 'api-model', MANIFEST_API_BASE_URL: 'https://api.example.test/v1', MANIFEST_API_KEY: 'separate-billing-test-key',
+  }, async () => ok({ choices: [] }), auth);
+  assert.ok(runtime);
+  await runtime.refreshProviderRegistry();
+  const registry = runtime.getProviderRegistry();
+  const chatgpt = registry.providers.find((provider) => provider.id === 'openai')!;
+  const apiAlternative = registry.providers.find((provider) => provider.label.startsWith('OpenAI API'))!;
+  assert.equal(chatgpt.protocol, 'openai-responses');
+  assert.equal(chatgpt.status, 'disconnected');
+  assert.equal(chatgpt.models.length, 0);
+  assert.equal(apiAlternative.id, 'custom');
+  assert.equal(apiAlternative.status, 'configured');
+  assert.equal(apiAlternative.models[0]?.providerId, 'custom');
+  assert.equal(JSON.stringify(registry).includes('separate-billing-test-key'), false);
+});
+
+test('un modèle ChatGPT et l’API facturée distinctement peuvent coexister sans sélection ni bascule côté runtime', async () => {
+  const auth = {
+    getStatus: () => ({ status: 'connected', usageMode: 'chatgpt-plan' }),
+    getStatusAndRefresh: async () => ({ status: 'connected', usageMode: 'chatgpt-plan' }),
+    hasSavedRegistration: () => true,
+    getVisibleModels: async () => [{ id: 'chatgpt-plan-model', label: 'Modèle ChatGPT' }],
+    getAccessToken: async () => 'delegated-plan-test-token',
+  } as unknown as ChatGPTAuthManager;
+  let apiAuthorization = '';
+  const runtime = createSuggestionRuntime(new MemoryProjectStore(heroProject()), {
+    MANIFEST_PROVIDER: 'openai', MANIFEST_MODEL: 'api-model', MANIFEST_API_BASE_URL: 'https://api.example.test/v1', MANIFEST_API_KEY: 'explicit-api-test-key',
+  }, async (_url, init) => {
+    apiAuthorization = init.headers.authorization ?? '';
+    return ok({ choices: [{ message: { content: '{"operations":[{"op":"update_props","pageId":"page-home","blockId":"block-hero","props":{"animation":"none"}}],"rationale":"Aucune modification."}' } }] });
+  }, auth);
+  assert.ok(runtime);
+  await runtime.refreshProviderRegistry();
+  const registry = runtime.getProviderRegistry();
+  assert.deepEqual(registry.providers.find((provider) => provider.id === 'openai')?.models.map((model) => model.id), ['chatgpt-plan-model']);
+  assert.deepEqual(registry.providers.find((provider) => provider.id === 'custom')?.models.map((model) => model.id), ['api-model']);
+  const job = runtime.start('project-m0', {
+    idempotencyKey: 'explicit-api-choice', expectedDraftVersion: 0, editorSessionId: 'session-1', intentEpoch: 1,
+    intent: 'Aucune modification', provider: 'custom', model: 'api-model', mode: 'direct', selectedPageId: 'page-home', selectedBlockId: null,
+  });
+  const done = await runtime.waitForCompletion(job.jobId);
+  assert.equal(done.state, 'succeeded');
+  assert.equal(apiAuthorization, 'Bearer explicit-api-test-key');
 });
 
 test('le runtime n’accepte que les fournisseurs au protocole compatible actuel', () => {

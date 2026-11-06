@@ -11,6 +11,18 @@ export function defaultModelSelection(registry: ModelProviderRegistry): ModelSel
     : EMPTY_MODEL_SELECTION;
 }
 
+/** Auto-select only an authorized, unambiguous ChatGPT-plan model. Paid API choices stay explicit. */
+export function defaultAllowedModelSelection(registry: ModelProviderRegistry, chatGPTPlanAuthorized: boolean): ModelSelection {
+  const configuredModels = registry.providers
+    .filter((provider) => provider.status === 'configured')
+    .flatMap((provider) => provider.models);
+  if (configuredModels.length !== 1) return EMPTY_MODEL_SELECTION;
+  const [model] = configuredModels;
+  const provider = registry.providers.find((entry) => entry.id === model!.providerId && entry.status === 'configured');
+  if (!provider || provider.protocol !== 'openai-responses' || !chatGPTPlanAuthorized) return EMPTY_MODEL_SELECTION;
+  return { providerId: provider.id, modelId: model!.id };
+}
+
 export function selectProvider(registry: ModelProviderRegistry, current: ModelSelection, providerId: string): ModelSelection {
   if (!providerId) return EMPTY_MODEL_SELECTION;
   const provider = registry.providers.find((entry) => entry.id === providerId && entry.status === 'configured' && entry.models.length > 0);

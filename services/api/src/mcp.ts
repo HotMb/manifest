@@ -8,6 +8,7 @@ import { PROJECT_ID, disconnectedProviderRegistry, MAX_LAUNCH_TEXT_LENGTH, valid
 import type { M0Project, M0CommandResult } from '@design-workbench/m0-contract';
 import { MemoryProjectStore, publicError } from './domain.ts';
 import { SuggestionJobException, type SuggestionJobManager } from './suggestion-jobs.ts';
+import type { ChatGPTAuthManager } from './chatgpt-auth/manager.ts';
 
 export const EDITOR_URI = 'ui://design/editor.html';
 const defaultHtmlPath = fileURLToPath(new URL('../../../apps/editor-web/dist/index.html', import.meta.url));
@@ -69,6 +70,14 @@ const providerRegistryOutput = z.object({
   }).strict()).max(5),
 }).strict();
 const decisionOutput = z.object({ proposal: proposalOutput, project: z.object({ projectId: Id, draftVersion: z.number().int().nonnegative(), contentHash: z.string().regex(/^[a-f0-9]{64}$/), snapshot: z.unknown() }).strict() }).strict();
+const authErrorCode = z.enum(['unsupported_platform', 'authorization_expired', 'consent_denied', 'invalid_callback', 'invalid_token', 'insufficient_scope', 'network_error', 'storage_error', 'revocation_failed', 'unknown']);
+const startChatGPTSignInOutput = z.object({ status: z.enum(['pending', 'connected', 'unsupported', 'error']), authorizationUrl: z.string().url().optional(), expiresAt: z.string().datetime().optional(), errorCode: authErrorCode.optional() }).strict();
+const chatGPTAuthStatusOutput = z.object({ status: z.enum(['disconnected', 'pending', 'connected', 'unsupported', 'error']), usageMode: z.enum(['chatgpt-plan', 'none']), errorCode: authErrorCode.optional() }).strict();
+const disconnectChatGPTOutput = z.union([
+  z.object({ status: z.literal('disconnected'), revocation: z.enum(['revoked', 'failed', 'not-connected']) }).strict(),
+  z.object({ status: z.literal('error'), revocation: z.literal('failed'), errorCode: z.literal('storage_error') }).strict(),
+]);
+const cancelChatGPTSignInOutput = z.object({ status: z.literal('disconnected') }).strict();
 
 function reply(project: M0Project | M0CommandResult) {
   return {
@@ -91,7 +100,7 @@ function failure(error: unknown) {
   return { isError: true, content: [{ type: 'text' as const, text: `${safe.code}: ${safe.message}` }], _meta: { error: safe } };
 }
 
-export function createDesignerMcpServer(options: { store?: MemoryProjectStore; htmlPath?: string; suggestionJobs?: SuggestionJobManager } = {}) {
+export function createDesignerMcpServer(options: { store?: MemoryProjectStore; htmlPath?: string; suggestionJobs?: SuggestionJobManager; chatgptAuth?: ChatGPTAuthManager; refreshProviderRegistry?: () => Promise<void> } = {}) {
   if (options.suggestionJobs && (!options.store || !options.suggestionJobs.usesProjectStore(options.store))) throw new Error('Le serveur MCP et les suggestions doivent partager le même store de projet.');
   const store = options.store ?? new MemoryProjectStore();
   const htmlPath = options.htmlPath ?? defaultHtmlPath;
@@ -151,9 +160,65 @@ export function createDesignerMcpServer(options: { store?: MemoryProjectStore; h
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     _meta: { ui: { visibility: ['app'] } },
   }, async () => {
+    await options.refreshProviderRegistry?.();
     const registry = options.suggestionJobs?.getProviderRegistry() ?? disconnectedProviderRegistry();
     return { content: [{ type: 'text' as const, text: `${registry.providers.length} fournisseur(s) configuré(s).` }], structuredContent: registry, _meta: { registry } };
   });
+  if (options.chatgptAuth) {
+    const auth = options.chatgptAuth;
+    registerAppTool(server, 'start_chatgpt_sign_in', {
+      title: 'Connecter ChatGPT',
+      description: 'Prépare une connexion Sign in with ChatGPT pour l’usage de forfait local. Affiche l’URL d’autorisation comme lien; l’utilisateur choisit lui-même de l’ouvrir. Ne retourne aucun jeton ni identité.',
+      inputSchema: z.object({}).strict(),
+      outputSchema: startChatGPTSignInOutput,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+      _meta: { ui: { visibility: ['app'] } },
+    }, async () => {
+      const result = await auth.startSignIn();
+      const message = result.status === 'pending' ? 'Autorisation prête. Ouvre le lien pour continuer.' : result.status === 'connected' ? 'ChatGPT est déjà connecté.' : 'La connexion ChatGPT n’a pas démarré.';
+      return { content: [{ type: 'text' as const, text: message }], structuredContent: result };
+    });
+    registerAppTool(server, 'get_chatgpt_auth_status', {
+      title: 'Lire la connexion ChatGPT',
+      description: 'Retourne uniquement l’état générique et le mode d’usage autorisé; aucun profil, jeton ou donnée de compte.',
+      inputSchema: z.object({}).strict(),
+      outputSchema: chatGPTAuthStatusOutput,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      _meta: { ui: { visibility: ['app'] } },
+    }, async () => {
+      const result = await auth.getStatusAndRefresh();
+      return { content: [{ type: 'text' as const, text: `Connexion ChatGPT: ${result.status}; mode ${result.usageMode}.` }], structuredContent: result };
+    });
+    registerAppTool(server, 'cancel_chatgpt_sign_in', {
+      title: 'Annuler la connexion ChatGPT',
+      description: 'Ferme le callback loopback actif et invalide state/PKCE. Tout callback reçu ensuite est refusé.',
+      inputSchema: z.object({}).strict(),
+      outputSchema: cancelChatGPTSignInOutput,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      _meta: { ui: { visibility: ['app'] } },
+    }, async () => {
+      const result = await auth.cancelSignIn();
+      return { content: [{ type: 'text' as const, text: 'Connexion annulée.' }], structuredContent: result };
+    });
+    registerAppTool(server, 'disconnect_chatgpt', {
+      title: 'Déconnecter ChatGPT',
+      description: 'Tente la révocation de la session puis efface localement les jetons. Si la révocation distante échoue, le statut local reste déconnecté.',
+      inputSchema: z.object({}).strict(),
+      outputSchema: disconnectChatGPTOutput,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+      _meta: { ui: { visibility: ['app'] } },
+    }, async () => {
+      const result = await auth.disconnect();
+      const text = result.status === 'error'
+        ? 'Échec de la suppression locale des identifiants. La connexion n’a pas été déconnectée.'
+        : result.revocation === 'revoked'
+          ? 'Connexion locale supprimée et révocation confirmée.'
+          : result.revocation === 'failed'
+            ? 'Connexion locale supprimée; la révocation distante n’a pas été confirmée.'
+            : 'Aucune connexion ChatGPT active.';
+      return { content: [{ type: 'text' as const, text }], structuredContent: result };
+    });
+  }
   if (options.suggestionJobs) {
     const suggestionJobs = options.suggestionJobs;
     registerAppTool(server, 'start_suggestion', {

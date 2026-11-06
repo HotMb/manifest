@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productName": "Manifest",
-  "revision": 55,
+  "revision": 65,
   "tickets": [
     {
       "id": "ARC-01",
@@ -745,7 +745,8 @@
       "phase": "M1",
       "owner": "backend",
       "dependencies": [
-        "GEN-02"
+        "GEN-02",
+        "AUTH-01"
       ],
       "ownedPaths": [
         "apps/editor-web/src/main.tsx",
@@ -759,9 +760,10 @@
       ],
       "acceptance": [
         "L’auto-sélection ne choisit une cible que si un seul fournisseur et un seul modèle sont configurés. Si le fournisseur a plusieurs modèles, le choix du modèle est obligatoire avant qu’un job IA puisse démarrer ; le contrôle reste utilisable dans cet état.",
-        "Le brief indique près du champ si l’API du fournisseur sera appelée après la pause, si aucune API n’est configurée, si plusieurs modèles doivent être choisis ou si le registre est indisponible. La facturation API distincte de ChatGPT est visible sans ouvrir les réglages détaillés ; l’état indisponible offre un retry ciblé du registre.",
-        "Le test navigateur vérifie qu’aucun job ne démarre avant le choix explicite parmi plusieurs modèles, puis qu’un job part après le debounce de 1 500 ms. Les appels utilisés pour les tests restent simulés.",
-        "Le Snapshot continue d’accepter une référence designPolicy héritée pour lecture, mais les nouveaux projets n’en contiennent pas et aucune référence n’est envoyée au modèle. Unslop reste une méthode de revue contextualisée, sans profil fixe."
+        "Le brief indique près du champ si l’API du fournisseur sera appelée après la pause, si aucune API/autorisation n’est configurée, si plusieurs modèles doivent être choisis ou si le registre est indisponible. L’usage de Sign in with ChatGPT est présenté comme usage du forfait autorisé et soumis à ses limites ; BYOK/API classique est clairement présenté comme facturé séparément. L’état indisponible offre un retry ciblé du registre.",
+        "Le test navigateur vérifie qu’aucun job ne démarre avant une autorisation ChatGPT valide et le choix explicite parmi plusieurs modèles, puis qu’un job part après le debounce de 1 500 ms. Les appels utilisés pour les tests restent simulés.",
+        "Le Snapshot continue d’accepter une référence designPolicy héritée pour lecture, mais les nouveaux projets n’en contiennent pas et aucune référence n’est envoyée au modèle. Unslop reste une méthode de revue contextualisée, sans profil fixe.",
+        "La génération ChatGPT par forfait utilise uniquement un jeton OAuth avec scopes de Responses API accordés par l’utilisateur. Aucun secret ne transite vers la vue ou le modèle, aucune clé n’est extraite de ChatGPT, et la transmission explicite /validate au modèle hôte reste distincte de l’inférence API réactive."
       ],
       "evidence": [],
       "blockers": [],
@@ -860,6 +862,56 @@
       "blockers": [],
       "status": "done",
       "branch": "work/hotfix-01",
+      "reviewer": "qa"
+    },
+    {
+      "id": "AUTH-01",
+      "title": "Connexion locale Sign in with ChatGPT et propositions Responses",
+      "phase": "M1",
+      "owner": "orchestrator",
+      "status": "done",
+      "dependencies": [],
+      "ownedPaths": [
+        "services/api/src/chatgpt-auth/",
+        "services/api/src/main.ts",
+        "services/api/src/mcp.ts",
+        "services/api/src/provider-runtime.ts",
+        "packages/m0-contract/src/providers.ts",
+        "packages/m0-contract/src/provider-http-adapter.ts",
+        "packages/m0-contract/src/provider-responses-adapter.ts",
+        "packages/m0-contract/src/index.ts",
+        "packages/host-adapters/src/index.ts",
+        "apps/editor-web/src/model-provider-panel.tsx",
+        "apps/editor-web/src/main.tsx",
+        "apps/editor-web/src/manifest.css",
+        "tests/chatgpt-auth.test.ts",
+        "tests/provider-responses-adapter.test.ts",
+        "tests/e2e/chatgpt-sign-in-preview.spec.ts",
+        "tests/e2e/empty-start.spec.ts",
+        "tests/e2e/launch-context.spec.ts",
+        "integrations/chatgpt-desktop/build.mjs",
+        "integrations/chatgpt-desktop/README.md",
+        "services/api/README.md",
+        "package.json",
+        "docs/evidence/AUTH-01"
+      ],
+      "acceptance": [
+        "Le plugin open source local propose une connexion ChatGPT à la demande, ouvre le flux officiel OAuth avec PKCE, state, nonce et callback loopback ; il ne récupère jamais une clé API et n'envoie aucune requête d'inférence avant consentement explicite à chatgpt.tokens.use.direct.",
+        "L'identité OpenID est validée (signature/JWKS, issuer, audience, expiration, nonce) et la portée Responses requise est vérifiée. Un refus, un jeton d'identité seul, un callback invalide ou une portée insuffisante laisse le fournisseur inutilisable sans fuite de détails sensibles. L'utilisateur peut annuler une tentative en attente ; le serveur ferme son callback loopback et rejette tout callback tardif.",
+        "Les jetons et leur rotation sont conservés uniquement dans le coffre protégé de l'utilisateur local ; le host ID opaque est stable. Rafraîchissement concurrent, révocation/déconnexion, erreurs réseau et reconsentement sont gérés. Le coffre initial prend en charge Windows DPAPI CurrentUser et indique clairement l'absence de coffre sécurisé sur tout hôte non pris en charge.",
+        "Après consentement, Manifest récupère les modèles visibles pour ce compte, actualise son registre sans exposer les jetons et laisse le modèle choisi explicite si plusieurs sont disponibles. L'interface distingue l'usage du forfait ChatGPT des clés API facturées séparément et offre un lien de gestion des limites d'usage.",
+        "Toute sortie de l'autorisation ChatGPT (refus, expiration, retrait de portée, limite, déconnexion ou erreur) bloque le mode Responses et ne bascule jamais silencieusement vers une clé API facturée ; l'utilisateur doit choisir explicitement un mode API distinct avant son utilisation.",
+        "L'adaptateur dédié utilise POST /v1/responses avec store=false et stream=true, traite le flux jusqu'à réponse complète, respecte l'annulation et l'idempotence, puis valide les opérations structurées contre le contrat Snapshot/M0 avant toute projection. Aucun code libre du modèle n'est exécuté.",
+        "Après une description puis 1 500 ms de pause, une réponse Responses structurée valide met à jour l'aperçu existant sans modifier le brouillon enregistré ; une modification suivante remplace le candidat périmé. Le flux initial vide garde un canevas blanc.",
+        "Les scénarios E2E qui simulent un modèle openai-responses déclarent explicitement un état autorisé chatgpt-plan ; sans autorisation le mode Responses demeure inutilisable. Les tests vérifient aussi qu'une API facturée peut être choisie seulement par action explicite.",
+        "Les tests hors ligne couvrent OAuth, PKCE, validation des jetons/scopes, stockage DPAPI via un secret factice, rotation/révocation, flux SSE Responses, annulation, validation de sortie, debounce et projection. La construction du package Desktop ne contient aucun jeton. Aucun appel API réel payant n'est exécuté par défaut ; la qualification réelle du compte et de l'hôte reste attribuée à ARC-01."
+      ],
+      "evidence": [
+        "docs/evidence/AUTH-01/implementation.md",
+        "docs/evidence/AUTH-01/review.md"
+      ],
+      "blockers": [],
+      "branch": "work/auth-01",
       "reviewer": "qa"
     }
   ],
@@ -1552,6 +1604,127 @@
       "to": "done",
       "actor": "qa",
       "at": "2026-11-04T19:03:25.299Z"
+    },
+    {
+      "revision": 56,
+      "ticketId": "AUTH-01",
+      "from": "absent",
+      "to": "ready",
+      "actor": "orchestrator",
+      "at": "2026-11-05T01:04:24.671Z",
+      "action": "ticket_added",
+      "source": "docs/delivery/changes/REV-56-auth-01-chatgpt-sign-in.json",
+      "reason": "Ajouter le flux local Sign in with ChatGPT avec consentement explicite et inférence Responses pour éviter la configuration manuelle d'une clé API"
+    },
+    {
+      "revision": 57,
+      "ticketId": "GEN-03",
+      "from": "todo",
+      "to": "todo",
+      "actor": "orchestrator",
+      "at": "2026-11-05T01:04:50.706Z",
+      "action": "criteria_updated",
+      "fields": [
+        "dependencies",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-57-gen-03-delegated-chatgpt-usage.json",
+      "reason": "Rendre l'autorisation OAuth ChatGPT et l'usage de son forfait prérequis explicite du flux de génération réactif"
+    },
+    {
+      "revision": 58,
+      "ticketId": "AUTH-01",
+      "from": "ready",
+      "to": "in_progress",
+      "actor": "backend",
+      "at": "2026-11-05T01:05:11.697Z"
+    },
+    {
+      "revision": 59,
+      "ticketId": "AUTH-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-05T01:10:14.406Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-59-auth-01-cancel-oauth-attempt.json",
+      "reason": "Rendre annulable et à callbacks tardifs inéligibles la connexion OAuth démarrée depuis le panneau"
+    },
+    {
+      "revision": 60,
+      "ticketId": "AUTH-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-05T01:27:53.265Z",
+      "action": "criteria_updated",
+      "fields": [
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-60-auth-no-paid-fallback.json",
+      "reason": "Empêcher tout basculement silencieux vers une API payante après perte du consentement ChatGPT"
+    },
+    {
+      "revision": 61,
+      "ticketId": "AUTH-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-06T00:14:39.080Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths"
+      ],
+      "source": "docs/delivery/changes/REV-61-auth-ci-test-command.json",
+      "reason": "Inclure les tests hors ligne OAuth et Responses dans le contrôle npm standard du ticket AUTH-01"
+    },
+    {
+      "revision": 62,
+      "ticketId": "AUTH-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-06T00:29:29.008Z",
+      "action": "criteria_updated",
+      "fields": [
+        "ownedPaths",
+        "acceptance"
+      ],
+      "source": "docs/delivery/changes/REV-62-auth-oauth-e2e-fixtures.json",
+      "reason": "Les scénarios E2E openai-responses doivent simuler explicitement le consentement ChatGPT depuis le nouveau garde-fou"
+    },
+    {
+      "revision": 63,
+      "ticketId": "AUTH-01",
+      "from": "in_progress",
+      "to": "in_progress",
+      "actor": "orchestrator",
+      "at": "2026-11-06T00:44:27.120Z",
+      "action": "criteria_updated",
+      "fields": [
+        "owner"
+      ],
+      "source": "docs/delivery/changes/REV-63-auth-owner-transfer.json",
+      "reason": "L’agent backend initial a atteint sa limite d’usage ; l’orchestrateur reprend les corrections, les preuves et la soumission pour revue indépendante."
+    },
+    {
+      "revision": 64,
+      "ticketId": "AUTH-01",
+      "from": "in_progress",
+      "to": "review",
+      "actor": "orchestrator",
+      "at": "2026-11-06T01:41:24.762Z"
+    },
+    {
+      "revision": 65,
+      "ticketId": "AUTH-01",
+      "from": "review",
+      "to": "done",
+      "actor": "qa",
+      "at": "2026-11-06T01:41:42.499Z"
     }
   ]
 }

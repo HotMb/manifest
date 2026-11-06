@@ -1,6 +1,6 @@
 # Manifest — tableau de livraison
 
-Vue générée depuis tickets.json, révision 55. GitHub Issues est un miroir ; les preuves restent dans Git.
+Vue générée depuis tickets.json, révision 65. GitHub Issues est un miroir ; les preuves restent dans Git.
 
 | Ticket | Phase | Responsable | État | Dépendances |
 |---|---|---|---|---|
@@ -32,7 +32,8 @@ Vue générée depuis tickets.json, révision 55. GitHub Issues est un miroir ; 
 | TEST-01 — Recette transversale M1 | M1 | qa | todo | ARC-03, DOM-01, DOM-02, DOM-03, CAT-01, CAT-02, CAT-03, UX-01, UI-01, UI-02, UI-03, UI-04, UI-05, API-01, JOB-01, AI-01, AI-02, SEC-01, ASSET-01, REV-01, EXP-01, EXP-02, OPS-01 |
 | GEN-01 — Boucle de conception réactive | M0 | frontend | done | — |
 | GEN-02 — Catalogue local de composition versionné | M1 | backend | in_progress | — |
-| GEN-03 — Choix du modèle sans implicite et transparence de l’état IA | M1 | backend | todo | GEN-02 |
+| GEN-03 — Choix du modèle sans implicite et transparence de l’état IA | M1 | backend | todo | GEN-02, AUTH-01 |
 | GEN-04 — Aperçu réactif de pages composées | M1 | frontend | todo | GEN-01, GEN-02, GEN-03 |
 | GEN-05 — Étendre les mouvements compris depuis le langage libre | M2 | backend | todo | GEN-02, GEN-03, GEN-04 |
 | HOTFIX-01 — Corriger le lancement contextuel et la hauteur de Manifest | M0 | frontend | done | — |
+| AUTH-01 — Connexion locale Sign in with ChatGPT et propositions Responses | M1 | orchestrator | done | — |
