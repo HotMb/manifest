@@ -1,5 +1,14 @@
 # Manifest — suivi du projet
 
+## Reprise AUTH-01 — 6 novembre 2026
+
+- **AUTH-01 — terminé localement, révision 65** sur `work/auth-01`. L’implémentation ajoute la connexion OAuth ChatGPT à la demande, le stockage DPAPI Windows, les contrôles de scopes et les propositions Responses validées par M0. La sélection reste vide tant que plusieurs modèles/fournisseurs existent.
+- **Contrôles après correctifs :** `npm test` 63/63, `npm run test:providers` 32/32, E2E 46/46, E2E OAuth 3/3, typecheck, build Desktop et smoke MCP (16 outils) réussis. Python contracts/unit tests ont réussi dans cette même tranche. Les tests loopback utilisent des identifiants factices ; aucune API fournisseur n’a été appelée.
+- **Revue indépendante :** le code reviewer a confirmé GO après les correctifs OIDC (`azp`, `nbf`, `iat`) et de sélection, sans P0–P2. `loop-verify` a rendu FAIL à sa seconde tentative avant les correctifs ; ses deux tentatives sont consommées, donc aucun PASS de ce service n’est revendiqué. Les changements détectés ont été corrigés, couverts par les tests et relus par un reviewer distinct.
+- **Package local :** `integrations/chatgpt-desktop/dist/manifest-desktop.zip`, 1 178 440 octets, SHA-256 `0DD0198973D71A9BA1E35E73C45B43B7B93B86A25E88CA942B14B6376C362E1D`. Cet artefact est local et ignoré par Git ; le build/smoke ne prouvent pas l’installation ni le fonctionnement dans ChatGPT Desktop.
+- **Suite du suivi :** ARC-01 reste bloqué jusqu’à une preuve dans l’hôte ChatGPT Desktop avec identité et modification réelles. `team:next` n’indique aucun nouveau ticket éligible ; GEN-03/04 restent dépendants de GEN-02.
+- **GitHub :** commit applicatif `0b702a4` poussé sur `work/auth-01`. PR [#28](https://github.com/HotMb/manifest/pull/28) ouverte en empilement sur la PR #27 (`work/arc-01-qualification`) pour éviter de répéter ses 229 fichiers. Quality #106 a réussi sur `33270bf`; la PR parente #27 reste en brouillon et Quality #98 a réussi sur son HEAD `63a63ac`. Après intégration de #27, retargeter #28 vers `main`. Aucune fusion n’a été faite.
+
 Mise à jour : **4 novembre 2026**. Référence GitHub : [HotMb/manifest](https://github.com/HotMb/manifest). Le code applicatif vérifié est `f354c2c` ; le checkpoint GEN-03/04 a été poussé dans `b76f025` sur la branche de la PR #27. La PR reste ouverte en brouillon, non fusionnée. GitHub Actions **Quality #94 réussit sur `f354c2c` et Quality #96 sur `b76f025`**. Le registre `docs/delivery/tickets.json` reste à la **révision 55** ; `BOARD.md` en est la vue générée. Les anciens comptes rendus ci-dessous reflètent leur date/révision d’origine.
 
 ## État courant — HOTFIX-01 — 4 novembre

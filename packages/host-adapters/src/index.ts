@@ -9,6 +9,27 @@ import {
   type M0Project, type ApplyOpsCommand,
 } from '@design-workbench/m0-contract';
 
+export const CHATGPT_AUTH_ERROR_CODES = [
+  'unsupported_platform', 'authorization_expired', 'consent_denied', 'invalid_callback',
+  'invalid_token', 'insufficient_scope', 'network_error', 'storage_error',
+  'revocation_failed', 'unknown',
+] as const;
+export type ChatGPTAuthErrorCode = typeof CHATGPT_AUTH_ERROR_CODES[number];
+export type ChatGPTAuthStatus = {
+  status: 'disconnected' | 'pending' | 'connected' | 'unsupported' | 'error';
+  usageMode: 'chatgpt-plan' | 'none';
+  errorCode?: ChatGPTAuthErrorCode;
+};
+export type ChatGPTSignInResult = {
+  status: 'pending' | 'connected' | 'unsupported' | 'error';
+  authorizationUrl?: string;
+  expiresAt?: string;
+  errorCode?: ChatGPTAuthErrorCode;
+};
+export type ChatGPTDisconnectResult =
+  | { status: 'disconnected'; revocation: 'revoked' | 'failed' | 'not-connected' }
+  | { status: 'error'; revocation: 'failed'; errorCode: 'storage_error' };
+
 export type EditorTransport = {
   readonly kind: 'browser-local' | 'browser-memory' | 'mcp';
   read(): Promise<M0Project>;
@@ -16,6 +37,10 @@ export type EditorTransport = {
   subscribeLaunchContext?(listener: (context: EditorLaunchContext) => void): () => void;
   commit(command: ApplyOpsCommand): Promise<M0Project>;
   readProviderRegistry?(): Promise<ModelProviderRegistry>;
+  startChatGPTSignIn?(): Promise<ChatGPTSignInResult>;
+  getChatGPTAuthStatus?(): Promise<ChatGPTAuthStatus>;
+  cancelChatGPTSignIn?(): Promise<{ status: 'disconnected' }>;
+  disconnectChatGPT?(): Promise<ChatGPTDisconnectResult>;
   startSuggestion?(input: StartSuggestionInput): Promise<SuggestionJob>;
   getSuggestionJob?(jobId: string): Promise<SuggestionJob>;
   getSuggestionUpdates?(jobId: string, afterSeq: number, limit?: number): Promise<SuggestionEventPage>;
@@ -30,6 +55,55 @@ export type EditorTransport = {
 
 export class TransportError extends Error {
   constructor(public readonly code: string, message: string) { super(message); this.name = 'TransportError'; }
+}
+
+function authErrorCode(value: unknown): ChatGPTAuthErrorCode | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'string' && (CHATGPT_AUTH_ERROR_CODES as readonly string[]).includes(value)) return value as ChatGPTAuthErrorCode;
+  throw new TransportError('INVALID_RESPONSE', 'La réponse d’autorisation de l’hôte est incomplète.');
+}
+
+function authorizationUrl(value: unknown): string {
+  if (typeof value !== 'string') throw new TransportError('INVALID_RESPONSE', 'Le lien d’autorisation est indisponible.');
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.hostname !== 'auth.openai.com' || url.pathname !== '/api/accounts/authorize' || url.username || url.password) throw new Error('Unexpected authorization origin');
+    return url.href;
+  } catch {
+    throw new TransportError('INVALID_RESPONSE', 'Le lien d’autorisation reçu n’est pas valide.');
+  }
+}
+
+function parseChatGPTSignIn(value: unknown): ChatGPTSignInResult {
+  if (!value || typeof value !== 'object') throw new TransportError('INVALID_RESPONSE', 'La réponse d’autorisation de l’hôte est incomplète.');
+  const result = value as Record<string, unknown>;
+  if (!['pending', 'connected', 'unsupported', 'error'].includes(String(result.status))) throw new TransportError('INVALID_RESPONSE', 'La réponse d’autorisation de l’hôte est incomplète.');
+  const parsed: ChatGPTSignInResult = { status: result.status as ChatGPTSignInResult['status'], ...(result.errorCode !== undefined ? { errorCode: authErrorCode(result.errorCode) } : {}) };
+  if (parsed.status === 'pending') {
+    parsed.authorizationUrl = authorizationUrl(result.authorizationUrl);
+    if (typeof result.expiresAt !== 'string' || !Number.isFinite(Date.parse(result.expiresAt))) throw new TransportError('INVALID_RESPONSE', 'La durée du lien d’autorisation est invalide.');
+    parsed.expiresAt = result.expiresAt;
+  }
+  return parsed;
+}
+
+function parseChatGPTAuthStatus(value: unknown): ChatGPTAuthStatus {
+  if (!value || typeof value !== 'object') throw new TransportError('INVALID_RESPONSE', 'Le statut d’autorisation de l’hôte est incomplet.');
+  const result = value as Record<string, unknown>;
+  if (!['disconnected', 'pending', 'connected', 'unsupported', 'error'].includes(String(result.status)) || !['chatgpt-plan', 'none'].includes(String(result.usageMode))) throw new TransportError('INVALID_RESPONSE', 'Le statut d’autorisation de l’hôte est incomplet.');
+  return {
+    status: result.status as ChatGPTAuthStatus['status'],
+    usageMode: result.usageMode as ChatGPTAuthStatus['usageMode'],
+    ...(result.errorCode !== undefined ? { errorCode: authErrorCode(result.errorCode) } : {}),
+  };
+}
+
+function parseChatGPTDisconnect(value: unknown): ChatGPTDisconnectResult {
+  if (!value || typeof value !== 'object') throw new TransportError('INVALID_RESPONSE', 'La réponse de déconnexion de l’hôte est incomplète.');
+  const result = value as Record<string, unknown>;
+  if (result.status === 'error' && result.revocation === 'failed' && result.errorCode === 'storage_error') return { status: 'error', revocation: 'failed', errorCode: 'storage_error' };
+  if (result.status !== 'disconnected' || !['revoked', 'failed', 'not-connected'].includes(String(result.revocation))) throw new TransportError('INVALID_RESPONSE', 'La réponse de déconnexion de l’hôte est incomplète.');
+  return { status: 'disconnected', revocation: result.revocation as ChatGPTDisconnectResult['revocation'] };
 }
 
 export function launchContextFromToolResult(value: unknown): EditorLaunchContext | undefined {
@@ -254,6 +328,14 @@ export async function createMcpTransport(): Promise<EditorTransport> {
     async read() { return call('read_project', { projectId: PROJECT_ID }); },
     async commit(command) { validateCommand(command); return call('commit_commands', { ...command }); },
     async readProviderRegistry() { return readRegistry(); },
+    async startChatGPTSignIn() { return parseChatGPTSignIn(await callData('start_chatgpt_sign_in', {}, null)); },
+    async getChatGPTAuthStatus() { return parseChatGPTAuthStatus(await callData('get_chatgpt_auth_status', {}, null)); },
+    async cancelChatGPTSignIn() {
+      const value = await callData('cancel_chatgpt_sign_in', {}, null);
+      if (!value || typeof value !== 'object' || (value as Record<string, unknown>).status !== 'disconnected') throw new TransportError('INVALID_RESPONSE', 'La réponse d’annulation de l’hôte est incomplète.');
+      return { status: 'disconnected' as const };
+    },
+    async disconnectChatGPT() { return parseChatGPTDisconnect(await callData('disconnect_chatgpt', {}, null)); },
     async startSuggestion(input) {
       validateStartSuggestionInput(input);
       return readJob('start_suggestion', { projectId: PROJECT_ID, ...input });
