@@ -33,6 +33,7 @@ Le test PKCE vérifie le challenge `S256`, la redirection `http://127.0.0.1:<por
 | `git diff --check` | Réussi | Aucun espace fautif ; Git n’a émis que des avertissements CRLF/LF |
 | `npm run package:desktop-plugin` | Réussi | Package Desktop `0.1.3` construit ; avertissements Vite `use client` provenant de dépendances tierces |
 | `npm run smoke:desktop-plugin` | Réussi | Démarrage stdio local, 16 outils, ressource HTML MCP Apps et ouverture sur projet vierge |
+| GitHub Actions Quality #104 | Échec au contrôle des liens uniquement | `docs/STATUS.md` pointait en Markdown vers le ZIP local ignoré par Git ; lien remplacé par un chemin texte avant le prochain run. E2E CI 46/46 avait réussi. |
 
 L’archive installable locale est `integrations/chatgpt-desktop/dist/manifest-desktop.zip`, 1 178 440 octets. Son SHA-256 est `0DD0198973D71A9BA1E35E73C45B43B7B93B86A25E88CA942B14B6376C362E1D`. L’inspection confirme neuf fichiers attendus (bundle HTML, serveur, manifeste et configuration MCP). Le package est un build local ; il n’a pas été installé dans ChatGPT Desktop pour ce contrôle.
 
