@@ -1,0 +1,24 @@
+{
+  "ownedPaths": [
+    "services/api/src/chatgpt-auth/",
+    "services/api/src/main.ts",
+    "services/api/src/mcp.ts",
+    "services/api/src/provider-runtime.ts",
+    "packages/m0-contract/src/providers.ts",
+    "packages/m0-contract/src/provider-http-adapter.ts",
+    "packages/m0-contract/src/provider-responses-adapter.ts",
+    "packages/m0-contract/src/index.ts",
+    "packages/host-adapters/src/index.ts",
+    "apps/editor-web/src/model-provider-panel.tsx",
+    "apps/editor-web/src/main.tsx",
+    "apps/editor-web/src/manifest.css",
+    "tests/chatgpt-auth.test.ts",
+    "tests/provider-responses-adapter.test.ts",
+    "tests/e2e/chatgpt-sign-in-preview.spec.ts",
+    "integrations/chatgpt-desktop/build.mjs",
+    "integrations/chatgpt-desktop/README.md",
+    "services/api/README.md",
+    "package.json",
+    "docs/evidence/AUTH-01"
+  ]
+}

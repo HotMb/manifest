@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { disconnectedProviderRegistry, validateModelProviderRegistry, type ModelProviderRegistry } from '@design-workbench/m0-contract';
-import { defaultModelSelection, EMPTY_MODEL_SELECTION, modelSelectionDeclaration, selectModel, selectProvider, selectedModel } from '../src/model-selection.ts';
+import { defaultAllowedModelSelection, defaultModelSelection, EMPTY_MODEL_SELECTION, modelSelectionDeclaration, selectModel, selectProvider, selectedModel } from '../src/model-selection.ts';
 
 const registry: ModelProviderRegistry = {
   schemaVersion: 1,
@@ -24,6 +24,16 @@ test('un seul fournisseur et un seul modèle configurés deviennent la cible aut
   assert.deepEqual(defaultModelSelection(registry), EMPTY_MODEL_SELECTION);
   const ambiguous: ModelProviderRegistry = { ...registry, providers: [...registry.providers, { ...registry.providers[0]!, id: 'openai', label: 'OpenAI', models: [{ id: 'gpt-test', label: 'GPT Test', providerId: 'openai', capabilities: ['structured-output'] }] }] };
   assert.deepEqual(defaultModelSelection(ambiguous), EMPTY_MODEL_SELECTION);
+});
+
+test('une sélection automatique ChatGPT exige une autorisation et un modèle unique tous fournisseurs confondus', () => {
+  const plan: ModelProviderRegistry = { schemaVersion: 1, providers: [{ id: 'openai', label: 'ChatGPT', protocol: 'openai-responses', status: 'configured', models: [
+    { id: 'gpt-plan', label: 'ChatGPT plan', providerId: 'openai', capabilities: ['structured-output'] },
+  ], supportsBYOK: false, secretConfigured: true }] };
+  assert.deepEqual(defaultAllowedModelSelection(plan, false), EMPTY_MODEL_SELECTION);
+  assert.deepEqual(defaultAllowedModelSelection(plan, true), { providerId: 'openai', modelId: 'gpt-plan' });
+  const paidAndPlan = { ...registry, providers: [...registry.providers, ...plan.providers] };
+  assert.deepEqual(defaultAllowedModelSelection(paidAndPlan, true), EMPTY_MODEL_SELECTION);
 });
 
 test('le modèle unique est sélectionné automatiquement, plusieurs modèles demandent un choix explicite', () => {

@@ -1,0 +1,40 @@
+{
+  "id": "AUTH-01",
+  "title": "Connexion locale Sign in with ChatGPT et propositions Responses",
+  "phase": "M1",
+  "owner": "backend",
+  "status": "ready",
+  "dependencies": [],
+  "ownedPaths": [
+    "services/api/src/chatgpt-auth/",
+    "services/api/src/main.ts",
+    "services/api/src/mcp.ts",
+    "services/api/src/provider-runtime.ts",
+    "packages/m0-contract/src/providers.ts",
+    "packages/m0-contract/src/provider-http-adapter.ts",
+    "packages/m0-contract/src/provider-responses-adapter.ts",
+    "packages/m0-contract/src/index.ts",
+    "packages/host-adapters/src/index.ts",
+    "apps/editor-web/src/model-provider-panel.tsx",
+    "apps/editor-web/src/main.tsx",
+    "apps/editor-web/src/manifest.css",
+    "tests/chatgpt-auth.test.ts",
+    "tests/provider-responses-adapter.test.ts",
+    "tests/e2e/chatgpt-sign-in-preview.spec.ts",
+    "integrations/chatgpt-desktop/build.mjs",
+    "integrations/chatgpt-desktop/README.md",
+    "services/api/README.md",
+    "docs/evidence/AUTH-01"
+  ],
+  "acceptance": [
+    "Le plugin open source local propose une connexion ChatGPT à la demande, ouvre le flux officiel OAuth avec PKCE, state, nonce et callback loopback ; il ne récupère jamais une clé API et n'envoie aucune requête d'inférence avant consentement explicite à chatgpt.tokens.use.direct.",
+    "L'identité OpenID est validée (signature/JWKS, issuer, audience, expiration, nonce) et la portée Responses requise est vérifiée. Un refus, un jeton d'identité seul, un callback invalide ou une portée insuffisante laisse le fournisseur inutilisable sans fuite de détails sensibles.",
+    "Les jetons et leur rotation sont conservés uniquement dans le coffre protégé de l'utilisateur local ; le host ID opaque est stable. Rafraîchissement concurrent, révocation/déconnexion, erreurs réseau et reconsentement sont gérés. Le coffre initial prend en charge Windows DPAPI CurrentUser et indique clairement l'absence de coffre sécurisé sur tout hôte non pris en charge.",
+    "Après consentement, Manifest récupère les modèles visibles pour ce compte, actualise son registre sans exposer les jetons et laisse le modèle choisi explicite si plusieurs sont disponibles. L'interface distingue l'usage du forfait ChatGPT des clés API facturées séparément et offre un lien de gestion des limites d'usage.",
+    "L'adaptateur dédié utilise POST /v1/responses avec store=false et stream=true, traite le flux jusqu'à réponse complète, respecte l'annulation et l'idempotence, puis valide les opérations structurées contre le contrat Snapshot/M0 avant toute projection. Aucun code libre du modèle n'est exécuté.",
+    "Après une description puis 1 500 ms de pause, une réponse Responses structurée valide met à jour l'aperçu existant sans modifier le brouillon enregistré ; une modification suivante remplace le candidat périmé. Le flux initial vide garde un canevas blanc.",
+    "Les tests hors ligne couvrent OAuth, PKCE, validation des jetons/scopes, stockage DPAPI via un secret factice, rotation/révocation, flux SSE Responses, annulation, validation de sortie, debounce et projection. La construction du package Desktop ne contient aucun jeton. Aucun appel API réel payant n'est exécuté par défaut ; la qualification réelle du compte et de l'hôte reste attribuée à ARC-01."
+  ],
+  "evidence": [],
+  "blockers": []
+}
