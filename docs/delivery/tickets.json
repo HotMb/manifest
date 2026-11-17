@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productName": "Manifest",
-  "revision": 65,
+  "revision": 66,
   "tickets": [
     {
       "id": "ARC-01",
@@ -30,12 +30,13 @@
         "docs/evidence/ARC-01/implementation-2026-11-03.md"
       ],
       "blockers": [
-        "Preuve réelle ChatGPT et compte de test autorisé non encore obtenus.",
-        "Configuration d'identité et jetons d'essai à préparer sans secrets dans le dépôt."
+        "Le connecteur réellement chargé dans ChatGPT Desktop est manifest-m0 ; le build AUTH-01 avec consentement OAuth et adaptateur Responses doit être installé ou sélectionné, puis son identité réelle doit être qualifiée.",
+        "Le debounce observé exécute seulement des règles locales et produit un Hero générique ; aucune génération live par l'API configurée ni fidélité complète au brief n'est encore prouvée dans l'hôte.",
+        "La transmission /validate avec accusé, le fallback copie/téléchargement et la matrice fichier, stockage durable, iframe, polling/rafraîchissement et mouvement réduit restent à éprouver dans ChatGPT Desktop."
       ],
       "status": "blocked",
       "branch": "work/arc-01",
-      "reason": "Retarder la qualification du parcours hôte jusqu'à ce que la génération par API après debounce et l'aperçu direct des animations soient livrés, puis éprouver le même flux complet dans ChatGPT Desktop."
+      "reason": "L'ouverture, le bridge, le debounce local, la prévisualisation et l'enregistrement Brouillon v1 sont maintenant observés dans ChatGPT Desktop ; le ticket reste bloqué sur le connecteur de production, l'API live et la transmission complète."
     },
     {
       "id": "ARC-02",
@@ -1725,6 +1726,21 @@
       "to": "done",
       "actor": "qa",
       "at": "2026-11-06T01:41:42.499Z"
+    },
+    {
+      "revision": 66,
+      "ticketId": "ARC-01",
+      "from": "blocked",
+      "to": "blocked",
+      "actor": "orchestrator",
+      "at": "2026-11-17T00:24:58.080Z",
+      "action": "criteria_updated",
+      "fields": [
+        "blockers",
+        "reason"
+      ],
+      "source": "docs/delivery/changes/REV-66-arc-01-real-host-observation.json",
+      "reason": "Observation réelle dans ChatGPT Desktop : bridge et écriture confirmés, API live et OAuth encore absents du connecteur chargé"
     }
   ]
 }

@@ -1,5 +1,11 @@
 # Manifest — suivi du projet
 
+## Observation réelle ARC-01 — 17 novembre 2026
+
+- **ChatGPT Desktop partiellement qualifié :** Manifest s'ouvre réellement dans la conversation, reçoit la demande, réagit après 1,5 s, modifie l'aperçu et confirme l'écriture en `Brouillon v1`. Le pied de page indique `Connecté à l'hôte` et `Enregistrement confirmé par le serveur`.
+- **Limite bloquante :** la source chargée est `manifest-m0`. La proposition provient explicitement des règles locales, produit un Hero générique et n'appelle ni l'API configurée ni OAuth/Responses. `/validate` et la matrice complète des capacités restent non exécutés.
+- **Décision :** ARC-01 reste `blocked`; la PR ne doit pas être fusionnée sur cette preuve partielle. Voir la [preuve hôte](evidence/ARC-01/chatgpt-desktop-host-2026-11-17.md) et la [revue](meetings/2026-11-17-ARC-01-chatgpt-desktop-review.md).
+
 ## Reprise AUTH-01 — 6 novembre 2026
 
 - **AUTH-01 — terminé localement, révision 65** sur `work/auth-01`. L’implémentation ajoute la connexion OAuth ChatGPT à la demande, le stockage DPAPI Windows, les contrôles de scopes et les propositions Responses validées par M0. La sélection reste vide tant que plusieurs modèles/fournisseurs existent.

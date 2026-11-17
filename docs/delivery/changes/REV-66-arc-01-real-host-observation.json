@@ -1,0 +1,8 @@
+{
+  "blockers": [
+    "Le connecteur réellement chargé dans ChatGPT Desktop est manifest-m0 ; le build AUTH-01 avec consentement OAuth et adaptateur Responses doit être installé ou sélectionné, puis son identité réelle doit être qualifiée.",
+    "Le debounce observé exécute seulement des règles locales et produit un Hero générique ; aucune génération live par l'API configurée ni fidélité complète au brief n'est encore prouvée dans l'hôte.",
+    "La transmission /validate avec accusé, le fallback copie/téléchargement et la matrice fichier, stockage durable, iframe, polling/rafraîchissement et mouvement réduit restent à éprouver dans ChatGPT Desktop."
+  ],
+  "reason": "L'ouverture, le bridge, le debounce local, la prévisualisation et l'enregistrement Brouillon v1 sont maintenant observés dans ChatGPT Desktop ; le ticket reste bloqué sur le connecteur de production, l'API live et la transmission complète."
+}
